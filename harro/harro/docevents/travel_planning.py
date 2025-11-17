@@ -2,6 +2,7 @@
 # For license information, please see license.txt
 
 import frappe
+from frappe.utils import get_link_to_form
 
 
 @frappe.whitelist()
@@ -12,6 +13,8 @@ def create_travel_plan(names):
 
 	for row in travel_request:
 		tr_doc = frappe.get_doc("Travel Request", row)
+		if tr_doc.docstatus < 1:
+			frappe.throw("Travel Request should be submitted.<br><ul><li>{0}</li></ul>".format(get_link_to_form("Travel Request", row)))
 		if len(tr_doc.itinerary):
 			for tr in tr_doc.itinerary:
 				travel_planing.append("travel_itinerary", {
@@ -36,6 +39,6 @@ def create_travel_plan(names):
 	message = """ <p>Travel Planning is Created.</p> """
 	message += "<ul>"
 	for tp in travel_planing_list:
-		message += f"<li>{tp}</li>"
+		message += f"<li>{get_link_to_form("Travel Planning", tp)}</li>"
 	message += "</ul>"
 	frappe.msgprint(message)

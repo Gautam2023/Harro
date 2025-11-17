@@ -112,8 +112,8 @@ def get_timesheet_working_hours(name):
         if row.get("custom_update_to_project_field") and row.get("custom_planned_hours_field_name"):
             dataset.append({
                 "label": row.get("name"),
-                "planned": doc.get(row.get("custom_update_to_project_field")),
-                "actual": doc.get(row.get("custom_planned_hours_field_name")),
+                "actual": doc.get(row.get("custom_update_to_project_field")),
+                "planned": doc.get(row.get("custom_planned_hours_field_name")),
                 "index": count
             })
             count += 1

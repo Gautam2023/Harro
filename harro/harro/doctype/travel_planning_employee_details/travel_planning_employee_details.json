@@ -1,0 +1,148 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "creation": "2025-11-11 12:46:46.351371",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "section_break_amiy",
+  "travel_request",
+  "employee_name",
+  "employee_hh_id",
+  "travel_from",
+  "travel_to",
+  "mode_of_travel",
+  "flight_coast",
+  "taxi_coast",
+  "extra_baggage",
+  "baggage_coast",
+  "column_break_gszv",
+  "lodging_required",
+  "preferred_area_for_lodging",
+  "check_in_date",
+  "check_out_date",
+  "room_night",
+  "hotel_coast"
+ ],
+ "fields": [
+  {
+   "fieldname": "section_break_amiy",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "travel_request",
+   "fieldtype": "Link",
+   "in_filter": 1,
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Travel Request",
+   "options": "Travel Request"
+  },
+  {
+   "fetch_from": "travel_request.employee_name",
+   "fieldname": "employee_name",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Employee Name"
+  },
+  {
+   "fetch_from": "travel_request.custom_hh__employee_id",
+   "fieldname": "employee_hh_id",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Employee HH ID"
+  },
+  {
+   "fieldname": "travel_from",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Travel From"
+  },
+  {
+   "fieldname": "travel_to",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Travel To"
+  },
+  {
+   "fieldname": "mode_of_travel",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Mode of Travel",
+   "options": "\nFlight\nTrain\nTaxi\nRented Car"
+  },
+  {
+   "fieldname": "flight_coast",
+   "fieldtype": "Currency",
+   "label": "Flight Coast"
+  },
+  {
+   "fieldname": "taxi_coast",
+   "fieldtype": "Currency",
+   "label": "Taxi Coast"
+  },
+  {
+   "fieldname": "extra_baggage",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Extra Baggage",
+   "options": "\nYes\nNo"
+  },
+  {
+   "fieldname": "baggage_coast",
+   "fieldtype": "Currency",
+   "label": "Baggage Coast"
+  },
+  {
+   "fieldname": "column_break_gszv",
+   "fieldtype": "Column Break"
+  },
+  {
+   "default": "0",
+   "fieldname": "lodging_required",
+   "fieldtype": "Check",
+   "label": "Lodging Required"
+  },
+  {
+   "fieldname": "preferred_area_for_lodging",
+   "fieldtype": "Data",
+   "label": "Preferred Area for Lodging"
+  },
+  {
+   "fieldname": "check_in_date",
+   "fieldtype": "Date",
+   "label": "Check-in Date"
+  },
+  {
+   "fieldname": "check_out_date",
+   "fieldtype": "Date",
+   "label": "Check-out Date"
+  },
+  {
+   "fieldname": "room_night",
+   "fieldtype": "Int",
+   "label": "Room Night"
+  },
+  {
+   "fieldname": "hotel_coast",
+   "fieldtype": "Currency",
+   "label": "Hotel Coast"
+  }
+ ],
+ "grid_page_length": 50,
+ "index_web_pages_for_search": 1,
+ "istable": 1,
+ "links": [],
+ "modified": "2025-11-17 22:00:24.492191",
+ "modified_by": "Administrator",
+ "module": "Harro",
+ "name": "Travel Planning Employee Details",
+ "owner": "nasrin@fosserp.com",
+ "permissions": [],
+ "row_format": "Dynamic",
+ "rows_threshold_for_grid_search": 20,
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": []
+}

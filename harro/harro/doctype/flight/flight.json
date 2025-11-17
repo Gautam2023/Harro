@@ -1,0 +1,187 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "autoname": "naming_series:",
+ "creation": "2025-10-27 10:05:11.074812",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "section_break_vdtn",
+  "travel_request",
+  "naming_series",
+  "vendor_name",
+  "preferred_seat",
+  "travel_itinerary",
+  "extra_baggage",
+  "total_cost_while_booking",
+  "cost_as_per_invoice",
+  "booking_status",
+  "column_break_ahqd",
+  "cancellation_cost",
+  "refunded_cost",
+  "re_schedule",
+  "remarkscancellationreschedule_reason",
+  "agent_invoice_no",
+  "is_paid",
+  "flight_ticket",
+  "amended_from"
+ ],
+ "fields": [
+  {
+   "fieldname": "section_break_vdtn",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "travel_request",
+   "fieldtype": "Link",
+   "label": "Travel Request",
+   "no_copy": 1,
+   "options": "Travel Request",
+   "print_hide": 1,
+   "search_index": 1
+  },
+  {
+   "default": "F-HHIN-",
+   "fieldname": "naming_series",
+   "fieldtype": "Select",
+   "label": "Naming Series",
+   "options": "F-HHIN-"
+  },
+  {
+   "fieldname": "vendor_name",
+   "fieldtype": "Link",
+   "label": "Vendor Name ",
+   "options": "Supplier"
+  },
+  {
+   "fetch_from": "travel_request.custom_preferred_seat",
+   "fieldname": "preferred_seat",
+   "fieldtype": "Data",
+   "label": "Preferred Seat"
+  },
+  {
+   "fieldname": "travel_itinerary",
+   "fieldtype": "Link",
+   "label": "Travel itinerary",
+   "options": "Travel Itinerary",
+   "read_only": 1
+  },
+  {
+   "fetch_from": "travel_itinerary.custom_extra_baggage",
+   "fieldname": "extra_baggage",
+   "fieldtype": "Select",
+   "label": "Extra Baggage "
+  },
+  {
+   "fieldname": "total_cost_while_booking",
+   "fieldtype": "Currency",
+   "label": "Total cost while booking",
+   "no_copy": 1,
+   "print_hide": 1,
+   "read_only": 1,
+   "search_index": 1
+  },
+  {
+   "fieldname": "cost_as_per_invoice",
+   "fieldtype": "Currency",
+   "label": "Cost as per Invoice"
+  },
+  {
+   "fieldname": "booking_status",
+   "fieldtype": "Data",
+   "label": "Booking Status"
+  },
+  {
+   "fieldname": "column_break_ahqd",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "cancellation_cost",
+   "fieldtype": "Currency",
+   "label": "Cancellation cost"
+  },
+  {
+   "fieldname": "refunded_cost",
+   "fieldtype": "Currency",
+   "label": "Refunded cost"
+  },
+  {
+   "fieldname": "re_schedule",
+   "fieldtype": "Currency",
+   "label": "Re Schedule",
+   "no_copy": 1
+  },
+  {
+   "fieldname": "remarkscancellationreschedule_reason",
+   "fieldtype": "Data",
+   "label": "Remarks(Cancellation/Reschedule reason)"
+  },
+  {
+   "fieldname": "agent_invoice_no",
+   "fieldtype": "Data",
+   "label": "Agent Invoice No"
+  },
+  {
+   "default": "0",
+   "fieldname": "is_paid",
+   "fieldtype": "Check",
+   "label": "Is Paid"
+  },
+  {
+   "fieldname": "flight_ticket",
+   "fieldtype": "Attach",
+   "label": "Flight Ticket"
+  },
+  {
+   "fieldname": "amended_from",
+   "fieldtype": "Link",
+   "label": "Amended From",
+   "no_copy": 1,
+   "options": "Flight",
+   "print_hide": 1,
+   "read_only": 1,
+   "search_index": 1
+  }
+ ],
+ "grid_page_length": 50,
+ "index_web_pages_for_search": 1,
+ "is_submittable": 1,
+ "links": [],
+ "modified": "2025-11-17 21:52:20.661944",
+ "modified_by": "Administrator",
+ "module": "Harro",
+ "name": "Flight",
+ "naming_rule": "By \"Naming Series\" field",
+ "owner": "nasrin@fosserp.com",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "submit": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Travel Manager",
+   "share": 1,
+   "write": 1
+  }
+ ],
+ "row_format": "Dynamic",
+ "rows_threshold_for_grid_search": 20,
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": []
+}

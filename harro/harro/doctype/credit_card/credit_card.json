@@ -1,0 +1,71 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "creation": "2025-11-12 14:44:27.017305",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "card_number",
+  "card_holder",
+  "issuing_bank",
+  "expiry_date",
+  "status"
+ ],
+ "fields": [
+  {
+   "fieldname": "card_number",
+   "fieldtype": "Int",
+   "label": "Card Number"
+  },
+  {
+   "fieldname": "card_holder",
+   "fieldtype": "Link",
+   "label": "Card Holder",
+   "options": "Employee"
+  },
+  {
+   "fieldname": "issuing_bank",
+   "fieldtype": "Link",
+   "label": "Issuing Bank",
+   "options": "Bank"
+  },
+  {
+   "fieldname": "expiry_date",
+   "fieldtype": "Date",
+   "label": "Expiry Date"
+  },
+  {
+   "fieldname": "status",
+   "fieldtype": "Select",
+   "label": "Status",
+   "options": "\nActive\nBlocked\nExpired"
+  }
+ ],
+ "grid_page_length": 50,
+ "index_web_pages_for_search": 1,
+ "links": [],
+ "modified": "2025-11-17 21:52:21.003004",
+ "modified_by": "Administrator",
+ "module": "Harro",
+ "name": "Credit Card",
+ "owner": "nasrin@fosserp.com",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  }
+ ],
+ "row_format": "Dynamic",
+ "rows_threshold_for_grid_search": 20,
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": []
+}

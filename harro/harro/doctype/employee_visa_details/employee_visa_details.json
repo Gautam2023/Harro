@@ -1,0 +1,100 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "autoname": "field:number",
+ "creation": "2025-10-24 12:21:32.323588",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "visa_country",
+  "number",
+  "from",
+  "to",
+  "column_break_ulfs",
+  "stay",
+  "type",
+  "entry",
+  "other_entry_type"
+ ],
+ "fields": [
+  {
+   "columns": 2,
+   "fieldname": "visa_country",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Visa country",
+   "options": "Visa country"
+  },
+  {
+   "columns": 1,
+   "fieldname": "number",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Number",
+   "unique": 1
+  },
+  {
+   "columns": 1,
+   "fieldname": "from",
+   "fieldtype": "Date",
+   "in_list_view": 1,
+   "label": "From"
+  },
+  {
+   "columns": 1,
+   "fieldname": "to",
+   "fieldtype": "Date",
+   "in_list_view": 1,
+   "label": "To"
+  },
+  {
+   "fieldname": "column_break_ulfs",
+   "fieldtype": "Column Break"
+  },
+  {
+   "columns": 1,
+   "fieldname": "stay",
+   "fieldtype": "Int",
+   "in_list_view": 1,
+   "label": "Stay"
+  },
+  {
+   "columns": 1,
+   "fieldname": "type",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Type"
+  },
+  {
+   "columns": 1,
+   "fieldname": "entry",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Entry",
+   "options": "\nMultiple\nSingle\nOther"
+  },
+  {
+   "depends_on": "eval:doc.entry==\"Other\"",
+   "fieldname": "other_entry_type",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Other Entry Type"
+  }
+ ],
+ "grid_page_length": 50,
+ "index_web_pages_for_search": 1,
+ "istable": 1,
+ "links": [],
+ "modified": "2025-11-17 21:52:20.034630",
+ "modified_by": "Administrator",
+ "module": "Harro",
+ "name": "Employee Visa Details",
+ "naming_rule": "By fieldname",
+ "owner": "nasrin@fosserp.com",
+ "permissions": [],
+ "row_format": "Dynamic",
+ "rows_threshold_for_grid_search": 20,
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": []
+}

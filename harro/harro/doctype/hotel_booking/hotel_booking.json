@@ -1,0 +1,206 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "autoname": "naming_series:",
+ "creation": "2025-10-23 15:22:32.249046",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "naming_series",
+  "travel_request",
+  "column_break_qcuf",
+  "is_paid",
+  "general_details_section",
+  "hh_invoice",
+  "month",
+  "booked_by",
+  "column_break_nzis",
+  "hh_employee_id",
+  "traveller_name",
+  "customer",
+  "hotel_details_section",
+  "location",
+  "hotel_nmae",
+  "checkin_date",
+  "checkout_date",
+  "room_night",
+  "column_break_gjci",
+  "per_night_charges",
+  "hotel_charges_with_gst",
+  "hotel_charges",
+  "hotel_invoice_value",
+  "invoice_number"
+ ],
+ "fields": [
+  {
+   "default": "HB-HHIN-",
+   "fieldname": "naming_series",
+   "fieldtype": "Select",
+   "label": "Naming Series",
+   "options": "HB-HHIN-"
+  },
+  {
+   "fieldname": "travel_request",
+   "fieldtype": "Link",
+   "label": "Travel Request",
+   "options": "Travel Request"
+  },
+  {
+   "fieldname": "column_break_qcuf",
+   "fieldtype": "Column Break"
+  },
+  {
+   "default": "0",
+   "fieldname": "is_paid",
+   "fieldtype": "Check",
+   "label": "Is Paid"
+  },
+  {
+   "fieldname": "general_details_section",
+   "fieldtype": "Section Break",
+   "label": "General Details"
+  },
+  {
+   "fieldname": "hh_invoice",
+   "fieldtype": "Data",
+   "label": "HH invoice"
+  },
+  {
+   "fieldname": "month",
+   "fieldtype": "Select",
+   "label": "Month",
+   "options": "\nJanuary\nFebruary\nMarch\nApril\nMay\nJune\nJuly\nAugust\nSeptember\nOctober\nNovember\nDecember"
+  },
+  {
+   "fieldname": "booked_by",
+   "fieldtype": "Data",
+   "label": "Booked By"
+  },
+  {
+   "fieldname": "column_break_nzis",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fetch_from": "travel_request.custom_hh__employee_id",
+   "fieldname": "hh_employee_id",
+   "fieldtype": "Data",
+   "label": "HH Employee ID",
+   "read_only": 1
+  },
+  {
+   "fetch_from": "travel_request.employee_name",
+   "fieldname": "traveller_name",
+   "fieldtype": "Data",
+   "label": "Traveller Name",
+   "read_only": 1
+  },
+  {
+   "fieldname": "customer",
+   "fieldtype": "Link",
+   "label": "Customer",
+   "options": "Hotel Supplier"
+  },
+  {
+   "fieldname": "hotel_details_section",
+   "fieldtype": "Section Break",
+   "label": "Hotel Details"
+  },
+  {
+   "fieldname": "location",
+   "fieldtype": "Data",
+   "label": "Location"
+  },
+  {
+   "fieldname": "hotel_nmae",
+   "fieldtype": "Data",
+   "label": "Hotel Name"
+  },
+  {
+   "fieldname": "checkin_date",
+   "fieldtype": "Date",
+   "label": "Checkin Date"
+  },
+  {
+   "fieldname": "checkout_date",
+   "fieldtype": "Date",
+   "label": "Checkout Date"
+  },
+  {
+   "fieldname": "room_night",
+   "fieldtype": "Int",
+   "label": "Room Night"
+  },
+  {
+   "fieldname": "column_break_gjci",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "per_night_charges",
+   "fieldtype": "Currency",
+   "label": "Per Night Charges",
+   "options": "INR"
+  },
+  {
+   "fieldname": "hotel_charges_with_gst",
+   "fieldtype": "Currency",
+   "label": "Hotel Charges With GST",
+   "options": "INR"
+  },
+  {
+   "fieldname": "hotel_charges",
+   "fieldtype": "Currency",
+   "label": "Hotel Charges",
+   "options": "INR"
+  },
+  {
+   "fieldname": "hotel_invoice_value",
+   "fieldtype": "Currency",
+   "label": "Hotel Invoice Value",
+   "options": "INR"
+  },
+  {
+   "fieldname": "invoice_number",
+   "fieldtype": "Data",
+   "label": "Invoice Number"
+  }
+ ],
+ "grid_page_length": 50,
+ "index_web_pages_for_search": 1,
+ "links": [],
+ "modified": "2025-11-17 21:52:22.232570",
+ "modified_by": "Administrator",
+ "module": "Harro",
+ "name": "Hotel Booking",
+ "naming_rule": "By \"Naming Series\" field",
+ "owner": "nasrin@fosserp.com",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Travel Manager",
+   "share": 1,
+   "write": 1
+  }
+ ],
+ "row_format": "Dynamic",
+ "rows_threshold_for_grid_search": 20,
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": []
+}

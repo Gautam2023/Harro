@@ -1,0 +1,255 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "autoname": "naming_series:",
+ "creation": "2025-10-23 12:59:11.504519",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "section_break_uzdm",
+  "naming_series",
+  "visit_no",
+  "travel_status",
+  "travel_desk_spoc",
+  "travel_type",
+  "traveller_name",
+  "travel_date",
+  "return_date",
+  "travell_to",
+  "section_break_vxrt",
+  "onward_ticket",
+  "return_ticket",
+  "boarding_pass",
+  "hotel_booking",
+  "cab_booking",
+  "daily_transfer",
+  "cab_details_mail_to_employee",
+  "travel_checklist",
+  "column_break_kqxh",
+  "travel_insurance",
+  "ir",
+  "mail_sent_flight_hotelcab",
+  "courtesy_call",
+  "mis_update",
+  "feedback_form",
+  "section_break_pfmj",
+  "remarks",
+  "amended_from"
+ ],
+ "fields": [
+  {
+   "fieldname": "section_break_uzdm",
+   "fieldtype": "Section Break"
+  },
+  {
+   "default": "TC-HHIN-",
+   "fieldname": "naming_series",
+   "fieldtype": "Select",
+   "label": "Naming Series",
+   "options": "TC-HHIN-"
+  },
+  {
+   "fieldname": "visit_no",
+   "fieldtype": "Int",
+   "label": "Visit No"
+  },
+  {
+   "fieldname": "travel_status",
+   "fieldtype": "Select",
+   "label": "Travel Status",
+   "options": "\nCompleted\nCancelled"
+  },
+  {
+   "fieldname": "travel_desk_spoc",
+   "fieldtype": "Select",
+   "label": "Travel Desk SPOC?",
+   "options": "\nJensu\nAshwathi"
+  },
+  {
+   "fieldname": "travel_type",
+   "fieldtype": "Select",
+   "label": "Travel Type",
+   "options": "\nDomestic\nInternational"
+  },
+  {
+   "fetch_from": "travell_to.employee_name",
+   "fieldname": "traveller_name",
+   "fieldtype": "Link",
+   "label": "Traveller Name",
+   "no_copy": 1,
+   "options": "Travel Request",
+   "unique": 1
+  },
+  {
+   "fieldname": "travel_date",
+   "fieldtype": "Date",
+   "label": "Travel Date"
+  },
+  {
+   "fieldname": "return_date",
+   "fieldtype": "Date",
+   "label": "Return Date"
+  },
+  {
+   "fieldname": "travell_to",
+   "fieldtype": "Link",
+   "label": "Travelling To",
+   "no_copy": 1,
+   "options": "Travel Request",
+   "print_hide": 1,
+   "read_only": 1
+  },
+  {
+   "fieldname": "section_break_vxrt",
+   "fieldtype": "Section Break"
+  },
+  {
+   "default": "0",
+   "fieldname": "onward_ticket",
+   "fieldtype": "Check",
+   "label": "Onward Ticket"
+  },
+  {
+   "default": "0",
+   "fieldname": "return_ticket",
+   "fieldtype": "Check",
+   "label": "Return Ticket"
+  },
+  {
+   "default": "0",
+   "fieldname": "boarding_pass",
+   "fieldtype": "Check",
+   "label": "Boarding Pass "
+  },
+  {
+   "default": "0",
+   "fieldname": "hotel_booking",
+   "fieldtype": "Check",
+   "label": "Hotel Booking"
+  },
+  {
+   "default": "0",
+   "fieldname": "cab_booking",
+   "fieldtype": "Check",
+   "label": "Airport Transfer"
+  },
+  {
+   "default": "0",
+   "fieldname": "daily_transfer",
+   "fieldtype": "Check",
+   "label": "Daily Transfer"
+  },
+  {
+   "default": "0",
+   "fieldname": "cab_details_mail_to_employee",
+   "fieldtype": "Check",
+   "label": "Cab Details Mail to Employee"
+  },
+  {
+   "default": "0",
+   "fieldname": "travel_checklist",
+   "fieldtype": "Check",
+   "label": "Travel Checklist"
+  },
+  {
+   "fieldname": "column_break_kqxh",
+   "fieldtype": "Column Break"
+  },
+  {
+   "default": "0",
+   "fieldname": "travel_insurance",
+   "fieldtype": "Check",
+   "label": "Travel Insurance"
+  },
+  {
+   "default": "0",
+   "fieldname": "ir",
+   "fieldtype": "Check",
+   "label": "IR"
+  },
+  {
+   "default": "0",
+   "fieldname": "mail_sent_flight_hotelcab",
+   "fieldtype": "Check",
+   "label": "Mail Sent (Flight /Hotel/Cab)"
+  },
+  {
+   "default": "0",
+   "fieldname": "courtesy_call",
+   "fieldtype": "Check",
+   "label": "Courtesy call"
+  },
+  {
+   "default": "0",
+   "fieldname": "mis_update",
+   "fieldtype": "Check",
+   "label": "MIS Update"
+  },
+  {
+   "default": "0",
+   "fieldname": "feedback_form",
+   "fieldtype": "Check",
+   "label": "Feedback Form"
+  },
+  {
+   "fieldname": "section_break_pfmj",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "remarks",
+   "fieldtype": "Small Text",
+   "label": "Remarks"
+  },
+  {
+   "fieldname": "amended_from",
+   "fieldtype": "Link",
+   "label": "Amended From",
+   "no_copy": 1,
+   "options": "Travel Checklist",
+   "print_hide": 1,
+   "read_only": 1,
+   "search_index": 1
+  }
+ ],
+ "grid_page_length": 50,
+ "index_web_pages_for_search": 1,
+ "is_submittable": 1,
+ "links": [],
+ "modified": "2025-11-17 21:52:21.222386",
+ "modified_by": "Administrator",
+ "module": "Harro",
+ "name": "Travel Checklist",
+ "naming_rule": "By \"Naming Series\" field",
+ "owner": "nasrin@fosserp.com",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "submit": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Travel Manager",
+   "share": 1,
+   "write": 1
+  }
+ ],
+ "row_format": "Dynamic",
+ "rows_threshold_for_grid_search": 20,
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": []
+}

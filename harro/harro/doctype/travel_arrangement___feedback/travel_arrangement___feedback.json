@@ -1,0 +1,224 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "autoname": "naming_series:",
+ "creation": "2025-10-23 11:40:34.799502",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "section_break_zbqc",
+  "naming_series",
+  "travel_request",
+  "visit_number",
+  "travelled__sector",
+  "customer_name_copy",
+  "onward_date",
+  "return_date",
+  "who_was_your_travel_desk_spoc",
+  "overall_how_satisfied_are_you_with_the_work_trip",
+  "got_details_before_trip",
+  "how_would_you_rate_the_following",
+  "was_our_travel_desk_helpful_and_courteous",
+  "was_the_information_provided_by_the_travel_desk_accurat",
+  "was_the_cab_service_provided_during_your_trip_satisfied",
+  "are_you_happy_with_the_hotel_and_flight_selection",
+  "section_break_pfut",
+  "how_would_you_rate_your_experience_with_our_travel",
+  "what_areas_do_you_think_we_could_improve_on",
+  "flight_option__taxi_arrangements__hotel__other",
+  "amended_from"
+ ],
+ "fields": [
+  {
+   "fieldname": "section_break_zbqc",
+   "fieldtype": "Section Break"
+  },
+  {
+   "default": "TF-HHIN-",
+   "fieldname": "naming_series",
+   "fieldtype": "Select",
+   "label": "Naming Series",
+   "options": "TF-HHIN-"
+  },
+  {
+   "fieldname": "travel_request",
+   "fieldtype": "Link",
+   "label": "Travel Request ",
+   "no_copy": 1,
+   "options": "Travel Request",
+   "print_hide": 1,
+   "search_index": 1
+  },
+  {
+   "fieldname": "visit_number",
+   "fieldtype": "Int",
+   "in_list_view": 1,
+   "label": "Visit Number",
+   "reqd": 1
+  },
+  {
+   "fieldname": "travelled__sector",
+   "fieldtype": "Data",
+   "label": "Travelled  Sector",
+   "reqd": 1
+  },
+  {
+   "fetch_from": "travel_request.employee",
+   "fieldname": "customer_name_copy",
+   "fieldtype": "Link",
+   "label": "Customer Name ",
+   "options": "Employee",
+   "reqd": 1
+  },
+  {
+   "fieldname": "onward_date",
+   "fieldtype": "Date",
+   "label": "Onward Date",
+   "reqd": 1
+  },
+  {
+   "fieldname": "return_date",
+   "fieldtype": "Date",
+   "label": "Return Date",
+   "reqd": 1
+  },
+  {
+   "fieldname": "who_was_your_travel_desk_spoc",
+   "fieldtype": "Select",
+   "label": " Who was your Travel desk SPOC? ",
+   "options": "\nJensu\nAshwathi Jayesh",
+   "reqd": 1
+  },
+  {
+   "fieldname": "overall_how_satisfied_are_you_with_the_work_trip",
+   "fieldtype": "Rating",
+   "in_list_view": 1,
+   "label": "Overall, how satisfied are you with the work trip? ",
+   "reqd": 1
+  },
+  {
+   "fieldname": "got_details_before_trip",
+   "fieldtype": "Select",
+   "label": "Were you provided with all the details for your travel before the trip from traveldesk team",
+   "options": "\nYes\nNo",
+   "reqd": 1
+  },
+  {
+   "fieldname": "how_would_you_rate_the_following",
+   "fieldtype": "Section Break",
+   "label": "How would you rate the following supports and facilities provided by our traveldesk Team"
+  },
+  {
+   "fieldname": "was_our_travel_desk_helpful_and_courteous",
+   "fieldtype": "Select",
+   "label": "Was our travel desk helpful and courteous ",
+   "options": "\nExcellent\nGood\nAverage\nFair\nNeed Improvement",
+   "reqd": 1
+  },
+  {
+   "fieldname": "was_the_information_provided_by_the_travel_desk_accurat",
+   "fieldtype": "Select",
+   "label": "Was the information provided by the travel desk accurat",
+   "options": "\nExcellent\nGood\nAverage\nFair\nNeed Improvement",
+   "reqd": 1
+  },
+  {
+   "fieldname": "was_the_cab_service_provided_during_your_trip_satisfied",
+   "fieldtype": "Select",
+   "label": "Was the Cab service provided during your trip satisfied ",
+   "options": "\nExcellent\nGood\nAverage\nFair\nNeed Improvement",
+   "reqd": 1
+  },
+  {
+   "fieldname": "are_you_happy_with_the_hotel_and_flight_selection",
+   "fieldtype": "Select",
+   "label": "Are you happy with the hotel and flight selection ",
+   "options": "\nExcellent\nGood\nAverage\nFair\nNeed Improvement",
+   "reqd": 1
+  },
+  {
+   "fieldname": "section_break_pfut",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "how_would_you_rate_your_experience_with_our_travel",
+   "fieldtype": "Select",
+   "label": "How would you rate your experience with our travel (0 - 10)",
+   "options": "\n0\n1\n2\n3\n4\n5\n6\n7\n8\n9\n10"
+  },
+  {
+   "fieldname": "what_areas_do_you_think_we_could_improve_on",
+   "fieldtype": "Select",
+   "label": "What areas do you think we could improve on?",
+   "options": "\nFlight option\nTaxi arrangements\nHotel\nOther"
+  },
+  {
+   "fieldname": "flight_option__taxi_arrangements__hotel__other",
+   "fieldtype": "Small Text",
+   "label": "Any additional comments or suggestions?"
+  },
+  {
+   "fieldname": "amended_from",
+   "fieldtype": "Link",
+   "label": "Amended From",
+   "no_copy": 1,
+   "options": "Travel Arrangement - Feedback",
+   "print_hide": 1,
+   "read_only": 1,
+   "search_index": 1
+  }
+ ],
+ "grid_page_length": 50,
+ "index_web_pages_for_search": 1,
+ "is_submittable": 1,
+ "links": [],
+ "modified": "2025-11-17 21:52:21.483047",
+ "modified_by": "Administrator",
+ "module": "Harro",
+ "name": "Travel Arrangement - Feedback",
+ "naming_rule": "By \"Naming Series\" field",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "submit": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Travel User",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Travel Manager",
+   "share": 1,
+   "write": 1
+  }
+ ],
+ "row_format": "Dynamic",
+ "rows_threshold_for_grid_search": 20,
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": []
+}

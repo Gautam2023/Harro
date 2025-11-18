@@ -6,13 +6,6 @@ frappe.ui.form.on("Job Card", {
         frm.set_df_property("custom_unproductive_work_timelogs", "cannot_add_rows", true);
     },
     start_job: function (frm, status, employee) {
-        const args = {
-                job_card_id: frm.doc.name,
-                start_time: frappe.datetime.now_datetime(),
-                employees: employee,
-                status: status,
-            };
-        frm.events.make_time_log(frm, args);
         if (status == "Resume Job"){
             frappe.call({
                 method: "harro.harro.docevents.job_card.resume_unproductive_log",
@@ -41,13 +34,6 @@ frappe.ui.form.on("Job Card", {
         }
 	},
     complete_job: function (frm, status, completed_qty) {
-        const args = {
-                job_card_id: frm.doc.name,
-                complete_time: frappe.datetime.now_datetime(),
-                status: status,
-                completed_qty: completed_qty,
-            };
-        frm.events.make_time_log(frm, args);
         if(status == 'On Hold'){
             let d = new frappe.ui.Dialog({
             title: 'Update Unproductive Activity',
@@ -57,7 +43,12 @@ frappe.ui.form.on("Job Card", {
                     "label" : "Activity Type",
                     "options" : "Activity Type",
                     "reqd" :  1,
-                    "fieldtype" : "Link"
+                    "fieldtype" : "Link",
+                    get_query: function () {
+						return {
+							filters: [["custom_unproductive_work" , "=", 1]],
+						};
+					},
                 },
                 {
                     "fieldname" : "project",

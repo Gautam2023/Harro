@@ -21,6 +21,13 @@ frappe.ui.form.on("Stock Entry", {
             };
         })
 	},
+    project : (frm)=>{
+        if(frm.doc.project){
+            frm.doc.items.forEach(e => {
+                frappe.model.set_value(e.doctype, e.name, "project", frm.doc.project)
+            });
+        }
+    },
     items_on_form_rendered(frm){
         
     }

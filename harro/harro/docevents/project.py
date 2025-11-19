@@ -86,7 +86,7 @@ def calculate_timesheet_hours(project):
 
                                         """, as_dict=True)
         
-    field_to_update = frappe.db.get_all("Activity Type" , fields = ['name', 'custom_update_to_project_field'], filters={'custom_update_to_project_field' : ["!=", '']})
+    field_to_update = frappe.db.get_all("Activity Type" , fields = ['name', 'custom_update_to_project_field'], filters={'custom_update_to_project_field' : ["!=", ''], "disabled" : 0})
 
     field_mapping = {}
     for row in field_to_update:
@@ -103,25 +103,25 @@ def calculate_timesheet_hours(project):
                 frappe.db.set_value("Project", project, field_mapping.get(row.name), 0)
 
 @frappe.whitelist()
-def get_timesheet_working_hours(name):
+def get_timesheet_working_hours(name, unproductive):
     doc = frappe.get_doc("Project", name)
-    fielddetails = frappe.db.get_all("Activity Type", fields=["custom_update_to_project_field", "custom_planned_hours_field_name", "name"])
+    fielddetails = frappe.db.get_all("Activity Type", fields=["custom_update_to_project_field", "custom_planned_hours_field_name", "name"], filters={"custom_unproductive_work" : unproductive, "disabled" : 0})
     dataset = []
     count = 0 
     for row in fielddetails:
         if row.get("custom_update_to_project_field") and row.get("custom_planned_hours_field_name"):
             dataset.append({
                 "label": row.get("name"),
-                "planned": doc.get(row.get("custom_update_to_project_field")),
-                "actual": doc.get(row.get("custom_planned_hours_field_name")),
+                "actual": doc.get(row.get("custom_update_to_project_field")),
+                "planned": doc.get(row.get("custom_planned_hours_field_name")),
                 "index": count
             })
             count += 1
     return dataset
 
 @frappe.whitelist() 
-def get_activity():
-    fielddetails = frappe.db.get_all("Activity Type", fields=["custom_update_to_project_field", "custom_planned_hours_field_name", "name"])
+def get_activity(unproductive=0):
+    fielddetails = frappe.db.get_all("Activity Type", fields=["custom_update_to_project_field", "custom_planned_hours_field_name", "name"], filters={"custom_unproductive_work" : unproductive, "disabled" : 0})
     activity_list = []
     for row in fielddetails:
         if row.get("custom_update_to_project_field") and row.get("custom_planned_hours_field_name"):

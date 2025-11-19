@@ -1,0 +1,147 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "autoname": "naming_series:",
+ "creation": "2025-10-24 10:29:57.165662",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "section_break_hsrj",
+  "naming_series",
+  "travel_request",
+  "passenger",
+  "from",
+  "to",
+  "column_break_oeuz",
+  "pick_up_location",
+  "pick_off_location",
+  "cost",
+  "is_paid",
+  "amended_from"
+ ],
+ "fields": [
+  {
+   "fieldname": "section_break_hsrj",
+   "fieldtype": "Section Break",
+   "label": "Taxi Details"
+  },
+  {
+   "default": "T-HHIN-",
+   "fieldname": "naming_series",
+   "fieldtype": "Select",
+   "label": "Naming Series",
+   "options": "\nT-HHIN-"
+  },
+  {
+   "fieldname": "travel_request",
+   "fieldtype": "Link",
+   "label": "Travel Request",
+   "options": "Travel Request"
+  },
+  {
+   "fieldname": "passenger",
+   "fieldtype": "Data",
+   "label": "Passenger"
+  },
+  {
+   "fieldname": "from",
+   "fieldtype": "Date",
+   "label": "From"
+  },
+  {
+   "fieldname": "to",
+   "fieldtype": "Date",
+   "label": "To"
+  },
+  {
+   "fieldname": "column_break_oeuz",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "pick_up_location",
+   "fieldtype": "Link",
+   "label": "Pick Up Location",
+   "options": "Location"
+  },
+  {
+   "fieldname": "pick_off_location",
+   "fieldtype": "Link",
+   "label": "Pick Off Location",
+   "options": "Location"
+  },
+  {
+   "fieldname": "cost",
+   "fieldtype": "Currency",
+   "label": "Cost"
+  },
+  {
+   "default": "0",
+   "fieldname": "is_paid",
+   "fieldtype": "Check",
+   "label": "Is Paid"
+  },
+  {
+   "fieldname": "amended_from",
+   "fieldtype": "Link",
+   "label": "Amended From",
+   "no_copy": 1,
+   "options": "Taxi",
+   "print_hide": 1,
+   "read_only": 1,
+   "search_index": 1
+  }
+ ],
+ "grid_page_length": 50,
+ "index_web_pages_for_search": 1,
+ "is_submittable": 1,
+ "links": [],
+ "modified": "2025-11-17 21:52:21.786796",
+ "modified_by": "Administrator",
+ "module": "Harro",
+ "name": "Taxi",
+ "naming_rule": "By \"Naming Series\" field",
+ "owner": "nasrin@fosserp.com",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "submit": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Travel User",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Travel Manager",
+   "share": 1,
+   "write": 1
+  }
+ ],
+ "row_format": "Dynamic",
+ "rows_threshold_for_grid_search": 20,
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": []
+}

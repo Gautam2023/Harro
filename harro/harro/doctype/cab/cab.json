@@ -1,0 +1,85 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "creation": "2025-10-24 13:28:34.347445",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "travel_request",
+  "passenger",
+  "from",
+  "to",
+  "cab",
+  "pick_up_location",
+  "pick_off_location",
+  "cost"
+ ],
+ "fields": [
+  {
+   "fieldname": "travel_request",
+   "fieldtype": "Link",
+   "label": "Travel Request",
+   "options": "Travel Request"
+  },
+  {
+   "fetch_from": "travel_request.employee_name",
+   "fieldname": "passenger",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Passenger"
+  },
+  {
+   "fieldname": "from",
+   "fieldtype": "Date",
+   "in_list_view": 1,
+   "label": "From"
+  },
+  {
+   "fieldname": "to",
+   "fieldtype": "Date",
+   "in_list_view": 1,
+   "label": "To"
+  },
+  {
+   "fieldname": "cab",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Cab ",
+   "options": "\nItios"
+  },
+  {
+   "fieldname": "pick_up_location",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Pick Up Location"
+  },
+  {
+   "fieldname": "pick_off_location",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Pick Off Location"
+  },
+  {
+   "fieldname": "cost",
+   "fieldtype": "Currency",
+   "in_list_view": 1,
+   "label": "Cost"
+  }
+ ],
+ "grid_page_length": 50,
+ "index_web_pages_for_search": 1,
+ "istable": 1,
+ "links": [],
+ "modified": "2025-11-17 21:52:19.457246",
+ "modified_by": "Administrator",
+ "module": "Harro",
+ "name": "Cab",
+ "owner": "nasrin@fosserp.com",
+ "permissions": [],
+ "row_format": "Dynamic",
+ "rows_threshold_for_grid_search": 20,
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": []
+}

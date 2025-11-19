@@ -1,0 +1,209 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "autoname": "naming_series:",
+ "creation": "2025-11-06 10:42:43.550890",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "naming_series",
+  "travel_planning_id",
+  "travel_type",
+  "ba_number",
+  "column_break_alxg",
+  "purpose_of_travel",
+  "visa_country",
+  "total_taxi_coast",
+  "total_flight_coast",
+  "total_hotel_booking_coast",
+  "total_currency_coast",
+  "other_coast",
+  "section_break_tfhq",
+  "travel_itinerary",
+  "section_break_bifj",
+  "travel_plan",
+  "flight_planning",
+  "amended_from"
+ ],
+ "fields": [
+  {
+   "default": "TP-HHIN-",
+   "fieldname": "naming_series",
+   "fieldtype": "Select",
+   "label": "Naming Series",
+   "options": "TP-HHIN-"
+  },
+  {
+   "fieldname": "travel_planning_id",
+   "fieldtype": "Data",
+   "label": "Travel Planning ID",
+   "unique": 1
+  },
+  {
+   "fieldname": "travel_type",
+   "fieldtype": "Select",
+   "label": "Travel Type",
+   "options": "\nDomestic\nInternational"
+  },
+  {
+   "fieldname": "ba_number",
+   "fieldtype": "Link",
+   "label": "BA Number",
+   "options": "Project"
+  },
+  {
+   "fieldname": "column_break_alxg",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "purpose_of_travel",
+   "fieldtype": "Link",
+   "label": "Purpose of Travel",
+   "options": "Purpose of Travel"
+  },
+  {
+   "fieldname": "visa_country",
+   "fieldtype": "Link",
+   "label": "Visa Country",
+   "options": "Country Wise visa Document Checklist"
+  },
+  {
+   "fieldname": "total_taxi_coast",
+   "fieldtype": "Currency",
+   "label": "Total Taxi Coast "
+  },
+  {
+   "fieldname": "total_flight_coast",
+   "fieldtype": "Currency",
+   "label": "Total Flight Coast  "
+  },
+  {
+   "fieldname": "total_hotel_booking_coast",
+   "fieldtype": "Currency",
+   "label": "Total Hotel Booking Coast"
+  },
+  {
+   "fieldname": "total_currency_coast",
+   "fieldtype": "Currency",
+   "label": "Total Baggage Coast"
+  },
+  {
+   "fieldname": "other_coast",
+   "fieldtype": "Currency",
+   "label": "Other Coast"
+  },
+  {
+   "fieldname": "section_break_tfhq",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "travel_itinerary",
+   "fieldtype": "Table",
+   "label": "Travel Itinerary",
+   "options": "Travel Planning Employee Details"
+  },
+  {
+   "collapsible": 1,
+   "fieldname": "section_break_bifj",
+   "fieldtype": "Section Break",
+   "label": "Flight Planning ",
+   "read_only": 1
+  },
+  {
+   "fieldname": "travel_plan",
+   "fieldtype": "Attach",
+   "label": "Travel Plan",
+   "permlevel": 1
+  },
+  {
+   "fieldname": "flight_planning",
+   "fieldtype": "Table",
+   "label": "Flight Planning",
+   "no_copy": 1,
+   "options": "Flight Planning",
+   "search_index": 1
+  },
+  {
+   "fieldname": "amended_from",
+   "fieldtype": "Link",
+   "label": "Amended From",
+   "no_copy": 1,
+   "options": "Travel Planning",
+   "print_hide": 1,
+   "read_only": 1,
+   "search_index": 1
+  }
+ ],
+ "grid_page_length": 50,
+ "index_web_pages_for_search": 1,
+ "is_submittable": 1,
+ "links": [
+  {
+   "link_doctype": "Flight",
+   "link_fieldname": "vendor_name"
+  },
+  {
+   "link_doctype": "Taxi",
+   "link_fieldname": "Passenger"
+  },
+  {
+   "link_doctype": "Hotel Booking",
+   "link_fieldname": "travel_request"
+  },
+  {
+   "link_doctype": "Travel Request",
+   "link_fieldname": "travel_type"
+  }
+ ],
+ "modified": "2025-11-17 21:52:22.513669",
+ "modified_by": "Administrator",
+ "module": "Harro",
+ "name": "Travel Planning",
+ "naming_rule": "By \"Naming Series\" field",
+ "owner": "nasrin@fosserp.com",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "submit": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Travel User",
+   "share": 1,
+   "submit": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Travel Manager",
+   "share": 1,
+   "submit": 1,
+   "write": 1
+  }
+ ],
+ "row_format": "Dynamic",
+ "rows_threshold_for_grid_search": 20,
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": []
+}

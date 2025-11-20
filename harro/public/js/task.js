@@ -114,6 +114,14 @@ function update_start_job_log(frm){
                 "read_only" : 1
             },
             {
+                "fieldname" : "employee",
+                "label" : "Employee",
+                "options" : "Employee",
+                "reqd" :  1,
+                "fieldtype" : "Link",
+                "read_only" : 0
+            },
+            {
                 "fieldname" : "expected_hrs",
                 "label" : "Expected Hrs",
                 "reqd" :  0,
@@ -128,7 +136,8 @@ function update_start_job_log(frm){
                 activity_type : data.activity_type,
                 from_time : frappe.datetime.now_datetime(),
                 project : data.project,
-                task : data.task
+                task : data.task,
+                employee : data.employee
             }
             frappe.call({
                 method: "harro.harro.docevents.task.update_time_log",
@@ -146,6 +155,7 @@ function update_start_job_log(frm){
     d.show()
     d.set_value("project", frm.doc.project)
     d.set_value("task", frm.doc.name)
+    d.set_value("employee", frm.doc.custom_employee__assign_to_employee_)
 }
 
 function update_stop_job_log(frm){

@@ -9,7 +9,7 @@ def update_time_log(arg):
     doc.append("unproductive_work_timelogs", {
         "from_time" : args.get("from_time"),
         "activity_type" : args.get('activity_type'),
-        "employee" : doc.custom_employee__assign_to_employee_,
+        "employee" : args.get("employee"),
         "project" : doc.project,
         "task" : args.get("task")
     })
@@ -49,6 +49,7 @@ def update_stop_task_log(arg):
             "doctype" : "Timesheet",
             "parent_project" : doc.project,
             "company" : doc.company,
+            "employee" : row.get("employee"),
             "time_logs" : [
                 {
                     "from_time" : row.get("from_time"),

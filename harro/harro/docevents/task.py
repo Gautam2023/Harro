@@ -1,10 +1,12 @@
 import frappe
 import json
-from frappe.utils import now, get_datetime
+from frappe.utils import now, get_datetime, get_link_to_form
 
 @frappe.whitelist()
 def update_time_log(arg):
     args = json.loads(arg)
+    if existing_task := frappe.db.exists("Task", {"employee" : args.get("employee"), "working_status" : "Work In Progress"}):
+        frappe.throw("Please stop the timer of the task {0}".format(get_link_to_form("Task", existing_task)))
     doc = frappe.get_doc("Task", args.get("task"))
     doc.append("unproductive_work_timelogs", {
         "from_time" : args.get("from_time"),
@@ -13,6 +15,8 @@ def update_time_log(arg):
         "project" : doc.project,
         "task" : args.get("task")
     })
+    if not doc.custom_employee__assign_to_employee_:
+        doc.custom_employee__assign_to_employee_ = args.get("employee")
     doc.flags.ignore_permissions=True
     doc.working_status = "Work In Progress"
     doc.save()

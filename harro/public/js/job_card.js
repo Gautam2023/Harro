@@ -100,8 +100,6 @@ frappe.ui.form.on("Job Card", {
                         d.hide();
                     }
                 })
-
-                
             }
         });
         d.show();

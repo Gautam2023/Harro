@@ -21,6 +21,24 @@ def create_custom_fields_on_migrate():
                 "options" : "Job Card",
                 "read_only" :  1
             }
+        ],
+        "Task" : [
+            {
+                "insert_after" : "depends_on",
+                "fieldname" : "unproductive_work_timelogs",
+                "label" : "Time Log",
+                "fieldtype" : "Table",
+                "options" : "Timesheet Detail",
+                "hidden" :  1
+            },
+            {
+                "insert_after" : "status",
+                "fieldname" : "working_status",
+                "label" : "Working Status",
+                "fieldtype" : "Select",
+                "options" : "\nWork In Progress\nOn Hold",
+                "hidden" :  1
+            }
         ]
     }
 

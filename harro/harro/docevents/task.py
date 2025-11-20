@@ -5,7 +5,7 @@ from frappe.utils import now, get_datetime, get_link_to_form
 @frappe.whitelist()
 def update_time_log(arg):
     args = json.loads(arg)
-    if existing_task := frappe.db.exists("Task", {"employee" : args.get("employee"), "working_status" : "Work In Progress"}):
+    if existing_task := frappe.db.exists("Task", {"custom_employee__assign_to_employee_" : args.get("employee"), "working_status" : "Work In Progress"}):
         frappe.throw("Please stop the timer of the task {0}".format(get_link_to_form("Task", existing_task)))
     doc = frappe.get_doc("Task", args.get("task"))
     doc.append("unproductive_work_timelogs", {
@@ -56,6 +56,7 @@ def update_stop_task_log(arg):
             "employee" : row.get("employee"),
             "time_logs" : [
                 {
+                    "activity_type" : row.get("activity_type"),
                     "from_time" : row.get("from_time"),
                     "from_time" : row.get("to_time"),
                     "employee" : row.get("employee"),

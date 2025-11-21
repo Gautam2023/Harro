@@ -185,6 +185,9 @@ doc_events = {
     },
     "Project" : {
         "validate" : "harro.harro.docevents.project.validate"
+    },
+    "Task" : {
+        "validate" : "harro.harro.docevents.task.validate"
     }
 }
 

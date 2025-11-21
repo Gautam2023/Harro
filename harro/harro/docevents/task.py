@@ -1,6 +1,31 @@
 import frappe
 import json
-from frappe.utils import now, get_datetime, get_link_to_form
+from frappe.utils import now
+from frappe.desk.form.assign_to import add as add_assignment
+
+
+def validate(self, method=None):
+    if self.depends_on:
+        for row in self.depends_on:
+            if row.task and row.custom_expected_start_date and row.custom_expected_end_date:
+
+                task_doc = frappe.get_doc("Task", row.task)
+
+                # Update only if values are different
+                if task_doc.exp_start_date != row.custom_expected_start_date:
+                    task_doc.exp_start_date = row.custom_expected_start_date
+
+                if task_doc.exp_end_date != row.custom_expected_end_date:
+                    task_doc.exp_end_date = row.custom_expected_end_date
+
+                if task_doc.expected_time != row.custom_expected_time:
+                    task_doc.expected_time = row.custom_expected_time
+
+                if row.custom_user not in task_doc._assign:
+                    add_assignment({"doctype": self.doctype, "name": self.name, "assign_to": [row.custom_user]})
+                task_doc.flags.ignore_permissions = True
+                task_doc.save()
+
 
 @frappe.whitelist()
 def update_time_log(arg):

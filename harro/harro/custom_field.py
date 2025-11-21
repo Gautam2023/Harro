@@ -39,6 +39,15 @@ def create_custom_fields_on_migrate():
                 "options" : "\nWork In Progress\nOn Hold",
                 "hidden" :  1
             }
+        ],
+        "HR Settings" : [
+            {
+                "insert_after" : "retirement_age",
+                "fieldname" : "task_permissable_limit",
+                "label" : "Task Permissable Limit",
+                "fieldtype" : "Float",
+                "hidden" :  0
+            }
         ]
     }
 

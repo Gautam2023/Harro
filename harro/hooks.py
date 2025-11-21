@@ -212,6 +212,14 @@ doc_events = {
 # 	],
 # }
 
+scheduler_events = {
+	"cron" : {
+        "*/15 * * * *" : [
+            "harro.harro.docevents.task.update_task_timer"
+        ]
+    }
+}
+
 # Testing
 # -------
 

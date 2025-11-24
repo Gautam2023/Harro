@@ -1,6 +1,31 @@
 import frappe
 import json
-from frappe.utils import now, get_datetime, get_link_to_form
+from frappe.utils import now, get_datetime
+from frappe.desk.form.assign_to import add as add_assignment
+
+
+def validate(self, method=None):
+    if self.depends_on:
+        for row in self.depends_on:
+            if row.task and row.custom_expected_start_date and row.custom_expected_end_date:
+
+                task_doc = frappe.get_doc("Task", row.task)
+
+                # Update only if values are different
+                if task_doc.exp_start_date != row.custom_expected_start_date:
+                    task_doc.exp_start_date = row.custom_expected_start_date
+
+                if task_doc.exp_end_date != row.custom_expected_end_date:
+                    task_doc.exp_end_date = row.custom_expected_end_date
+
+                if task_doc.expected_time != row.custom_expected_time:
+                    task_doc.expected_time = row.custom_expected_time
+
+                if row.custom_user not in task_doc._assign:
+                    add_assignment({"doctype": self.doctype, "name": self.name, "assign_to": [row.custom_user]})
+                task_doc.flags.ignore_permissions = True
+                task_doc.save()
+
 
 @frappe.whitelist()
 def update_time_log(arg):
@@ -74,3 +99,44 @@ def update_stop_task_log(arg, start_new=False):
         }).insert()
     frappe.db.set_value("Task",args.get("task"), "working_status", "On Hold")
     return True
+
+# Scheduler : Stop Timer after every 2 hours
+def update_task_timer():
+    task_list = frappe.db.get_list("Task", {"working_status" : 'Work In Progress'})
+    for row in task_list:
+        doc = frappe.get_doc("Task", row.name)
+        if doc.unproductive_work_timelogs:
+            from_time = get_datetime(doc.unproductive_work_timelogs[-1].from_time)
+            current_time = get_datetime()
+            diff_hours = (current_time - from_time).total_seconds() / 3600
+            permissable_hours = frappe.db.get_single_value("HR Settings", "task_permissable_limit")
+            if diff_hours >= permissable_hours:
+                doc.unproductive_work_timelogs[-1].to_time = now()
+                doc.working_status = "On Hold"
+                doc.flags.ignore_permissions = True
+                doc.save()
+                if doc.employee:
+                    send_timer_stopper_notification(doc, permissable_hours)
+
+def send_timer_stopper_notification(doc, permissible_hours):
+    employee_name = frappe.db.get_value("Employee", doc.employee, "full_name")
+    user_id = frappe.db.get_value("Employee", doc.employee, "user_id")
+    if not user_id:
+        return
+    message = f"""
+        <p>Hi {employee_name},</p>
+
+        <p>You have exceeded the permissible working limit of <b>{permissible_hours} hours</b>. 
+        If you are still working, please open the task below and restart the timer.</p>
+
+        <p><b>Task:</b> {doc.name}</p>
+
+        <p>Thank you,<br>
+        Regards</p>
+
+        <br><br>
+        <center><small>This is a system-generated email. Please do not reply.</small></center>
+    """
+
+    subject = "Action Required: Please Restart Your Task Timer"
+    frappe.sendmail(recipients=[user_id], subject=subject, message=message)

@@ -231,7 +231,8 @@ scheduler_events = {
 #
 override_whitelisted_methods = {
 	"erpnext.buying.doctype.purchase_order.purchase_order.make_subcontracting_order": "harro.harro.docevents.purchase_order.make_subcontracting_order",
-    "erpnext.subcontracting.doctype.subcontracting_order.subcontracting_order.make_subcontracting_receipt" : "harro.harro.docevents.subcontracting_order.make_subcontracting_receipt"
+    "erpnext.subcontracting.doctype.subcontracting_order.subcontracting_order.make_subcontracting_receipt" : "harro.harro.docevents.subcontracting_order.make_subcontracting_receipt",
+    "erpnext.manufacturing.doctype.production_plan.production_plan.get_items_for_material_requests" : "harro.harro.docevents.production_plan.get_items_for_material_requests"
 }
 #
 # each overriding function accepts a `data` argument;

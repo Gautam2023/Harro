@@ -18,6 +18,24 @@ from erpnext.manufacturing.doctype.production_plan.production_plan import Produc
 from erpnext.manufacturing.report.bom_stock_report.bom_stock_report import get_bom_stock
 
 class CustomProductionPlan(ProductionPlan):
+    def set_sub_assembly_items_based_on_level(self, row, bom_data, manufacturing_type=None):
+        "Modify bom_data, set additional details."
+        is_group_warehouse = frappe.db.get_value("Warehouse", self.sub_assembly_warehouse, "is_group")
+        
+
+        for data in bom_data:
+            data.qty = data.stock_qty
+            data.production_plan_item = row.name
+            data.schedule_date = row.planned_start_date
+            manufacturing_type = frappe.db.get_value("Item", data.production_item, "custom_manufacturing_type")
+            data.type_of_manufacturing = manufacturing_type or (
+                "Subcontract" if data.is_sub_contracted_item else "In House"
+            )
+            data.custom_item_group = frappe.db.get_value("Item", data.production_item, "item_group")
+
+            if not is_group_warehouse:
+                data.fg_warehouse = self.sub_assembly_warehouse
+                    
     @frappe.whitelist()
     def make_material_request(self):
         """Create Material Requests grouped by Sales Order and Material Request Type"""

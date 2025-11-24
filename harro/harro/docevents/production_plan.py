@@ -80,15 +80,14 @@ class CustomProductionPlan(ProductionPlan):
                     if material_request_type == "Material Transfer"
                     else None,
                     "qty": item.quantity,
-                    "schedule_date": schedule_date,
+                    "schedule_date": date_map.get(item.item_code),
                     "warehouse": item.warehouse,
                     "sales_order": item.sales_order,
                     "production_plan": self.name,
                     "material_request_plan_item": item.name,
                     "project": frappe.db.get_value("Sales Order", item.sales_order, "project")
                     if item.sales_order
-                    else None,
-                    "schedule_date" : date_map.get(item.item_code)
+                    else None
                 },
             )
 

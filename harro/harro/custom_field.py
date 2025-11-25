@@ -51,11 +51,11 @@ def create_custom_fields_on_migrate():
         ],
         "Material Request" : [
             {
-                "label": "structure_class_head",
-                "fieldname": "custom_structure_class_head",
+                "label": "Item Group",
+                "fieldname": "item_group",
                 "insert_after": "custom_ba_number",
                 "fieldtype": "Link",
-                "options": "Structure Class Head"
+                "options": "Item Group"
             }
         ]
     }

@@ -1,5 +1,7 @@
 import frappe
 from openpyxl import load_workbook
+import csv
+
 
 # @frappe.whitelist()
 # def execute_uploaded_file(file_path, bom_c):
@@ -14,20 +16,38 @@ def extract_bom_item_data(file_path, bom_c):
     if not file_path:
         frappe.throw("Please upload a file first.")
 
-    # Read Excel
-    if "private" in file_path:
-        file_path = file_path.replace("/private", '')
-        public_file_path = frappe.get_site_path("private", file_path.lstrip("/"))
-    else:
-        public_file_path = frappe.get_site_path("public", file_path.lstrip("/"))
-    workbook = load_workbook(filename=public_file_path, data_only=True)
-    sheet = workbook.active
-    headers = [cell.value for cell in sheet[1] if cell.value]
+    # get file extension
+    if file_path.endswith('.xlsx'):
+        # Read Excel
+        if "private" in file_path:
+            file_path = file_path.replace("/private", '')
+            public_file_path = frappe.get_site_path("private", file_path.lstrip("/"))
+        else:
+            public_file_path = frappe.get_site_path("public", file_path.lstrip("/"))
+        workbook = load_workbook(filename=public_file_path, data_only=True)
+        sheet = workbook.active
+        headers = [cell.value for cell in sheet[1] if cell.value]
 
-    data = []
-    for row in sheet.iter_rows(min_row=2, values_only=True):
-        row_dict = dict(zip(headers, row))
-        data.append(row_dict)
+        data = []
+        for row in sheet.iter_rows(min_row=2, values_only=True):
+            row_dict = dict(zip(headers, row))
+            data.append(row_dict)
+
+    elif file_path.endswith('.csv'):
+        # Read csv
+        if "private" in file_path:
+            file_path = file_path.replace("/private", '')
+            public_file_path = frappe.get_site_path("private", file_path.lstrip("/"))
+        else:
+            public_file_path = frappe.get_site_path("public", file_path.lstrip("/"))
+        
+        data = []
+        with open(public_file_path, mode='r', encoding='utf-8') as file:
+            reader = csv.DictReader(file)
+            for row in reader:
+                data.append(row)
+    else:
+        frappe.throw("Unsupported file type. Please upload a .xlsx or .csv file.")
 
     create_item_group()
 

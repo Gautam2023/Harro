@@ -105,7 +105,7 @@ class CustomProductionPlan(ProductionPlan):
                     "material_request_plan_item": item.name,
                     "project": frappe.db.get_value("Sales Order", item.sales_order, "project")
                         if item.sales_order else self.custom_ba_number,
-                    "item_group": structure_class,
+                    "item_group": item_group,
                 },
             )
 

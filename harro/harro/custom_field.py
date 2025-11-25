@@ -48,6 +48,15 @@ def create_custom_fields_on_migrate():
                 "fieldtype" : "Float",
                 "hidden" :  0
             }
+        ],
+        "Material Request" : [
+            {
+                "label": "Item Group",
+                "fieldname": "item_group",
+                "insert_after": "custom_ba_number",
+                "fieldtype": "Link",
+                "options": "Item Group"
+            }
         ]
     }
 

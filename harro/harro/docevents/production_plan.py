@@ -63,14 +63,14 @@ class CustomProductionPlan(ProductionPlan):
             item_doc = frappe.get_cached_doc("Item", item.item_code)
 
             material_request_type = item.material_request_type or item_doc.default_material_request_type
-            structure_class = item_doc.custom_structure_class_head or ""  # NEW FIELD
+            item_group = item_doc.item_group or ""  # NEW FIELD
 
             # Updated key: SO : MR Type : Customer : Structure Class
             key = "{}:{}:{}:{}".format(
                 item.sales_order,
                 material_request_type,
                 item_doc.customer or "",
-                structure_class
+                item_group
             )
 
             schedule_date = item.schedule_date or add_days(nowdate(), cint(item_doc.lead_time_days))
@@ -85,7 +85,7 @@ class CustomProductionPlan(ProductionPlan):
                         "company": self.company,
                         "material_request_type": material_request_type,
                         "customer": item_doc.customer or "",
-                        "custom_structure_class_head": structure_class,  # Optional: store in MR if needed
+                        "item_group": item_group,  # Optional: store in MR if needed
                     }
                 )
                 material_request_list.append(material_request)
@@ -105,7 +105,7 @@ class CustomProductionPlan(ProductionPlan):
                     "material_request_plan_item": item.name,
                     "project": frappe.db.get_value("Sales Order", item.sales_order, "project")
                         if item.sales_order else self.custom_ba_number,
-                    "custom_structure_class_head": structure_class,
+                    "item_group": structure_class,
                 },
             )
 

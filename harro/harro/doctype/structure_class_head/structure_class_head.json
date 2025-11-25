@@ -1,0 +1,64 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "autoname": "field:structure_class",
+ "creation": "2025-11-24 16:10:10.158045",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "structure_class",
+  "column_break_beuv",
+  "strukturklasse",
+  "bom_no"
+ ],
+ "fields": [
+  {
+   "fieldname": "structure_class",
+   "fieldtype": "Data",
+   "label": " Structure Class",
+   "unique": 1
+  },
+  {
+   "fieldname": "column_break_beuv",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "strukturklasse",
+   "fieldtype": "Data",
+   "label": "Strukturklasse"
+  },
+  {
+   "fieldname": "bom_no",
+   "fieldtype": "Int",
+   "label": "BOM No (Stufe Baugruppenpos)"
+  }
+ ],
+ "grid_page_length": 50,
+ "index_web_pages_for_search": 1,
+ "links": [],
+ "modified": "2025-11-25 12:27:47.618671",
+ "modified_by": "Administrator",
+ "module": "Harro",
+ "name": "Structure Class Head",
+ "naming_rule": "By fieldname",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  }
+ ],
+ "row_format": "Dynamic",
+ "rows_threshold_for_grid_search": 20,
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": []
+}

@@ -48,6 +48,15 @@ def create_custom_fields_on_migrate():
                 "fieldtype" : "Float",
                 "hidden" :  0
             }
+        ],
+        "Material Request" : [
+            {
+                "label": "structure_class_head",
+                "fieldname": "custom_structure_class_head",
+                "insert_after": "custom_ba_number",
+                "fieldtype": "Link",
+                "options": "Structure Class Head"
+            }
         ]
     }
 

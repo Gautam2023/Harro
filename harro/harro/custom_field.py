@@ -49,13 +49,22 @@ def create_custom_fields_on_migrate():
                 "hidden" :  0
             }
         ],
+        "Item Group" : [
+            {
+                "insert_after" : "is_group",
+                "fieldname" : "user",
+                "label" : "User",
+                "fieldtype" : "Link",
+                "options" : "User"
+            }
+        ],
         "Material Request" : [
             {
-                "label": "Item Group",
-                "fieldname": "item_group",
-                "insert_after": "custom_ba_number",
-                "fieldtype": "Link",
-                "options": "Item Group"
+                "insert_after" : "custom_ba_number",
+                "fieldname" : "item_group",
+                "label" : "Item Group",
+                "fieldtype" : "Link",
+                "options" : "Item Group"
             }
         ]
     }

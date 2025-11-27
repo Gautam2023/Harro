@@ -2,7 +2,7 @@
  "actions": [],
  "allow_rename": 1,
  "autoname": "field:structure_class",
- "creation": "2025-11-26 12:57:06.066172",
+ "creation": "2025-11-24 16:10:10.158045",
  "doctype": "DocType",
  "engine": "InnoDB",
  "field_order": [
@@ -36,7 +36,7 @@
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2025-11-26 12:57:06.066172",
+ "modified": "2025-11-25 12:27:47.618671",
  "modified_by": "Administrator",
  "module": "Harro",
  "name": "Structure Class Head",

@@ -1,5 +1,7 @@
 import frappe
 from openpyxl import load_workbook
+import csv
+
 
 # @frappe.whitelist()
 # def execute_uploaded_file(file_path, bom_c):
@@ -14,20 +16,38 @@ def extract_bom_item_data(file_path, bom_c):
     if not file_path:
         frappe.throw("Please upload a file first.")
 
-    # Read Excel
-    if "private" in file_path:
-        file_path = file_path.replace("/private", '')
-        public_file_path = frappe.get_site_path("private", file_path.lstrip("/"))
-    else:
-        public_file_path = frappe.get_site_path("public", file_path.lstrip("/"))
-    workbook = load_workbook(filename=public_file_path, data_only=True)
-    sheet = workbook.active
-    headers = [cell.value for cell in sheet[1] if cell.value]
+    # get file extension
+    if file_path.endswith('.xlsx'):
+        # Read Excel
+        if "private" in file_path:
+            file_path = file_path.replace("/private", '')
+            public_file_path = frappe.get_site_path("private", file_path.lstrip("/"))
+        else:
+            public_file_path = frappe.get_site_path("public", file_path.lstrip("/"))
+        workbook = load_workbook(filename=public_file_path, data_only=True)
+        sheet = workbook.active
+        headers = [cell.value for cell in sheet[1] if cell.value]
 
-    data = []
-    for row in sheet.iter_rows(min_row=2, values_only=True):
-        row_dict = dict(zip(headers, row))
-        data.append(row_dict)
+        data = []
+        for row in sheet.iter_rows(min_row=2, values_only=True):
+            row_dict = dict(zip(headers, row))
+            data.append(row_dict)
+
+    elif file_path.endswith('.csv'):
+        # Read csv
+        if "private" in file_path:
+            file_path = file_path.replace("/private", '')
+            public_file_path = frappe.get_site_path("private", file_path.lstrip("/"))
+        else:
+            public_file_path = frappe.get_site_path("public", file_path.lstrip("/"))
+        
+        data = []
+        with open(public_file_path, mode='r', encoding='utf-8') as file:
+            reader = csv.DictReader(file)
+            for row in reader:
+                data.append(row)
+    else:
+        frappe.throw("Unsupported file type. Please upload a .xlsx or .csv file.")
 
     create_item_group()
 
@@ -48,10 +68,10 @@ def extract_bom_item_data(file_path, bom_c):
                 uom = stock_uom
 
         # Create Item if it doesn't exist
-        if not frappe.db.exists("Item", artikel, ):
-            create_item(artikel, row, uom, item_group=StrukturklassePos)
+        if not frappe.db.exists("Item", artikel ):
+            create_item(artikel, row, uom, structureclass=StrukturklassePos)
         if not frappe.db.exists("Item", baugruppe ):
-            create_item(baugruppe, row, uom=None, item_group=StrukturklasseKopf)
+            create_item(baugruppe, row, uom=None, structureclass=StrukturklasseKopf)
 
         new_row = {
             "item_code": artikel,
@@ -74,24 +94,23 @@ def extract_bom_item_data(file_path, bom_c):
     doc.save()
 
 
-def create_item(item, row, uom=None, item_group="Production Part"):
-
-    if item_group_ := frappe.db.exists("Item Group", {"custom_german_name_of_item_group" : item_group}):
-       item_group = item_group_
+def create_item(item, row, uom=None, structureclass= None):
+    item_group = "All Item Groups"
+    if StructureClass := frappe.db.exists("Structure Class Head", {"strukturklasse" : structureclass}):
+        structureclass = StructureClass
     else:
         frappe.get_doc(
             {
-                "item_group_name": item_group,
-                "custom_german_name_of_item_group" : item_group,
-                "parent_item_group": "All Item Groups",
-                "old_parent": "All Item Groups",
-                "doctype": "Item Group"
+                "strukturklasse": structureclass,
+                "structure_class": structureclass,
+                "doctype": "Structure Class Head"
             }
         ).insert()
 
     item_doc = frappe.get_doc({
                 "doctype" : "Item",
                 "item_code" : item,
+                "custom_structure_class_head" : structureclass,
                 "item_group" : item_group,
                 "stock_uom" : uom or "Nos",
                 "valuation_rate" : 0

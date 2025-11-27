@@ -56,7 +56,8 @@ doctype_js = {
         "Sales Order" : "public/js/sales_order.js",
         "Purchase Order" : "public/js/purchase_order.js",
         "Expense Claim" : "public/js/expense_claim.js",
-        "Task" : "public/js/task.js"
+        "Task" : "public/js/task.js",
+        "Production Plan" : "public/js/production_plan.js"
     }
 # doctype_list_js = {"doctype" : "public/js/doctype_list.js"}
 # doctype_tree_js = {"doctype" : "public/js/doctype_tree.js"}
@@ -185,6 +186,12 @@ doc_events = {
     },
     "Project" : {
         "validate" : "harro.harro.docevents.project.validate"
+    },
+    "Task" : {
+        "validate" : "harro.harro.docevents.task.validate"
+    },
+    "Material Request": {
+        "on_update": "harro.harro.docevents.material_request.on_update"
     }
 }
 
@@ -209,6 +216,14 @@ doc_events = {
 # 	],
 # }
 
+scheduler_events = {
+	"cron" : {
+        "*/15 * * * *" : [
+            "harro.harro.docevents.task.update_task_timer"
+        ]
+    }
+}
+
 # Testing
 # -------
 
@@ -219,7 +234,9 @@ doc_events = {
 #
 override_whitelisted_methods = {
 	"erpnext.buying.doctype.purchase_order.purchase_order.make_subcontracting_order": "harro.harro.docevents.purchase_order.make_subcontracting_order",
-    "erpnext.subcontracting.doctype.subcontracting_order.subcontracting_order.make_subcontracting_receipt" : "harro.harro.docevents.subcontracting_order.make_subcontracting_receipt"
+    "erpnext.subcontracting.doctype.subcontracting_order.subcontracting_order.make_subcontracting_receipt" : "harro.harro.docevents.subcontracting_order.make_subcontracting_receipt",
+    "erpnext.manufacturing.doctype.production_plan.production_plan.get_items_for_material_requests" : "harro.harro.docevents.production_plan.get_items_for_material_requests",
+    "erpnext.manufacturing.doctype.work_order.work_order.make_stock_entry": "harro.harro.override.work_order.make_stock_entry"
 }
 #
 # each overriding function accepts a `data` argument;

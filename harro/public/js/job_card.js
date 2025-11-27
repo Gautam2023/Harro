@@ -6,7 +6,7 @@ frappe.ui.form.on("Job Card", {
         frm.set_df_property("custom_unproductive_work_timelogs", "cannot_add_rows", true);
     },
     start_job: function (frm, status, employee) {
-        if (status == "Resume Job" && 1==2){
+        if (status == "Resume Job"){
             frappe.call({
                 method: "harro.harro.docevents.job_card.resume_unproductive_log",
                 args : {
@@ -34,7 +34,7 @@ frappe.ui.form.on("Job Card", {
         }
 	},
     complete_job: function (frm, status, completed_qty) {
-        if(status == 'On Hold' && 1==2){
+        if(status == 'On Hold'){
             let d = new frappe.ui.Dialog({
             title: 'Update Unproductive Activity',
             fields: [

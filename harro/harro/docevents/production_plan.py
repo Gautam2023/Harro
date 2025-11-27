@@ -88,6 +88,11 @@ class CustomProductionPlan(ProductionPlan):
                         "item_group": item_group,  # Optional: store in MR if needed
                     }
                 )
+
+                # add custom_ba_number from production plan to material request
+                if hasattr(self, 'custom_ba_number') and self.custom_ba_number:
+                    material_request.custom_ba_number = self.custom_ba_number
+
                 material_request_list.append(material_request)
             else:
                 material_request = material_request_map[key]

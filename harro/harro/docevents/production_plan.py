@@ -125,6 +125,80 @@ class CustomProductionPlan(ProductionPlan):
             msgprint(_("No material request created"))
 
 
+    def create_work_order(self, item):
+        from erpnext.manufacturing.doctype.work_order.work_order import OverProductionError
+
+        if flt(item.get("qty")) <= 0:
+            return
+        
+        wo = frappe.new_doc("Work Order")
+        wo.update(item)
+        wo.planned_start_date = item.get("planned_start_date") or item.get("schedule_date")
+
+        # added custom_ba_number from production plan to work order
+        if hasattr(self, 'custom_ba_number') and self.custom_ba_number:
+            wo.project = self.custom_ba_number
+
+        if item.get("warehouse"):
+            wo.fg_warehouse = item.get("warehouse")
+
+        wo.set_work_order_operations()
+        wo.set_required_items()
+
+        try:
+            wo.flags.ignore_mandatory = True
+            wo.flags.ignore_validate = True
+            wo.insert()
+            return wo.name
+        except OverProductionError:
+            pass
+
+
+    def make_subcontracted_purchase_order(self, subcontracted_po, purchase_orders):
+        if not subcontracted_po:
+            return
+        
+        for supplier, po_list in subcontracted_po.items():
+            po = frappe.new_doc("Purchase Order")
+            po.company = self.company
+            po.supplier = supplier
+            po.schedule_date = getdate(po_list[0].schedule_date) if po_list[0].schedule_date else nowdate()
+            po.is_subcontracted = 1
+
+            # add custom_ba_number from production plan to purchase order
+            if hasattr(self, 'custom_ba_number') and self.custom_ba_number:
+                po.project = self.custom_ba_number
+
+            for row in po_list:
+                po_data = {
+					"fg_item": row.production_item,
+					"warehouse": row.fg_warehouse,
+					"production_plan_sub_assembly_item": row.name,
+					"bom": row.bom_no,
+					"production_plan": self.name,
+					"fg_item_qty": row.qty,
+				}
+
+                for field in [
+					"schedule_date",
+					"qty",
+					"description",
+					"production_plan_item",
+				]:
+                    po_data[field] = row.get(field)
+
+                po.append("items", po_data)
+
+            po.set_service_items_for_finished_goods()
+            po.set_missing_values()
+            po.flags.ignore_mandatory = True
+            po.flags.ignore_validate = True
+            po.insert()
+            purchase_orders.append(po.name)
+
+
+
+
 def compare_and_update_schedule_dates(doc):
     if not doc.posting_date:
         return

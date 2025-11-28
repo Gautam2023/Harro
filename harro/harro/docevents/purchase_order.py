@@ -39,6 +39,10 @@ def make_subcontracting_order(source_name, target_doc=None, save=False, submit=F
 
 def get_mapped_subcontracting_order(source_name, target_doc=None):
     def post_process(source_doc, target_doc):
+        # map project(BA Number) from purchase order to subcontracting order
+        if source_doc.get('project'):
+            target_doc.project = source_doc.project
+            
         target_doc.populate_items_table()
 
         if target_doc.set_warehouse:

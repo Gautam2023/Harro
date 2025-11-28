@@ -69,6 +69,7 @@ def resume_unproductive_log(to_time, job_card):
                 "employee": emp,
                 "parent_project": doc.project,
                 "company": doc.company,
+                "employee" : last_log.employee,
                 "time_logs": [
                     {
                         "activity_type": last_log.get("activity_type"),

@@ -73,14 +73,8 @@ def create_custom_fields_on_migrate():
                 "fieldname" : "remove_based_item_group",
                 "label" : "Commodity Group",
                 "fieldtype" : "Table MultiSelect",
-                "options" : "Removed As Per Item Group"
-            },
-            {
-                "insert_after" : "remove_based_item_group",
-                "fieldname" : "remove_items",
-                "label" : "Remove Items",
-                "fieldtype" : "Button",
-                "options" : "Removed As Per Item Group"
+                "options" : "Removed As Per Item Group",
+                "description" : "Update the Commodity Group to remove items from below table"
             }
         ]
     }

@@ -29,10 +29,22 @@ from erpnext.manufacturing.doctype.production_plan.production_plan import (
     get_subitems,
     get_exploded_items
 )
+from frappe import _
 
 class CustomProductionPlan(ProductionPlan):
     def validate(self):
         compare_and_update_schedule_dates(self)
+
+        sub_contracting_row = []
+        for row in self.sub_assembly_items:
+            if row.type_of_manufacturing == "Subcontract" and not row.supplier:
+                sub_contracting_row.append(row.idx)
+        if sub_contracting_row:
+            message = ''
+            for row in sub_contracting_row:
+                message += f"Mandatory fields required in table <b>Sub Assembly Items Row {row}.</b><br><ul><li>Supplier</li></ul><hr>"
+        
+            frappe.throw(_(message), title=_("Missing Fields"))
         super().validate()
 
     def set_sub_assembly_items_based_on_level(self, row, bom_data, manufacturing_type=None):

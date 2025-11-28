@@ -57,7 +57,7 @@ def resume_unproductive_log(to_time, job_card):
     last_log.to_time = to_time
     doc.flags.ignore_permissions = True
 
-    employees = doc.get("custom_employees") or []
+    employees = doc.get("employees") or []
 
     # If employees exist: create timesheet per employee
     if employees:

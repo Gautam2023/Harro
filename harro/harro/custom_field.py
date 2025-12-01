@@ -66,6 +66,16 @@ def create_custom_fields_on_migrate():
                 "fieldtype" : "Link",
                 "options" : "Item Group"
             }
+        ],
+        "Production Plan" : [
+            {
+                "insert_after" : "transfer_materials",
+                "fieldname" : "remove_based_item_group",
+                "label" : "Commodity Group",
+                "fieldtype" : "Table MultiSelect",
+                "options" : "Removed As Per Item Group",
+                "description" : "Update the Commodity Group to remove items from below table"
+            }
         ]
     }
 

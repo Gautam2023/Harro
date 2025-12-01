@@ -33,6 +33,7 @@ from frappe import _
 
 class CustomProductionPlan(ProductionPlan):
     def validate(self):
+        remove_row_from_mr_items(self)
         compare_and_update_schedule_dates(self)
 
         sub_contracting_row = []
@@ -465,3 +466,18 @@ def update_schedule_date_as_per_tree(doc, items):
     
     return items
 
+def remove_row_from_mr_items(self):
+    if not self.mr_items:
+        frappe.throw("Please select first Commodity Group.")
+
+    # Item Groups selected for removal
+    item_group_list = [row.commodity_group for row in self.remove_based_item_group]
+
+    filtered_items = []
+    for row in self.mr_items:
+        item_group = frappe.db.get_value("Item", row.item_code, "item_group")
+        if item_group not in item_group_list:
+            filtered_items.append(row)
+
+    # Replace original table with filtered table
+    self.mr_items = filtered_items    

@@ -21,7 +21,7 @@ def validate(self, method=None):
                 if task_doc.expected_time != row.custom_expected_time:
                     task_doc.expected_time = row.custom_expected_time
 
-                if row.custom_user not in task_doc._assign:
+                if row.custom_user and row.custom_user not in task_doc._assign:
                     add_assignment({"doctype": self.doctype, "name": self.name, "assign_to": [row.custom_user]})
                 task_doc.flags.ignore_permissions = True
                 task_doc.save()

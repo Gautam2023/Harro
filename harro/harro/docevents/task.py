@@ -7,27 +7,30 @@ from frappe.desk.form.assign_to import add as add_assignment
 def validate(self, method=None):
     if self.depends_on:
         for row in self.depends_on:
+            if not row.custom_employee and row.custom_user:
+                if employee := frappe.db.exists("Employee", {"user_id" : row.custom_user}):
+                    row.custom_employee = employee 
+
             if row.task and row.custom_expected_start_date and row.custom_expected_end_date:
 
                 task_doc = frappe.get_doc("Task", row.task)
 
                 # Update only if values are different
                 if task_doc.exp_start_date != row.custom_expected_start_date:
-                    task_doc.exp_start_date = row.custom_expected_start_date
+                    frappe.db.set_value("Task", row.task, "exp_start_date", row.custom_expected_start_date)
 
                 if task_doc.exp_end_date != row.custom_expected_end_date:
-                    task_doc.exp_end_date = row.custom_expected_end_date
+                    frappe.db.set_value("Task", row.task, "exp_end_date", row.custom_expected_end_date)
 
                 if task_doc.expected_time != row.custom_expected_time:
-                    task_doc.expected_time = row.custom_expected_time
+                    frappe.db.set_value("Task", row.task, "expected_time", row.custom_expected_time)
+
                 if not task_doc._assign:
                     _assign = []
                 else:
                     _assign = eval(task_doc._assign)
                 if row.custom_user and row.custom_user not in _assign:
                     add_assignment({"doctype": self.doctype, "name": row.task, "assign_to": [row.custom_user]})
-                task_doc.flags.ignore_permissions = True
-                task_doc.save()
 
 
 @frappe.whitelist()

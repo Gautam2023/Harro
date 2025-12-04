@@ -11,7 +11,7 @@ def validate(self, method=None):
                 if employee := frappe.db.exists("Employee", {"user_id" : row.custom_user}):
                     row.custom_employee = employee 
 
-            if row.task and row.custom_expected_start_date and row.custom_expected_end_date:
+            if row.task:
 
                 task_doc = frappe.get_doc("Task", row.task)
 
@@ -31,6 +31,9 @@ def validate(self, method=None):
                     _assign = eval(task_doc._assign)
                 if row.custom_user and row.custom_user not in _assign:
                     add_assignment({"doctype": self.doctype, "name": row.task, "assign_to": [row.custom_user]})
+                    frappe.db.set_value("Task", row.task, "custom_assigned_to_responsible_user", row.custom_user)
+                    frappe.db.set_value("Task", row.task, "custom_employee__assign_to_employee_", row.custom_employee)
+
 
 
 @frappe.whitelist()

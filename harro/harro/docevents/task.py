@@ -146,3 +146,10 @@ def send_timer_stopper_notification(doc, permissible_hours):
 
     subject = "Action Required: Please Restart Your Task Timer"
     frappe.sendmail(recipients=[user_id], subject=subject, message=message)
+
+@frappe.whitelist()
+def get_employee_id(user):
+    if employee := frappe.db.exists("Employee", {"user_id" : user}):
+        return employee
+    else:
+        None

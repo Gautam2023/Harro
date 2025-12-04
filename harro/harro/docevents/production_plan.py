@@ -468,8 +468,7 @@ def update_schedule_date_as_per_tree(doc, items):
 
 def remove_row_from_mr_items(self):
     if not self.mr_items:
-        frappe.throw("Please select first Commodity Group.")
-
+        return
     # Item Groups selected for removal
     item_group_list = [row.commodity_group for row in self.remove_based_item_group]
 

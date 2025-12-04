@@ -1,0 +1,1 @@
+import "./frappe/views/gantt/gantt_view.js"

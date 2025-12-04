@@ -38,6 +38,8 @@ def validate(self, method=None):
                         frappe.db.set_value("Task", row.task, "custom_assigned_to_responsible_user", row.custom_user)
                     if not task_doc.custom_employee__assign_to_employee_:
                         frappe.db.set_value("Task", row.task, "custom_employee__assign_to_employee_", row.custom_employee)
+    if self.custom_assigned_to_responsible_user:
+        add_assignment({"doctype": self.doctype, "name": self.name, "assign_to": [self.custom_assigned_to_responsible_user]})
 
 
 

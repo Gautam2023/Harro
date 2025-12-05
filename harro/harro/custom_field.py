@@ -90,7 +90,7 @@ def create_custom_fields_on_migrate():
                 "insert_after": "item_code",
                 "fieldtype": "Link",
                 "options" : "Item Group",
-                "read_only" : 1,
+                "read_only" : 0,
                 "fetch_from" : "item_code.item_group"
             }
         ]

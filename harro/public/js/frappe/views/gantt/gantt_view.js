@@ -103,14 +103,12 @@ frappe.views.GanttView = class GanttView extends frappe.views.ListView {
 			[planned_bar, actual_bar].forEach(bar => {
 				if (!bar) return;
 
-				if (item.color && frappe.ui.color.validate_hex(item.color) && bar["bar_type"] == "actual") {
-					console.log(bar)
-					console.log("Actual")
-					bar["custom_class"] = "color-" + "190000";
+				if (item.color && frappe.ui.color.validate_hex(item.color) && bar["bar_type"] === "actual") {
+					bar["custom_class"] = "color-" + 
+						(item.actual_progress ? item.actual_progress.replace("#", "") : "FFC067");
 				}
+
 				else if(item.color && frappe.ui.color.validate_hex(item.color) && bar["bar_type"] != "actual"){
-					console.log(bar)
-					console.log("Not Actual")
 					bar["custom_class"] = "color-" + item.color.substr(1);
 				}
 
@@ -128,12 +126,14 @@ frappe.views.GanttView = class GanttView extends frappe.views.ListView {
 		const svg = this.$result.find("svg")[0];
 		if (!svg) return;
 
+		// Ensure <defs> exists
 		let defs = svg.querySelector("defs");
 		if (!defs) {
 			defs = document.createElementNS("http://www.w3.org/2000/svg", "defs");
 			svg.insertBefore(defs, svg.firstChild);
 		}
 
+		// Inject pattern once (if it does not already exist)
 		if (!svg.querySelector("#diagonalHatch")) {
 			const pattern = document.createElementNS("http://www.w3.org/2000/svg", "pattern");
 			pattern.setAttribute("id", "diagonalHatch");
@@ -147,6 +147,12 @@ frappe.views.GanttView = class GanttView extends frappe.views.ListView {
 			`;
 			defs.appendChild(pattern);
 		}
+
+		// Apply hatch pattern to all bars whose data-id ends with "_actual"
+		const actualBars = document.querySelectorAll('g.bar-wrapper[data-id$="_actual"] .bar');
+		actualBars.forEach(bar => {
+			bar.setAttribute("fill", "url(#diagonalHatch)");
+		});
 	}
 
 	render() {
@@ -226,28 +232,8 @@ frappe.views.GanttView = class GanttView extends frappe.views.ListView {
 		});
 		this.setup_view_mode_buttons();
 		this.set_colors();
-		setTimeout(() => {
-			this.inject_hatch_pattern();
-			this.apply_hatch_to_bars();
-		}, 100);
+		this.inject_hatch_pattern();
 	}
-
-	apply_hatch_to_bars() {
-		const svg = this.$result.find("svg")[0];
-		if (!svg) return;
-
-		// Find bars where data-id = diagonalHatch
-		const bars = svg.querySelectorAll('g.bar-wrapper[data-id="diagonalHatch"] .bar');
-
-		bars.forEach(bar => {
-			bar.setAttribute("fill", "url(#diagonalHatch)");
-			bar.setAttribute("stroke", "#333");
-			bar.setAttribute("stroke-width", "2");
-			bar.setAttribute("height", "20");
-			bar.setAttribute("y", parseInt(bar.getAttribute("y")) + 10);
-		});
-	}
-
 
 	setup_view_mode_buttons() {
 		// view modes (for translation) __("Day"), __("Week"), __("Month"),

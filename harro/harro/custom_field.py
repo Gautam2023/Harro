@@ -38,6 +38,13 @@ def create_custom_fields_on_migrate():
                 "fieldtype" : "Select",
                 "options" : "\nWork In Progress\nOn Hold",
                 "hidden" :  1
+            },
+            {
+                "label": "Actual Progress",
+                "fieldname": "custom_actual_progress",
+                "insert_after": "act_end_date",
+                "fieldtype": "Color",
+                "default" : "#FFC067"
             }
         ],
         "HR Settings" : [

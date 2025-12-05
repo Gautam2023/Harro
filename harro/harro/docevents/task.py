@@ -5,6 +5,8 @@ from frappe.desk.form.assign_to import add as add_assignment
 
 
 def validate(self, method=None):
+    if not self.custom_actual_progress:
+        self.custom_actual_progress = "#FFC067"
     if self.depends_on:
         for row in self.depends_on:
             if not row.custom_employee and row.custom_user:

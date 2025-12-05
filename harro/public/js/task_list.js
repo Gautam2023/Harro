@@ -9,7 +9,8 @@ frappe.listview_settings["Task"] = {
 		"progress",
 		"depends_on_tasks",
 		"act_start_date",
-		"act_end_date"
+		"act_end_date",
+		"custom_actual_progress"
 	],
 	filters: [["status", "=", "Open"]],
 	onload: function (listview) {

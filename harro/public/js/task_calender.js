@@ -10,8 +10,9 @@ frappe.views.calendar["Task"] = {
 		allDay: "allDay",
 		progress: "progress",
 		actual_start : "act_start_date",
-		actual_end : "act_end_date"
- 	},
+		actual_end : "act_end_date",
+		actual_progress : "custom_actual_progress"
+  	},
 	gantt: true,
 	filters: [
 		{

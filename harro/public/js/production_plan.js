@@ -9,14 +9,18 @@ frappe.ui.form.on("Production Plan", {
         // collect commodity groups selected for removal
         let item_group_list = frm.doc.remove_based_item_group.map(e => e.commodity_group);
 
-        // loop mr_items and remove matching rows
+        // filter rows that should remain
         frm.doc.mr_items = frm.doc.mr_items.filter(row => {
             return !item_group_list.includes(row.commodity_group);
         });
 
+        // reindex idx
+        frm.doc.mr_items.forEach((row, index) => {
+            row.idx = index + 1;   // Frappe child tables start at 1
+        });
+
         frm.refresh_field("mr_items");
     }
-
 })
 
 function override_setup_download(frm) {

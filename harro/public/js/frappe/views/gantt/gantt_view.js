@@ -104,9 +104,13 @@ frappe.views.GanttView = class GanttView extends frappe.views.ListView {
 				if (!bar) return;
 
 				if (item.color && frappe.ui.color.validate_hex(item.color) && bar["bar_type"] == "actual") {
+					console.log(bar)
+					console.log("Actual")
 					bar["custom_class"] = "color-" + "190000";
 				}
 				else if(item.color && frappe.ui.color.validate_hex(item.color) && bar["bar_type"] != "actual"){
+					console.log(bar)
+					console.log("Not Actual")
 					bar["custom_class"] = "color-" + item.color.substr(1);
 				}
 

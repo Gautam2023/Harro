@@ -85,6 +85,21 @@ frappe.ui.form.on("Task", {
 			}
 		}
 	},
+    custom_assigned_to_responsible_user:(frm)=>{
+        if (frm.doc.custom_assigned_to_responsible_user){
+            frappe.call({
+                method : "harro.harro.docevents.task.get_employee_id",
+                args: {
+                    user : frm.doc.custom_assigned_to_responsible_user
+                },
+                callback:(r)=>{
+                    if(r.message){
+                        frm.set_value("custom_employee__assign_to_employee_", r.message)
+                    }
+                }
+            })
+        }
+    }
 })
 function update_start_job_log(frm){
     let d = new frappe.ui.Dialog({

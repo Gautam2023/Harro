@@ -451,6 +451,7 @@ def get_items_for_material_requests(doc, warehouses=None, get_parent_warehouse_d
 
 def update_schedule_date_as_per_tree(doc, items):
     item_schedule_date_map = {}
+    item_group_map = {}
     for row in doc.sub_assembly_items:
         bom_tree = get_bom_tree(row.get("bom_no"))
         bom_items = set(flatten_bom_items(bom_tree))
@@ -460,10 +461,17 @@ def update_schedule_date_as_per_tree(doc, items):
                 item_schedule_date_map[item] = final_date
             else:
                 item_schedule_date_map[item] = row.get("schedule_date")
+        if not item_group_map.get(row.get("production_item")):
+            item_group_map[row.get("production_item")] = row.get("custom_item_group")
+        
 
     for row in items:
         row.update({"schedule_date" : item_schedule_date_map.get(row.get("item_code"))})
-    
+        if item_group_map.get(row.get("item_code")):
+            row.update({"commodity_group" : item_group_map.get(row.get("item_code"))})
+        else:
+            row.update({"commodity_group" : frappe.db.get_value("Item", row.get("item_code"), "item_group")})
+
     return items
 
 def remove_row_from_mr_items(self):

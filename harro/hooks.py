@@ -25,8 +25,8 @@ app_license = "mit"
 # ------------------
 
 # include js, css files in header of desk.html
-# app_include_css = "/assets/harro/css/harro.css"
-# app_include_js = "/assets/harro/js/harro.js"
+app_include_css = "/assets/harro/css/harro.css"
+app_include_js = "/assets/harro/js/frappe/views/gantt/gantt_view.js"
 
 # include js, css files in header of web template
 # web_include_css = "/assets/harro/css/harro.css"
@@ -59,9 +59,9 @@ doctype_js = {
         "Task" : "public/js/task.js",
         "Production Plan" : "public/js/production_plan.js"
     }
-# doctype_list_js = {"doctype" : "public/js/doctype_list.js"}
+doctype_list_js = {"Task" : "public/js/task_list.js"}
 # doctype_tree_js = {"doctype" : "public/js/doctype_tree.js"}
-# doctype_calendar_js = {"doctype" : "public/js/doctype_calendar.js"}
+doctype_calendar_js = {"Task" : "public/js/task_calender.js"}
 
 # Svg Icons
 # ------------------

@@ -75,6 +75,23 @@ def create_custom_fields_on_migrate():
                 "fieldtype" : "Table MultiSelect",
                 "options" : "Removed As Per Item Group",
                 "description" : "Update the Commodity Group to remove items from below table"
+            },
+            {
+                "label": "Delete Selected Commodity Group Items",
+                "fieldname": "delete_selected_commodity_group_items",
+                "insert_after": "remove_based_item_group",
+                "fieldtype": "Button",
+            }
+        ],
+        "Material Request Plan Item" : [
+            {
+                "label": "Commodity Group",
+                "fieldname": "commodity_group",
+                "insert_after": "item_code",
+                "fieldtype": "Link",
+                "options" : "Item Group",
+                "read_only" : 1,
+                "fetch_from" : "item_code.item_group"
             }
         ]
     }

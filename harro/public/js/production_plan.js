@@ -4,7 +4,19 @@ frappe.ui.form.on("Production Plan", {
         override_bulk_edit_functions(frm);
         frm.get_docfield("sub_assembly_items").allow_bulk_edit = true
         frm.fields_dict.sub_assembly_items.grid.setup_allow_bulk_edit()
+    },
+    delete_selected_commodity_group_items(frm) {
+        // collect commodity groups selected for removal
+        let item_group_list = frm.doc.remove_based_item_group.map(e => e.commodity_group);
+
+        // loop mr_items and remove matching rows
+        frm.doc.mr_items = frm.doc.mr_items.filter(row => {
+            return !item_group_list.includes(row.commodity_group);
+        });
+
+        frm.refresh_field("mr_items");
     }
+
 })
 
 function override_setup_download(frm) {

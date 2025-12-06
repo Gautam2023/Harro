@@ -72,6 +72,13 @@ def create_custom_fields_on_migrate():
                 "label" : "Item Group",
                 "fieldtype" : "Link",
                 "options" : "Item Group"
+            },
+            {
+                "insert_after" : "items",
+                "fieldname" : "total_items",
+                "label" : "Total Number of Items",
+                "fieldtype" : "Data",
+                "read_only" : 1
             }
         ],
         "Production Plan" : [

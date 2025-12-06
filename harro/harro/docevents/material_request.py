@@ -18,5 +18,5 @@ def on_update(doc, method):
                 "description": "Auto-assigned based on Item Group"
             })
 
-def validate(self):
+def validate(self, method=None):
     self.total_items = len(self.items)

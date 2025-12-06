@@ -192,7 +192,8 @@ doc_events = {
         "validate" : "harro.harro.docevents.task.validate"
     },
     "Material Request": {
-        "on_update": "harro.harro.docevents.material_request.on_update"
+        "on_update": "harro.harro.docevents.material_request.on_update",
+        "validate" : "harro.harro.docevents.material_request.validate",
     }
 }
 

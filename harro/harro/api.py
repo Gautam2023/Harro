@@ -9,7 +9,7 @@ def get_supplier_list(doctype, txt, searchfield, start, page_len, filters):
                                      Select sq.supplier
                                      From `tabSupplier Quotation` as sq
                                      Left Join `tabSupplier Quotation Item` as sqi ON sqi.parent = sq.name
-                                     Where sq.docstatus < 2
+                                     Where sq.docstatus < 2 and sqi.request_for_quotation = '{rfq_doc.name}'
                                 """, as_dict=1)
     
     sq_supplier = [

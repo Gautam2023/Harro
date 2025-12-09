@@ -20,3 +20,5 @@ def on_update(doc, method):
 
 def validate(self, method=None):
     self.total_items = len(self.items)
+    for item in self.items:
+        item.project = self.custom_ba_number

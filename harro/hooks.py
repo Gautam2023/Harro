@@ -58,10 +58,11 @@ doctype_js = {
         "Expense Claim" : "public/js/expense_claim.js",
         "Task" : "public/js/task.js",
         "Production Plan" : "public/js/production_plan.js",
-        "Material Request" : "public/js/material_requiest.js"
+        "Material Request" : "public/js/material_requiest.js",
+        "Request for Quotation" : "public/js/request_for_quotation.js"
     }
+
 doctype_list_js = {"Task" : "public/js/task_list.js"}
-# doctype_tree_js = {"doctype" : "public/js/doctype_tree.js"}
 doctype_calendar_js = {"Task" : "public/js/task_calender.js"}
 
 # Svg Icons

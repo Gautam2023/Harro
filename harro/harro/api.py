@@ -26,3 +26,37 @@ def get_supplier_list(doctype, txt, searchfield, start, page_len, filters):
 
 
 
+@frappe.whitelist()
+def get_open_tasks_for_user():
+    user = frappe.session.user
+
+    # find task assigned to currently logged in user
+    todos = frappe.db.get_all(
+        "ToDo",
+        filters = {
+            "reference_type": "Task",
+            "allocated_to": user,
+            "status": "Open"
+        },
+        pluck = "reference_name"
+    )
+
+    if not todos:
+        return {
+            "value": 0,
+            "fieldtype": "Int"
+        }
+    
+    # count only valid tasks that are not completed/cancelled/template
+    count = frappe.db.count(
+        "Task",
+        filters={
+            "name": ["in",todos],
+            "status": ["not in", ["Completed","Cancelled","Template"]]
+        }
+    )
+
+    return {
+        "value": count,
+        "fieldtype": "Int"
+    }

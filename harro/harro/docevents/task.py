@@ -7,6 +7,11 @@ from frappe.desk.form.assign_to import add as add_assignment
 def validate(self, method=None):
     if not self.custom_actual_progress:
         self.custom_actual_progress = "#FFC067"
+    if not self.is_new():
+        update_task_details_of_parent_task(self)
+    
+
+def update_task_details_of_parent_task(self):
     if self.depends_on:
         for row in self.depends_on:
             if not row.custom_employee and row.custom_user:
@@ -18,13 +23,13 @@ def validate(self, method=None):
                 task_doc = frappe.get_doc("Task", row.task)
 
                 # Update only if values are different
-                if task_doc.exp_start_date != row.custom_expected_start_date:
+                if task_doc.exp_start_date and row.custom_expected_start_date and task_doc.exp_start_date != row.custom_expected_start_date:
                     frappe.db.set_value("Task", row.task, "exp_start_date", row.custom_expected_start_date)
 
-                if task_doc.exp_end_date != row.custom_expected_end_date:
+                if task_doc.exp_end_date and row.custom_expected_end_date and task_doc.exp_end_date != row.custom_expected_end_date:
                     frappe.db.set_value("Task", row.task, "exp_end_date", row.custom_expected_end_date)
 
-                if task_doc.expected_time != row.custom_expected_time:
+                if task_doc.expected_time and row.custom_expected_time and task_doc.expected_time != row.custom_expected_time:
                     frappe.db.set_value("Task", row.task, "expected_time", row.custom_expected_time)
 
                 if not task_doc._assign:
@@ -36,9 +41,9 @@ def validate(self, method=None):
                     frappe.db.set_value("Task", row.task, "custom_assigned_to_responsible_user", row.custom_user)
                     frappe.db.set_value("Task", row.task, "custom_employee__assign_to_employee_", row.custom_employee)
                 else:
-                    if not task_doc.custom_assigned_to_responsible_user:
+                    if not task_doc.custom_assigned_to_responsible_user and row.custom_user:
                         frappe.db.set_value("Task", row.task, "custom_assigned_to_responsible_user", row.custom_user)
-                    if not task_doc.custom_employee__assign_to_employee_:
+                    if not task_doc.custom_employee__assign_to_employee_ and row.custom_employee:
                         frappe.db.set_value("Task", row.task, "custom_employee__assign_to_employee_", row.custom_employee)
     if self.custom_assigned_to_responsible_user:
         add_assignment({"doctype": self.doctype, "name": self.name, "assign_to": [self.custom_assigned_to_responsible_user]})

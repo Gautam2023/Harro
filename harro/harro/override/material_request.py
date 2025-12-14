@@ -65,7 +65,7 @@ def make_purchase_order(source_name, target_doc=None, args=None):
                     ["sales_order", "sales_order"],
                     ["sales_order_item", "sales_order_item"],
                     ["wip_composite_asset", "wip_composite_asset"],
-                    #["custom_ba_number", "project"], # BA Number field mapped 
+                    ["custom_ba_number", "project"], # BA Number field mapped 
                 ],
                 "postprocess": update_item,
                 "condition": select_item,

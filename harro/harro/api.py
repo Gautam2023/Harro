@@ -61,7 +61,7 @@ def get_open_tasks_for_user():
         "fieldtype": "Int",
         "route": ["List", "Task"],
         "route_options": {
-            "name": ["in", todos],
+            "_assign": ["like", f"%{user}%"],
             "status": ["not in", ["Completed","Cancelled","Template"]]
         }
     }

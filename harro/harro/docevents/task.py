@@ -23,13 +23,13 @@ def update_task_details_of_parent_task(self):
                 task_doc = frappe.get_doc("Task", row.task)
 
                 # Update only if values are different
-                if task_doc.exp_start_date and row.custom_expected_start_date and task_doc.exp_start_date != row.custom_expected_start_date:
+                if row.custom_expected_start_date and task_doc.exp_start_date != row.custom_expected_start_date:
                     frappe.db.set_value("Task", row.task, "exp_start_date", row.custom_expected_start_date)
 
-                if task_doc.exp_end_date and row.custom_expected_end_date and task_doc.exp_end_date != row.custom_expected_end_date:
+                if row.custom_expected_end_date and task_doc.exp_end_date != row.custom_expected_end_date:
                     frappe.db.set_value("Task", row.task, "exp_end_date", row.custom_expected_end_date)
 
-                if task_doc.expected_time and row.custom_expected_time and task_doc.expected_time != row.custom_expected_time:
+                if row.custom_expected_time and task_doc.expected_time != row.custom_expected_time:
                     frappe.db.set_value("Task", row.task, "expected_time", row.custom_expected_time)
 
                 if not task_doc._assign:

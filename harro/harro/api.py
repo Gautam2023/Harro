@@ -58,5 +58,10 @@ def get_open_tasks_for_user():
 
     return {
         "value": count,
-        "fieldtype": "Int"
+        "fieldtype": "Int",
+        "route": ["List", "Task"],
+        "route_options": {
+            "name": ["in", todos],
+            "status": ["not in", ["Completed","Cancelled","Template"]]
+        }
     }

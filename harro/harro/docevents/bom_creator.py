@@ -69,7 +69,6 @@ def extract_bom_item_data(file_path, bom_c):
             if stock_uom := frappe.db.exists("UOM", {"custom_german_uom" : mengeneinheit}):
                 uom = stock_uom
         
-        row.update({"idx" :  i})
 
         # Create Item if it doesn't exist
         if not frappe.db.exists("Item", artikel ):

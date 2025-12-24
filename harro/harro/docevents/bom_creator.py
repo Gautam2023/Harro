@@ -63,6 +63,8 @@ def extract_bom_item_data(file_path, bom_c):
         mengeneinheit = row.get("Mengeneinheit")
         StrukturklasseKopf = row.get("StrukturklasseKopf")
         StrukturklassePos = row.get("StrukturklassePos")
+        
+        
 
         uom = None
         if mengeneinheit:
@@ -97,7 +99,12 @@ def extract_bom_item_data(file_path, bom_c):
 
 
 def create_item(item, row, uom=None, structureclass= None):
-    item_group = "All Item Groups"
+    Teilegruppe =  row.get("Commodity Group")
+    Bezeichnung =  row.get("Commodity Name")
+    if item_group := frappe.db.exists("Item Group", {"custom_teilegruppe" : Teilegruppe, "custom_bezeichnung" : Bezeichnung}):
+        item_group = item_group
+    else:
+        item_group = "All Item Groups"
     if StructureClass := frappe.db.exists("Structure Class Head", {"strukturklasse" : structureclass}):
         structureclass = StructureClass
     else:

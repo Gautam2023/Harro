@@ -113,3 +113,9 @@ def validate(self, method):
                 frappe.throw(
                     f"Row #{item.idx}: Quantity is {item.qty} but you entered {serial_count} serial numbers."
                 )
+
+@frappe.whitelist()
+def get_company_contact():
+	user = frappe.session.user
+	user_id = frappe.db.exists("Contact", {"user": user})
+	return user_id

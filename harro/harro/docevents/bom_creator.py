@@ -54,7 +54,9 @@ def extract_bom_item_data(file_path, bom_c):
     # Map to track FG item → child table row idx
     fg_row_map = {}
 
-    for row in data:
+    for i, row in enumerate(data):
+        if not row.get("Artikel") or row.get("Artikel") =="None" or row.get("Artikel") == '':
+            continue
         artikel = row.get("Artikel")
         baugruppe = row.get("Baugruppe")
         menge = row.get("Menge")
@@ -66,6 +68,7 @@ def extract_bom_item_data(file_path, bom_c):
         if mengeneinheit:
             if stock_uom := frappe.db.exists("UOM", {"custom_german_uom" : mengeneinheit}):
                 uom = stock_uom
+        
 
         # Create Item if it doesn't exist
         if not frappe.db.exists("Item", artikel ):
@@ -78,7 +81,6 @@ def extract_bom_item_data(file_path, bom_c):
             "fg_item": baugruppe,
             "qty" : menge
         }
-
         # Set parent_row_no only if FG item already exists in table
         if baugruppe in fg_row_map:
             new_row["parent_row_no"] = fg_row_map[baugruppe]
@@ -106,7 +108,7 @@ def create_item(item, row, uom=None, structureclass= None):
                 "doctype": "Structure Class Head"
             }
         ).insert()
-
+    
     item_doc = frappe.get_doc({
                 "doctype" : "Item",
                 "item_code" : item,

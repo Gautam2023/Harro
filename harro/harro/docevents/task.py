@@ -10,6 +10,13 @@ def validate(self, method=None):
     if not self.is_new():
         update_task_details_of_parent_task(self)
     
+    if not self.custom_assigned_to_responsible_user and self.custom_employee__assign_to_employee_:
+        user = frappe.db.get_value("Employee", self.custom_employee__assign_to_employee_, "user_id")
+        self.custom_assigned_to_responsible_user = user
+    
+    if not self.custom_employee__assign_to_employee_ and self.custom_assigned_to_responsible_user:
+        if employee := frappe.db.exists("Employee", {"user_id" : self.custom_assigned_to_responsible_user}):
+            self.custom_employee__assign_to_employee_ = employee
 
 def update_task_details_of_parent_task(self):
     if self.depends_on:
@@ -83,6 +90,10 @@ def update_stop_task_log(arg, start_new=False):
     doc = frappe.get_doc("Task", args.get("task"))
     row = doc.unproductive_work_timelogs[-1]
     doc.unproductive_work_timelogs[-1].to_time = args.get("to_time")
+    row.update({
+        "to_time" : args.get("to_time")
+    })
+
     doc.flags.ignore_permissions = True
     doc.save()
 
@@ -96,7 +107,7 @@ def update_stop_task_log(arg, start_new=False):
         timesheet_doc.append("time_logs", {
             "activity_type" : row.get("activity_type"),
             "from_time" : row.get("from_time"),
-            "from_time" : row.get("to_time"),
+            "to_time" : row.get("to_time"),
             "employee" : row.get("employee"),
             "project" : row.get("project"),
             "task" : args.get("task")
@@ -113,7 +124,7 @@ def update_stop_task_log(arg, start_new=False):
                 {
                     "activity_type" : row.get("activity_type"),
                     "from_time" : row.get("from_time"),
-                    "from_time" : row.get("to_time"),
+                    "to_time" : row.get("to_time"),
                     "employee" : row.get("employee"),
                     "project" : row.get("project"),
                     "task" : args.get("task")

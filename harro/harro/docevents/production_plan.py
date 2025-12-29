@@ -29,10 +29,23 @@ from erpnext.manufacturing.doctype.production_plan.production_plan import (
     get_subitems,
     get_exploded_items
 )
+from frappe import _
 
 class CustomProductionPlan(ProductionPlan):
     def validate(self):
+        remove_row_from_mr_items(self)
         compare_and_update_schedule_dates(self)
+
+        sub_contracting_row = []
+        for row in self.sub_assembly_items:
+            if row.type_of_manufacturing == "Subcontract" and not row.supplier:
+                sub_contracting_row.append(row.idx)
+        if sub_contracting_row:
+            message = ''
+            for row in sub_contracting_row:
+                message += f"Mandatory fields required in table <b>Sub Assembly Items Row {row}.</b><br><ul><li>Supplier</li></ul><hr>"
+        
+            frappe.throw(_(message), title=_("Missing Fields"))
         super().validate()
 
     def set_sub_assembly_items_based_on_level(self, row, bom_data, manufacturing_type=None):
@@ -438,6 +451,7 @@ def get_items_for_material_requests(doc, warehouses=None, get_parent_warehouse_d
 
 def update_schedule_date_as_per_tree(doc, items):
     item_schedule_date_map = {}
+    item_group_map = {}
     for row in doc.sub_assembly_items:
         bom_tree = get_bom_tree(row.get("bom_no"))
         bom_items = set(flatten_bom_items(bom_tree))
@@ -447,9 +461,30 @@ def update_schedule_date_as_per_tree(doc, items):
                 item_schedule_date_map[item] = final_date
             else:
                 item_schedule_date_map[item] = row.get("schedule_date")
+        if not item_group_map.get(row.get("production_item")):
+            item_group_map[row.get("production_item")] = row.get("custom_item_group")
+        
 
     for row in items:
         row.update({"schedule_date" : item_schedule_date_map.get(row.get("item_code"))})
-    
+        if item_group_map.get(row.get("item_code")):
+            row.update({"commodity_group" : item_group_map.get(row.get("item_code"))})
+        else:
+            row.update({"commodity_group" : frappe.db.get_value("Item", row.get("item_code"), "item_group")})
+
     return items
 
+def remove_row_from_mr_items(self):
+    if not self.mr_items:
+        return
+    # Item Groups selected for removal
+    item_group_list = [row.commodity_group for row in self.remove_based_item_group]
+
+    filtered_items = []
+    for row in self.mr_items:
+        item_group = frappe.db.get_value("Item", row.item_code, "item_group")
+        if item_group not in item_group_list:
+            filtered_items.append(row)
+
+    # Replace original table with filtered table
+    self.mr_items = filtered_items    

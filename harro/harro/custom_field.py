@@ -38,6 +38,13 @@ def create_custom_fields_on_migrate():
                 "fieldtype" : "Select",
                 "options" : "\nWork In Progress\nOn Hold",
                 "hidden" :  1
+            },
+            {
+                "label": "Actual Progress",
+                "fieldname": "custom_actual_progress",
+                "insert_after": "act_end_date",
+                "fieldtype": "Color",
+                "default" : "#FFC067"
             }
         ],
         "HR Settings" : [
@@ -65,6 +72,40 @@ def create_custom_fields_on_migrate():
                 "label" : "Item Group",
                 "fieldtype" : "Link",
                 "options" : "Item Group"
+            },
+            {
+                "insert_after" : "items",
+                "fieldname" : "total_items",
+                "label" : "Total Number of Items",
+                "fieldtype" : "Data",
+                "read_only" : 1
+            }
+        ],
+        "Production Plan" : [
+            {
+                "insert_after" : "transfer_materials",
+                "fieldname" : "remove_based_item_group",
+                "label" : "Commodity Group",
+                "fieldtype" : "Table MultiSelect",
+                "options" : "Removed As Per Item Group",
+                "description" : "Update the Commodity Group to remove items from below table"
+            },
+            {
+                "label": "Delete Selected Commodity Group Items",
+                "fieldname": "delete_selected_commodity_group_items",
+                "insert_after": "remove_based_item_group",
+                "fieldtype": "Button",
+            }
+        ],
+        "Material Request Plan Item" : [
+            {
+                "label": "Commodity Group",
+                "fieldname": "commodity_group",
+                "insert_after": "item_code",
+                "fieldtype": "Link",
+                "options" : "Item Group",
+                "read_only" : 0,
+                "fetch_from" : "item_code.item_group"
             }
         ]
     }

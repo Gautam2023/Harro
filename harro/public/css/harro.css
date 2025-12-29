@@ -1,0 +1,10 @@
+/* For ACTUAL bar only (pattern fill) */
+.bar.actual {
+    fill: url(#diagonalHatch);
+}
+
+/* Optional: DARK outline so pattern is visible */
+/* .color-FFC067 {
+    stroke: #333;
+    stroke-width: 1px;
+} */

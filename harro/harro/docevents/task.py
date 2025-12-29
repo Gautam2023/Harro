@@ -5,26 +5,49 @@ from frappe.desk.form.assign_to import add as add_assignment
 
 
 def validate(self, method=None):
+    if not self.custom_actual_progress:
+        self.custom_actual_progress = "#FFC067"
+    if not self.is_new():
+        update_task_details_of_parent_task(self)
+    
+
+def update_task_details_of_parent_task(self):
     if self.depends_on:
         for row in self.depends_on:
-            if row.task and row.custom_expected_start_date and row.custom_expected_end_date:
+            if not row.custom_employee and row.custom_user:
+                if employee := frappe.db.exists("Employee", {"user_id" : row.custom_user}):
+                    row.custom_employee = employee 
+
+            if row.task:
 
                 task_doc = frappe.get_doc("Task", row.task)
 
                 # Update only if values are different
-                if task_doc.exp_start_date != row.custom_expected_start_date:
-                    task_doc.exp_start_date = row.custom_expected_start_date
+                if task_doc.exp_start_date and row.custom_expected_start_date and task_doc.exp_start_date != row.custom_expected_start_date:
+                    frappe.db.set_value("Task", row.task, "exp_start_date", row.custom_expected_start_date)
 
-                if task_doc.exp_end_date != row.custom_expected_end_date:
-                    task_doc.exp_end_date = row.custom_expected_end_date
+                if task_doc.exp_end_date and row.custom_expected_end_date and task_doc.exp_end_date != row.custom_expected_end_date:
+                    frappe.db.set_value("Task", row.task, "exp_end_date", row.custom_expected_end_date)
 
-                if task_doc.expected_time != row.custom_expected_time:
-                    task_doc.expected_time = row.custom_expected_time
+                if task_doc.expected_time and row.custom_expected_time and task_doc.expected_time != row.custom_expected_time:
+                    frappe.db.set_value("Task", row.task, "expected_time", row.custom_expected_time)
 
-                if row.custom_user not in task_doc._assign:
-                    add_assignment({"doctype": self.doctype, "name": self.name, "assign_to": [row.custom_user]})
-                task_doc.flags.ignore_permissions = True
-                task_doc.save()
+                if not task_doc._assign:
+                    _assign = []
+                else:
+                    _assign = eval(task_doc._assign)
+                if row.custom_user and row.custom_user not in _assign:
+                    add_assignment({"doctype": self.doctype, "name": row.task, "assign_to": [row.custom_user]})
+                    frappe.db.set_value("Task", row.task, "custom_assigned_to_responsible_user", row.custom_user)
+                    frappe.db.set_value("Task", row.task, "custom_employee__assign_to_employee_", row.custom_employee)
+                else:
+                    if not task_doc.custom_assigned_to_responsible_user and row.custom_user:
+                        frappe.db.set_value("Task", row.task, "custom_assigned_to_responsible_user", row.custom_user)
+                    if not task_doc.custom_employee__assign_to_employee_ and row.custom_employee:
+                        frappe.db.set_value("Task", row.task, "custom_employee__assign_to_employee_", row.custom_employee)
+    if self.custom_assigned_to_responsible_user:
+        add_assignment({"doctype": self.doctype, "name": self.name, "assign_to": [self.custom_assigned_to_responsible_user]})
+
 
 
 @frappe.whitelist()
@@ -140,3 +163,10 @@ def send_timer_stopper_notification(doc, permissible_hours):
 
     subject = "Action Required: Please Restart Your Task Timer"
     frappe.sendmail(recipients=[user_id], subject=subject, message=message)
+
+@frappe.whitelist()
+def get_employee_id(user):
+    if employee := frappe.db.exists("Employee", {"user_id" : user}):
+        return employee
+    else:
+        None

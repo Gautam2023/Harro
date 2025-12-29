@@ -21,9 +21,8 @@ def update_unproductive_log(arg, job_card):
     args = json.loads(arg)
     doc = frappe.get_doc("Job Card", job_card)
 
-    employees = doc.get("employee") or []  # multiselect employee list
+    employees = doc.employee
 
-    # If employees selected → create a row per employee
     if employees:
         for emp in employees:
             doc.append("custom_unproductive_work_timelogs", {
@@ -31,7 +30,7 @@ def update_unproductive_log(arg, job_card):
                 "from_time": args.get("from_time"),
                 "project": args.get("project"),
                 "task": args.get("task"),
-                "employee": emp  # update employee field in child table row
+                "employee": emp.employee  # update employee field in child table row
             })
     else:
         # No employees → add single entry
@@ -57,7 +56,7 @@ def resume_unproductive_log(to_time, job_card):
     last_log.to_time = to_time
     doc.flags.ignore_permissions = True
 
-    employees = doc.get("custom_employees") or []
+    employees = doc.get("employee") or []
 
     # If employees exist: create timesheet per employee
     if employees:
@@ -69,6 +68,7 @@ def resume_unproductive_log(to_time, job_card):
                 "employee": emp,
                 "parent_project": doc.project,
                 "company": doc.company,
+                "employee" : last_log.employee,
                 "time_logs": [
                     {
                         "activity_type": last_log.get("activity_type"),

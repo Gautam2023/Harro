@@ -25,8 +25,11 @@ app_license = "mit"
 # ------------------
 
 # include js, css files in header of desk.html
-# app_include_css = "/assets/harro/css/harro.css"
-# app_include_js = "/assets/harro/js/harro.js"
+app_include_css = "/assets/harro/css/harro.css"
+app_include_js = [
+    "/assets/harro/js/frappe/views/gantt/gantt_view.js",
+    "/assets/harro/js/harro_hierarchy_chart.bundle.js"
+]
 
 # include js, css files in header of web template
 # web_include_css = "/assets/harro/css/harro.css"
@@ -57,11 +60,13 @@ doctype_js = {
         "Purchase Order" : "public/js/purchase_order.js",
         "Expense Claim" : "public/js/expense_claim.js",
         "Task" : "public/js/task.js",
-        "Production Plan" : "public/js/production_plan.js"
+        "Production Plan" : "public/js/production_plan.js",
+        "Material Request" : "public/js/material_requiest.js",
+        "Request for Quotation" : "public/js/request_for_quotation.js"
     }
-# doctype_list_js = {"doctype" : "public/js/doctype_list.js"}
-# doctype_tree_js = {"doctype" : "public/js/doctype_tree.js"}
-# doctype_calendar_js = {"doctype" : "public/js/doctype_calendar.js"}
+
+doctype_list_js = {"Task" : "public/js/task_list.js"}
+doctype_calendar_js = {"Task" : "public/js/task_calender.js"}
 
 # Svg Icons
 # ------------------
@@ -191,7 +196,8 @@ doc_events = {
         "validate" : "harro.harro.docevents.task.validate"
     },
     "Material Request": {
-        "on_update": "harro.harro.docevents.material_request.on_update"
+        "on_update": "harro.harro.docevents.material_request.on_update",
+        "validate" : "harro.harro.docevents.material_request.validate",
     }
 }
 
@@ -236,7 +242,9 @@ override_whitelisted_methods = {
 	"erpnext.buying.doctype.purchase_order.purchase_order.make_subcontracting_order": "harro.harro.docevents.purchase_order.make_subcontracting_order",
     "erpnext.subcontracting.doctype.subcontracting_order.subcontracting_order.make_subcontracting_receipt" : "harro.harro.docevents.subcontracting_order.make_subcontracting_receipt",
     "erpnext.manufacturing.doctype.production_plan.production_plan.get_items_for_material_requests" : "harro.harro.docevents.production_plan.get_items_for_material_requests",
-    "erpnext.manufacturing.doctype.work_order.work_order.make_stock_entry": "harro.harro.override.work_order.make_stock_entry"
+    "erpnext.manufacturing.doctype.work_order.work_order.make_stock_entry": "harro.harro.override.work_order.make_stock_entry",
+    "erpnext.controllers.subcontracting_controller.make_rm_stock_entry" : "harro.harro.override.subcontracting_order.make_rm_stock_entry",
+    "erpnext.stock.doctype.material_request.material_request.make_purchase_order": "harro.harro.override.material_request.make_purchase_order"
 }
 #
 # each overriding function accepts a `data` argument;

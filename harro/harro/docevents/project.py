@@ -128,3 +128,181 @@ def get_activity(unproductive=0):
             activity_list.append(row.get("name"))
         
     return activity_list
+
+
+## custom function for employee chart
+# @frappe.whitelist()
+# def get_project_hierarchy(project):
+#     project_employees = frappe.get_all(
+#         "Project User",   
+#         filters={"parent": project},
+#         pluck="custom_employee"
+#     )
+
+#     if not project_employees:
+#         return []
+#     employees = frappe.get_all(
+#         "Employee",
+#         filters={
+#             "name": ["in", project_employees],
+#             "status": "Active"
+#         },
+#         fields=[
+#             "name as id",
+#             "employee_name as name",
+#             "reports_to",
+#             "designation as title",
+#             "image",
+#             "lft",
+#             "rgt"
+#         ],
+#         order_by="employee_name"
+#     )
+
+#     for emp in employees:
+#         emp.connections = sum(
+#             1 for e in employees if e.get("reports_to") == emp.id
+#         )
+#         emp.expandable = bool(emp.connections)
+#     frappe.log_error(message=frappe.as_json(employees), title="employees")
+#     return employees
+
+
+
+@frappe.whitelist()
+def get_project_hierarchy(project, parent=None):
+    """
+    Get employee hierarchy for a project
+    - If parent is None: returns root nodes (employees without a manager in the project)
+    - If parent is provided: returns direct reports of that parent
+    """
+    project_employees = frappe.get_all(
+        "Project User",   
+        filters={"parent": project},
+        pluck="custom_employee"
+    )
+
+    if not project_employees:
+        return []
+    
+    # Build filters based on parent parameter
+    filters = {
+        "name": ["in", project_employees],
+        "status": "Active"
+    }
+    
+    if parent:
+        # Get direct reports of this parent
+        filters["reports_to"] = parent
+    else:
+        # Get root nodes: employees with no reports_to OR reports_to not in project
+        filters["reports_to"] = ["is", "set"]
+    
+    employees = frappe.get_all(
+        "Employee",
+        filters=filters,
+        fields=[
+            "name as id",
+            "employee_name as name",
+            "reports_to",
+            "designation as title",
+            "image"
+        ],
+        order_by="employee_name"
+    )
+    
+    # For root nodes, we need to filter out those whose manager is also in the project
+    if not parent:
+        root_employees = []
+        for emp in employees:
+            if not emp.reports_to or emp.reports_to not in project_employees:
+                root_employees.append(emp)
+        employees = root_employees
+    
+    # Get count of direct reports for each employee
+    for emp in employees:
+        # Count how many employees report to this person within the project
+        direct_reports = frappe.get_all(
+            "Employee",
+            filters={
+                "reports_to": emp.id,
+                "name": ["in", project_employees],
+                "status": "Active"
+            },
+            count=True
+        )
+        emp.connections = direct_reports
+        emp.expandable = direct_reports > 0
+    
+    frappe.log_error(message=frappe.as_json(employees), title=f"Project hierarchy for {project}")
+    return employees
+
+@frappe.whitelist()
+def get_all_project_nodes(project):
+    """
+    Get all nodes in the project hierarchy for Expand All functionality
+    Returns a list of [parent, [children]] pairs
+    """
+    project_employees = frappe.get_all(
+        "Project User",   
+        filters={"parent": project},
+        pluck="custom_employee"
+    )
+
+    if not project_employees:
+        return []
+    
+    # Get all active employees in the project
+    all_employees = frappe.get_all(
+        "Employee",
+        filters={
+            "name": ["in", project_employees],
+            "status": "Active"
+        },
+        fields=[
+            "name as id",
+            "employee_name as name",
+            "reports_to",
+            "designation as title",
+            "image"
+        ]
+    )
+    
+    # Build a mapping of manager -> direct reports
+    manager_map = {}
+    for emp in all_employees:
+        if emp.reports_to:
+            manager_map.setdefault(emp.reports_to, []).append(emp)
+    
+    # Create result in the format expected by the frontend
+    result = []
+    for emp in all_employees:
+        if emp.id in manager_map:  # This employee has direct reports
+            children = manager_map[emp.id]
+            
+            # Format parent
+            parent_data = {
+                "id": emp.id,
+                "name": emp.name,
+                "title": emp.title,
+                "image": emp.image,
+                "connections": len(children),
+                "expandable": True
+            }
+            
+            # Format children
+            children_data = []
+            for child in children:
+                child_data = {
+                    "id": child.id,
+                    "name": child.name,
+                    "title": child.title,
+                    "image": child.image,
+                    "connections": len(manager_map.get(child.id, [])),
+                    "expandable": child.id in manager_map
+                }
+                children_data.append(child_data)
+            
+            result.append([parent_data, children_data])
+    
+    return result

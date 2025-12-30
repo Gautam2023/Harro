@@ -195,6 +195,9 @@ doc_events = {
     "Material Request": {
         "on_update": "harro.harro.docevents.material_request.on_update",
         "validate" : "harro.harro.docevents.material_request.validate",
+    },
+    "Employee Checkin" : {
+        "after_insert" : "harro.harro.docevents.employee_checkin.after_insert"
     }
 }
 

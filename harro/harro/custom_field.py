@@ -47,15 +47,6 @@ def create_custom_fields_on_migrate():
                 "default" : "#FFC067"
             }
         ],
-        "HR Settings" : [
-            {
-                "insert_after" : "retirement_age",
-                "fieldname" : "task_permissable_limit",
-                "label" : "Task Permissable Limit",
-                "fieldtype" : "Float",
-                "hidden" :  0
-            }
-        ],
         "Item Group" : [
             {
                 "insert_after" : "is_group",
@@ -106,6 +97,18 @@ def create_custom_fields_on_migrate():
                 "options" : "Item Group",
                 "read_only" : 0,
                 "fetch_from" : "item_code.item_group"
+            }
+        ],
+        "Projects Settings" : [
+            {
+                "fieldname" : "task_cut_of_time",
+                "label" : "Task Cut of Time",
+                "fieldtype" : "Float",
+            },
+            {
+                "fieldname" : "job_card_cut_of_time",
+                "label" : "Job Card Cut of Time",
+                "fieldtype" : "Float",
             }
         ]
     }

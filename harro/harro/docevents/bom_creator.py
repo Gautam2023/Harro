@@ -98,7 +98,7 @@ def extract_bom_item_data(file_path, bom_c):
 
 
 def create_item(item, row, uom=None, structureclass= None):
-    Teilegruppe =  row.get("Teilegruppe") or row.get("teilegruppe")
+    Teilegruppe =  row.get("Teilegruppe") or row.get("teilegruppe") or row.get("Commodity Group") or row.get("commodity group")
     if item_group := frappe.db.exists("Item Group", {"custom_teilegruppe" : Teilegruppe}):
         item_group = item_group
     else:
@@ -210,7 +210,7 @@ def make_fieldname(label):
     return label.strip().lower().replace(" ", "_") 
     
 def update_correct_item_group(item, row):
-    Teilegruppe =  row.get("Teilegruppe") or row.get("teilegruppe")
+    Teilegruppe =  row.get("Teilegruppe") or row.get("teilegruppe") or row.get("Commodity Group") or row.get("commodity group")
     existing_item_group = frappe.db.get_value("Item", item, "item_group")
     if item_group := frappe.db.exists("Item Group", {"custom_teilegruppe" : Teilegruppe}):
         if existing_item_group != item_group:

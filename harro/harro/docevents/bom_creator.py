@@ -63,18 +63,19 @@ def extract_bom_item_data(file_path, bom_c):
         mengeneinheit = row.get("Mengeneinheit")
         StrukturklasseKopf = row.get("StrukturklasseKopf")
         StrukturklassePos = row.get("StrukturklassePos")
-
+        
         uom = None
         if mengeneinheit:
             if stock_uom := frappe.db.exists("UOM", {"custom_german_uom" : mengeneinheit}):
                 uom = stock_uom
         
-
         # Create Item if it doesn't exist
         if not frappe.db.exists("Item", artikel ):
             create_item(artikel, row, uom, structureclass=StrukturklassePos)
         if not frappe.db.exists("Item", baugruppe ):
             create_item(baugruppe, row, uom=None, structureclass=StrukturklasseKopf)
+
+        update_correct_item_group(artikel, row)
 
         new_row = {
             "item_code": artikel,
@@ -97,7 +98,11 @@ def extract_bom_item_data(file_path, bom_c):
 
 
 def create_item(item, row, uom=None, structureclass= None):
-    item_group = "All Item Groups"
+    Teilegruppe =  row.get("Teilegruppe") or row.get("teilegruppe") or row.get("Commodity Group") or row.get("commodity group")
+    if item_group := frappe.db.exists("Item Group", {"custom_teilegruppe" : Teilegruppe}):
+        item_group = item_group
+    else:
+        item_group = "All Item Groups"
     if StructureClass := frappe.db.exists("Structure Class Head", {"strukturklasse" : structureclass}):
         structureclass = StructureClass
     else:
@@ -204,3 +209,9 @@ def create_item_group():
 def make_fieldname(label):
     return label.strip().lower().replace(" ", "_") 
     
+def update_correct_item_group(item, row):
+    Teilegruppe =  row.get("Teilegruppe") or row.get("teilegruppe") or row.get("Commodity Group") or row.get("commodity group")
+    existing_item_group = frappe.db.get_value("Item", item, "item_group")
+    if item_group := frappe.db.exists("Item Group", {"custom_teilegruppe" : Teilegruppe}):
+        if existing_item_group != item_group:
+            frappe.db.set_value("Item", item, "item_group", existing_item_group)

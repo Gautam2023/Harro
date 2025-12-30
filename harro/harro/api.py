@@ -1,4 +1,6 @@
 import frappe
+from frappe.utils import today, get_datetime, now_datetime, time_diff_in_seconds, now
+from harro.harro.docevents.task import update_stop_task_log
 
 @frappe.whitelist()
 def get_supplier_list(doctype, txt, searchfield, start, page_len, filters):
@@ -65,3 +67,68 @@ def get_open_tasks_for_user():
             "status": ["not in", ["Completed","Cancelled","Template"]]
         }
     }
+
+
+
+def update_the_task_timer_based_on_shift_end():
+
+    employees = frappe.get_all(
+        "Employee",
+        filters={"default_shift": ["!=", ""]},
+        fields=["name", "default_shift"]
+    )
+
+    if not employees:
+        return
+
+    for employee in employees:
+
+        shift_end_time = frappe.db.get_value(
+            "Shift Type",
+            employee.default_shift,
+            "end_time"
+        )
+
+        if not shift_end_time:
+            continue
+
+        # convert to datetime
+        shift_end_dt = get_datetime(f"{today()} {shift_end_time}")
+        current_dt = now_datetime()
+
+        diff_minutes = time_diff_in_seconds(shift_end_dt, current_dt) / 60
+
+        # Only process tasks within -5 to 0 min of shift end
+        if not (-5 <= diff_minutes <= 0):
+            continue
+
+        task_list = frappe.db.sql(
+            """
+            SELECT 
+                t.name AS task_name,
+                td.name AS timesheet_detail
+            FROM `tabTask` t
+            LEFT JOIN `tabTimesheet Detail` td 
+                ON td.parent = t.name
+            WHERE 
+                t.status != 'Cancelled'
+                AND t.custom_employee__assign_to_employee_ = %(employee)s
+                AND (td.to_time IS NULL OR td.to_time = '')
+                AND td.creation < %(now)s
+            """,
+            {
+                "employee": employee.name,
+                "now": shift_end_dt
+            },
+            as_dict=True,
+        )
+    
+        for row in task_list:
+            arg = {
+                    "task" : row.task_name,
+                    "to_time" : now()
+                }
+            
+            update_stop_task_log(arg, start_new = True)
+        
+

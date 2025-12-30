@@ -1,4 +1,5 @@
 import html2canvas from "html2canvas";
+frappe.provide("harro");
 
 harro.HierarchyChart = class {
     constructor(doctype, wrapper, method) {

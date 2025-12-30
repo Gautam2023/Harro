@@ -228,11 +228,10 @@ def get_project_hierarchy(project, parent=None):
                 "reports_to": emp.id,
                 "name": ["in", project_employees],
                 "status": "Active"
-            },
-            count=True
+            }
         )
         emp.connections = direct_reports
-        emp.expandable = direct_reports > 0
+        emp.expandable = len(direct_reports) > 0
     
     frappe.log_error(message=frappe.as_json(employees), title=f"Project hierarchy for {project}")
     return employees

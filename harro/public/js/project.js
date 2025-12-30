@@ -5,11 +5,11 @@ frappe.ui.form.on("Project", {
         }
         if (!frm.doc.name) return;
 
-        const wrapper = frm.fields_dict.custom_chart.$wrapper;
+        const wrapper = frm.fields_dict.chart.$wrapper;
         wrapper.empty();
 
         $(wrapper).bind("show", () => {
-            frappe.require("harro_hierarchy_chart.bundle.js", () => {
+            frappe.require("harro.bundle.js", () => {
                 if (!window.harro || !window.harro.HierarchyChart) {
                     console.error("harro.HierarchyChart not loaded!");
                     return;

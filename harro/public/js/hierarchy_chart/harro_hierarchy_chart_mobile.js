@@ -1,3 +1,4 @@
+frappe.provide("harro");
 harro.HierarchyChartMobile = class {
     constructor(doctype, wrapper, method) {
         // 'wrapper' is a DOM element from HTML field

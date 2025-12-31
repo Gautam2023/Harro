@@ -1,6 +1,7 @@
 import frappe
 from frappe.utils import today, get_datetime, now_datetime, time_diff_in_seconds, now
 from harro.harro.docevents.task import update_stop_task_log
+from harro.harro.docevents.employee_checkin import update_unproductive_log_employee_wise, make_time_log
 
 @frappe.whitelist()
 def get_supplier_list(doctype, txt, searchfield, start, page_len, filters):
@@ -130,5 +131,76 @@ def update_the_task_timer_based_on_shift_end():
                 }
             
             update_stop_task_log(arg, start_new = True)
-        
 
+
+def update_the_job_card_timer_based_on_shift_end():
+
+    employees = frappe.get_all(
+        "Employee",
+        filters={"default_shift": ["!=", ""]},
+        fields=["name", "default_shift"]
+    )
+
+    if not employees:
+        return
+
+    for employee in employees:
+
+        shift_end_time = frappe.db.get_value(
+            "Shift Type",
+            employee.default_shift,
+            "end_time"
+        )
+
+        if not shift_end_time:
+            continue
+
+        # convert to datetime
+        shift_end_dt = get_datetime(f"{today()} {shift_end_time}")
+        current_dt = now_datetime()
+
+        diff_minutes = time_diff_in_seconds(shift_end_dt, current_dt) / 60
+
+        # Only process tasks within -5 to 0 min of shift end
+        if not (-5 <= diff_minutes <= 0):
+            continue
+
+        job_card_list = frappe.db.sql(
+            """
+            SELECT 
+                jc.name AS job_card, jc.project,
+                jct.name AS timesheet_detail
+            FROM `tabJob Card` jc
+            LEFT JOIN `tabJob Card Time Log` jct
+                ON jct.parent = jc.name
+            WHERE 
+                jc.status = 'Work In Progress'
+                AND jct.employee = %(employee)s
+                AND (jct.to_time IS NULL OR jct.to_time = '')
+                AND jct.creation < %(now)s
+            """,
+            {
+                "employee": employee.name,
+                "now": shift_end_dt
+            },
+            as_dict=True,
+        )
+    
+        for row in job_card_list:
+            job_card = row.job_card
+            employee = employee.name
+            args = {
+                "activity_type": "Shift End",
+                "from_time": now_datetime(),
+                "project": row.project,
+            }
+            update_unproductive_log_employee_wise(args, job_card, employee)
+
+            args = {
+                'job_card_id': row.job_card,
+                "complete_time": now(),
+                "status": "On Hold",
+                "completed_qty": 0,
+            }
+
+            make_time_log(args)

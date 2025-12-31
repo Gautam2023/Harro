@@ -154,7 +154,7 @@ def update_task_timer():
                     send_timer_stopper_notification(doc, permissable_hours)
 
 def send_timer_stopper_notification(doc, permissible_hours):
-    employee_name = frappe.db.get_value("Employee", doc.custom_employee__assign_to_employee_, "full_name")
+    employee_name = frappe.db.get_value("Employee", doc.custom_employee__assign_to_employee_, "employee_name")
     user_id = frappe.db.get_value("Employee", doc.custom_employee__assign_to_employee_, "user_id")
     if not user_id:
         return

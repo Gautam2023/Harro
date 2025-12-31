@@ -365,6 +365,7 @@ def stop_timer_for_jobcard_every_two_hours():
         from_time = doc.time_logs[-1].from_time
         current_time = get_datetime()
         diff_hours = (current_time - from_time).total_seconds() / 3600
+        employee = doc.time_logs[-1].employee
 
         permissable_hours = frappe.db.get_single_value(
             "Projects Settings",
@@ -374,7 +375,7 @@ def stop_timer_for_jobcard_every_two_hours():
         if diff_hours >= permissable_hours:
 
             # Log unproductive entry
-            
+
             args = {
                 "activity_type": "Reached Permissable Work Hours",
                 "from_time": now_datetime(),
@@ -393,13 +394,7 @@ def stop_timer_for_jobcard_every_two_hours():
 
             # ============== EMAIL NOTIFICATION =================
             try:
-                # get employee from job card
-                employee = frappe.db.get_value(
-                    "Job Card",
-                    row.name,
-                    "employee"
-                )
-
+            
                 if not employee:
                     continue
 

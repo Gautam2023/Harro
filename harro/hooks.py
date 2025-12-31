@@ -193,7 +193,8 @@ doc_events = {
         "validate" : "harro.harro.docevents.project.validate"
     },
     "Task" : {
-        "validate" : "harro.harro.docevents.task.validate"
+        "validate" : "harro.harro.docevents.task.validate",
+        "on_update" : "harro.harro.docevents.task.update_parent_task_dependency_status"
     },
     "Material Request": {
         "on_update": "harro.harro.docevents.material_request.on_update",

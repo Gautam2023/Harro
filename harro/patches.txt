@@ -14,3 +14,4 @@ harro.patches.create_field_for_item_master
 harro.patches.job_card_field_remove_and_add
 harro.patches.update_acitivity_type
 harro.patches.update_status_options
+harro.patches.update_task_dependency_status

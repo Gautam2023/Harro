@@ -225,7 +225,9 @@ doc_events = {
 scheduler_events = {
 	"cron" : {
         "*/15 * * * *" : [
-            "harro.harro.docevents.task.update_task_timer"
+            "harro.harro.docevents.task.update_task_timer",
+            "harro.harro.api.update_the_task_timer_based_on_shift_end",
+            "harro.harro.api.update_the_job_card_timer_based_on_shift_end"
         ]
     }
 }

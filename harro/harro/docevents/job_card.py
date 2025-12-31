@@ -18,7 +18,10 @@ def on_cancel(self, method):
 
 @frappe.whitelist()
 def update_unproductive_log(arg, job_card):
-    args = json.loads(arg)
+    try:
+        args = json.loads(arg)
+    except:
+        args = arg
     doc = frappe.get_doc("Job Card", job_card)
 
     employees = doc.employee

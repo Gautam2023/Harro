@@ -354,22 +354,99 @@ def update_the_job_card_timer_based_on_shift_end():
 
 def stop_timer_for_jobcard_every_two_hours():
     jobcard_list = frappe.db.get_list("Job Card", {"status" : 'Work In Progress'})
+
     for row in jobcard_list:
         doc = frappe.get_doc("Job Card", row.name)
-        if doc.custom_unproductive_work_timelogs:
-            from_time = doc.custom_unproductive_work_timelogs[-1].from_time
-            current_time = get_datetime()
-            diff_hours = (current_time - from_time).total_seconds() / 3600
-            permissable_hours = frappe.db.get_single_value("Projects Settings", "job_card_cut_of_time")
-            if diff_hours >= permissable_hours:
-                doc.custom_unproductive_work_timelogs[-1].to_time = now()
-                doc.flags.ignore_permissions = True
-                doc.save()
-            
+
+        if not doc.custom_unproductive_work_timelogs:
+            continue
+
+        from_time = doc.custom_unproductive_work_timelogs[-1].from_time
+        current_time = get_datetime()
+        diff_hours = (current_time - from_time).total_seconds() / 3600
+
+        permissable_hours = frappe.db.get_single_value(
+            "Projects Settings",
+            "job_card_cut_of_time"
+        )
+
+        if diff_hours >= permissable_hours:
+
+            # close current unproductive log
+            doc.custom_unproductive_work_timelogs[-1].to_time = now()
+            doc.flags.ignore_permissions = True
+            doc.save()
+
+            # stop time log
             args = {
-                    'job_card_id': row.name,
-                    "complete_time": get_datetime(),
-                    "status": "On Hold",
-                    "completed_qty": 0,
-                }
+                'job_card_id': row.name,
+                "complete_time": get_datetime(),
+                "status": "On Hold",
+                "completed_qty": 0,
+            }
             make_time_log(args)
+
+            # ============== EMAIL NOTIFICATION =================
+            try:
+                # get employee from job card
+                employee = frappe.db.get_value(
+                    "Job Card",
+                    row.name,
+                    "employee"
+                )
+
+                if not employee:
+                    continue
+
+                # get user_id
+                user = frappe.db.get_value(
+                    "Employee",
+                    employee,
+                    ["user_id"],
+                    as_dict=True
+                )
+
+                if not user or not user.user_id:
+                    continue
+
+                # get email id
+                recipient_email = user.user_id
+
+                if not recipient_email:
+                    continue
+
+                # job card link
+                job_card_link = get_url_to_form("Job Card", row.name)
+
+                frappe.sendmail(
+                    recipients=[recipient_email],
+                    subject="Job Card Timer Stopped — Cut-off Limit Reached",
+                    message=f"""
+                        <p>Hi,</p>
+
+                        <p>
+                            Your Job Card timer has been stopped automatically because 
+                            the configured cut-off time of <b>{permissable_hours} hour(s)</b> 
+                            has been reached.
+                        </p>
+
+                        <p>
+                            <b>Job Card:</b>
+                            <a href="{job_card_link}">{row.name}</a>
+                        </p>
+
+                        <p>
+                            If you are still working on this job,
+                            please update the Time Log or restart the timer.
+                        </p>
+
+                        <p>Thanks,<br>System</p>
+                    """
+                )
+
+            except Exception:
+                frappe.log_error(
+                    frappe.get_traceback(),
+                    f"Job Card Cut-off Timer: Error sending email for Job Card {row.name}"
+                )
+

@@ -3,6 +3,7 @@ from frappe.utils import today, get_datetime, now_datetime, time_diff_in_seconds
 from harro.harro.docevents.task import update_stop_task_log
 from harro.harro.docevents.employee_checkin import update_unproductive_log_employee_wise, make_time_log
 from frappe.utils import get_url_to_form
+from harro.harro.docevents.job_card import update_unproductive_log
 
 
 @frappe.whitelist()
@@ -353,15 +354,15 @@ def update_the_job_card_timer_based_on_shift_end():
 
 
 def stop_timer_for_jobcard_every_two_hours():
-    jobcard_list = frappe.db.get_list("Job Card", {"status" : 'Work In Progress'})
+    jobcard_list = frappe.db.get_all("Job Card", filters={"status" : 'Work In Progress'}, fields=["name", "project"])
 
     for row in jobcard_list:
         doc = frappe.get_doc("Job Card", row.name)
 
-        if not doc.custom_unproductive_work_timelogs:
+        if not doc.time_logs:
             continue
 
-        from_time = doc.custom_unproductive_work_timelogs[-1].from_time
+        from_time = doc.time_logs[-1].from_time
         current_time = get_datetime()
         diff_hours = (current_time - from_time).total_seconds() / 3600
 
@@ -372,10 +373,14 @@ def stop_timer_for_jobcard_every_two_hours():
 
         if diff_hours >= permissable_hours:
 
-            # close current unproductive log
-            doc.custom_unproductive_work_timelogs[-1].to_time = now()
-            doc.flags.ignore_permissions = True
-            doc.save()
+            # Log unproductive entry
+            
+            args = {
+                "activity_type": "Reached Permissable Work Hours",
+                "from_time": now_datetime(),
+                "project": row.get("project"),
+            }
+            update_unproductive_log(args, row.name)
 
             # stop time log
             args = {

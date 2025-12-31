@@ -144,7 +144,7 @@ def update_task_timer():
             from_time = get_datetime(doc.unproductive_work_timelogs[-1].from_time)
             current_time = get_datetime()
             diff_hours = (current_time - from_time).total_seconds() / 3600
-            permissable_hours = frappe.db.get_single_value("HR Settings", "task_permissable_limit")
+            permissable_hours = frappe.db.get_single_value("Projects Settings", "task_cut_of_time")
             if diff_hours >= permissable_hours:
                 doc.unproductive_work_timelogs[-1].to_time = now()
                 doc.working_status = "On Hold"
@@ -154,8 +154,8 @@ def update_task_timer():
                     send_timer_stopper_notification(doc, permissable_hours)
 
 def send_timer_stopper_notification(doc, permissible_hours):
-    employee_name = frappe.db.get_value("Employee", doc.employee, "full_name")
-    user_id = frappe.db.get_value("Employee", doc.employee, "user_id")
+    employee_name = frappe.db.get_value("Employee", doc.custom_employee__assign_to_employee_, "full_name")
+    user_id = frappe.db.get_value("Employee", doc.custom_employee__assign_to_employee_, "user_id")
     if not user_id:
         return
     message = f"""

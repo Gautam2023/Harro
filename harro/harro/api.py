@@ -2,6 +2,8 @@ import frappe
 from frappe.utils import today, get_datetime, now_datetime, time_diff_in_seconds, now
 from harro.harro.docevents.task import update_stop_task_log
 from harro.harro.docevents.employee_checkin import update_unproductive_log_employee_wise, make_time_log
+from frappe.utils import get_url_to_form
+
 
 @frappe.whitelist()
 def get_supplier_list(doctype, txt, searchfield, start, page_len, filters):
@@ -117,7 +119,8 @@ def update_the_task_timer_based_on_shift_end():
                 LEFT JOIN `tabTimesheet Detail` td 
                     ON td.parent = t.name
                 WHERE 
-                    t.status != 'Cancelled'
+                    t.status != 'Cancelled' AND
+                    t.working_status = 'Work In Progress'
                     AND t.custom_employee__assign_to_employee_ = %(employee)s
                     AND (td.to_time IS NULL OR td.to_time = '')
                     AND td.creation < %(now)s
@@ -143,13 +146,65 @@ def update_the_task_timer_based_on_shift_end():
                     "to_time": now()
                 }
 
+                # stop timer
                 update_stop_task_log(arg, start_new=True)
+
+                # --- email notification ---
+                try:
+                    user = frappe.db.get_value(
+                        "Employee",
+                        employee.name,
+                        ["user_id"],
+                        as_dict=True
+                    )
+
+                    if not user or not user.user_id:
+                        continue
+
+                    # get email of the user
+                    recipient_email = user.user_id
+
+                    if not recipient_email:
+                        continue
+
+                    # task link
+                    task_link = get_url_to_form("Task", row.task_name)
+
+                    frappe.sendmail(
+                        recipients=[recipient_email],
+                        subject="Task Timer Stopped Due to Shift End",
+                        message=f"""
+                            <p>Hi,</p>
+                            <p>
+                                Your task timer has been stopped automatically because your
+                                working shift has ended.
+                            </p>
+
+                            <p>
+                                <b>Task:</b> <a href="{task_link}">{row.task_name}</a>
+                            </p>
+
+                            <p>
+                                If you are still working on this task,
+                                please update the Timesheet or restart the task timer.
+                            </p>
+
+                            <p>Thanks</p>
+                        """
+                    )
+
+                except Exception:
+                    frappe.log_error(
+                        frappe.get_traceback(),
+                        f"Shift End Task Timer: Error emailing for task {row.task_name} employee {employee.name}"
+                    )
 
             except Exception:
                 frappe.log_error(
                     frappe.get_traceback(),
                     f"Shift End Task Timer: Error updating task {row.task_name} for employee {employee.name}"
                 )
+
 
 
 def update_the_job_card_timer_based_on_shift_end():
@@ -237,8 +292,84 @@ def update_the_job_card_timer_based_on_shift_end():
 
                 make_time_log(args)
 
+                try:
+                    # get user_id from employee
+                    user = frappe.db.get_value(
+                        "Employee",
+                        emp.name,
+                        ["user_id"],
+                        as_dict=True
+                    )
+
+                    if not user or not user.user_id:
+                        continue
+
+                    # get email from user
+                    recipient_email = user.user_id
+
+                    if not recipient_email:
+                        continue
+
+                    # Job Card link
+                    job_card_link = get_url_to_form("Job Card", row.job_card)
+
+                    frappe.sendmail(
+                        recipients=[recipient_email],
+                        subject="Job Card Timer Stopped Due to Shift End",
+                        message=f"""
+                            <p>Hi,</p>
+
+                            <p>
+                                Your Job Card timer has been stopped automatically 
+                                because your shift has ended.
+                            </p>
+
+                            <p>
+                                <b>Job Card:</b> 
+                                <a href="{job_card_link}">{row.job_card}</a>
+                            </p>
+
+                            <p>
+                                If you are still working on this job,
+                                please update the Time Log or restart the timer.
+                            </p>
+
+                            <p>Thanks</p>
+                        """
+                    )
+
+                except Exception:
+                    frappe.log_error(
+                        frappe.get_traceback(),
+                        f"Shift End Job Card Timer: Error emailing for Job Card {row.job_card} employee {emp.name}"
+                    )
+
             except Exception:
                 frappe.log_error(
                     frappe.get_traceback(),
                     f"Shift End Job Card Timer: Error updating Job Card {row.job_card} for employee {emp.name}"
                 )
+
+
+
+def stop_timer_for_jobcard_every_two_hours():
+    jobcard_list = frappe.db.get_list("Job Card", {"status" : 'Work In Progress'})
+    for row in jobcard_list:
+        doc = frappe.get_doc("Job Card", row.name)
+        if doc.custom_unproductive_work_timelogs:
+            from_time = doc.custom_unproductive_work_timelogs[-1].from_time
+            current_time = get_datetime()
+            diff_hours = (current_time - from_time).total_seconds() / 3600
+            permissable_hours = frappe.db.get_single_value("Projects Settings", "job_card_cut_of_time")
+            if diff_hours >= permissable_hours:
+                doc.custom_unproductive_work_timelogs[-1].to_time = now()
+                doc.flags.ignore_permissions = True
+                doc.save()
+            
+            args = {
+                    'job_card_id': row.name,
+                    "complete_time": get_datetime(),
+                    "status": "On Hold",
+                    "completed_qty": 0,
+                }
+            make_time_log(args)

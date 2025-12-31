@@ -150,7 +150,7 @@ def update_task_timer():
                 doc.working_status = "On Hold"
                 doc.flags.ignore_permissions = True
                 doc.save()
-                if doc.employee:
+                if doc.custom_employee__assign_to_employee_:
                     send_timer_stopper_notification(doc, permissable_hours)
 
 def send_timer_stopper_notification(doc, permissible_hours):

@@ -20,7 +20,7 @@ frappe.ui.form.on("Task", {
         }
         frm.trigger("make_dashboard");
         // 
-        if (frm.doc.__islocal) return;
+        
 
 		frm.dashboard.refresh();
 		frm.trigger('show_task_dependency_progress');
@@ -107,7 +107,8 @@ frappe.ui.form.on("Task", {
     },
     // 
     show_task_dependency_progress(frm) {
-
+        if (frm.doc.__islocal) return;
+        
 		let rows = frm.doc.depends_on || [];
 		let completed = 0;
 		let total = 0;

@@ -83,9 +83,9 @@ def update_time_log(arg):
 
 @frappe.whitelist()
 def update_stop_task_log(arg, start_new=False):
-    if not start_new:
+    try:
         args = json.loads(arg)
-    else:
+    except:
         args = arg
     doc = frappe.get_doc("Task", args.get("task"))
     row = doc.unproductive_work_timelogs[-1]
@@ -146,10 +146,11 @@ def update_task_timer():
             diff_hours = (current_time - from_time).total_seconds() / 3600
             permissable_hours = frappe.db.get_single_value("Projects Settings", "task_cut_of_time")
             if diff_hours >= permissable_hours:
-                doc.unproductive_work_timelogs[-1].to_time = now()
-                doc.working_status = "On Hold"
-                doc.flags.ignore_permissions = True
-                doc.save()
+                arg = {
+                    "task" : row.name,
+                    "to_time" : now()
+                }
+                update_stop_task_log(arg, start_new=True)
                 if doc.custom_employee__assign_to_employee_:
                     send_timer_stopper_notification(doc, permissable_hours)
 

@@ -182,3 +182,29 @@ def get_employee_id(user):
         return employee
     else:
         None
+
+
+## custom method to updated status of dependent task in parent task child table
+def update_parent_task_dependency_status(doc, method=None):
+    current_task = doc.name
+    current_status = doc.status
+
+    parent_tasks = frappe.get_all(
+        "Task Depends On",
+        filters={"task": current_task},
+        fields=["parent"]
+    )
+
+    for row in parent_tasks:
+        parent_task = frappe.get_doc("Task", row.parent)
+        updated = False
+
+        for dep in parent_task.depends_on:
+            if dep.task == current_task:
+                if dep.custom_status != current_status:
+                    dep.custom_status = current_status
+                    updated = True
+
+        if updated:
+            parent_task.flags.ignore_permissions = True
+            parent_task.save()

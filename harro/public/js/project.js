@@ -1,12 +1,41 @@
 frappe.ui.form.on("Project", {
     refresh(frm) {
-        if(!frm.is_new()){
+        if (!frm.is_new()) {
             prepare_chart_design(frm)
         }
+        if (!frm.doc.name) return;
+
+        const wrapper = frm.fields_dict.custom_chart.$wrapper;
+        wrapper.empty();
+
+        $(wrapper).bind("show", () => {
+            frappe.require("harro_hierarchy_chart.bundle.js", () => {
+                if (!window.harro || !window.harro.HierarchyChart) {
+                    console.error("harro.HierarchyChart not loaded!");
+                    return;
+                }
+
+                let chart;
+                const method = "harro.harro.docevents.project.get_project_hierarchy";
+
+                if (frappe.is_mobile()) {
+                    chart = new harro.HierarchyChartMobile("Employee", wrapper[0], method);
+                } else {
+                    chart = new harro.HierarchyChart("Employee", wrapper[0], method);
+                }
+
+                chart.args = {
+                    project: frm.doc.name
+                };
+
+                chart.show();
+            });
+        });
+        $(wrapper).trigger("show");
     }
 });
 
-function prepare_chart_design(frm){
+function prepare_chart_design(frm) {
     if (!frm.fields_dict.effort_overview) return;
 
     const wrapper = frm.fields_dict.effort_overview.$wrapper;
@@ -35,14 +64,14 @@ function prepare_chart_design(frm){
     const t_wrapper = frm.fields_dict.custom_timesheet_chart.$wrapper;
     if (!t_wrapper.find(".multi-effort-wrapper").length) {
         frappe.call({
-        method : "harro.harro.docevents.project.get_activity",
-        args:{
-            unproductive : 0
-        },
-        callback:function(r){
-            acivity_type = r.message
-        
-        t_wrapper.html(`
+            method: "harro.harro.docevents.project.get_activity",
+            args: {
+                unproductive: 0
+            },
+            callback: function (r) {
+                acivity_type = r.message
+
+                t_wrapper.html(`
             <div class="multi-effort-wrapper" style="display:flex; justify-content:space-around; flex-wrap:wrap; gap:20px;">
                 ${acivity_type.map((title, i) => `
                     <div class="effort-chart-wrapper" 
@@ -58,22 +87,22 @@ function prepare_chart_design(frm){
                 `).join('')}
             </div>
         `);
-        }
-    })
+            }
+        })
     }
 
     acivity_type = []
     const un_wrapper = frm.fields_dict.custom_unproductive_chart.$wrapper;
     if (!un_wrapper.find(".multi-effort-wrapper").length) {
         frappe.call({
-        method : "harro.harro.docevents.project.get_activity",
-        args:{
-            unproductive : 1
-        },
-        callback:function(r){
-            acivity_type = r.message
-        
-        un_wrapper.html(`
+            method: "harro.harro.docevents.project.get_activity",
+            args: {
+                unproductive: 1
+            },
+            callback: function (r) {
+                acivity_type = r.message
+
+                un_wrapper.html(`
             <div class="multi-effort-wrapper" style="display:flex; justify-content:space-around; flex-wrap:wrap; gap:20px;">
                 ${acivity_type.map((title, i) => `
                     <div class="effort-chart-wrapper" 
@@ -89,8 +118,8 @@ function prepare_chart_design(frm){
                 `).join('')}
             </div>
         `);
-        }
-    })
+            }
+        })
     }
 
     loadChartJS(() => {
@@ -245,7 +274,7 @@ function renderSpeedometer(frm, set) {
 function renderAllproductiveTimesheetSpeedometers(frm) {
     frappe.call({
         method: "harro.harro.docevents.project.get_timesheet_working_hours",
-        args: { name: frm.doc.name, unproductive : 0 },
+        args: { name: frm.doc.name, unproductive: 0 },
         callback: function (r) {
             if (!r.message) return;
             const dataSets = r.message
@@ -354,9 +383,9 @@ function renderproductiveTimesheetSpeedometer(frm, set) {
 function renderAllunproductiveTimesheetSpeedometers(frm) {
     frappe.call({
         method: "harro.harro.docevents.project.get_timesheet_working_hours",
-        args: { 
+        args: {
             name: frm.doc.name,
-            unproductive : 1
+            unproductive: 1
         },
         callback: function (r) {
             if (!r.message) return;

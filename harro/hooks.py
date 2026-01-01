@@ -26,7 +26,10 @@ app_license = "mit"
 
 # include js, css files in header of desk.html
 app_include_css = "/assets/harro/css/harro.css"
-app_include_js = "/assets/harro/js/frappe/views/gantt/gantt_view.js"
+app_include_js = [
+    "/assets/harro/js/frappe/views/gantt/gantt_view.js",
+    "/assets/harro/js/harro_hierarchy_chart.bundle.js"
+]
 
 # include js, css files in header of web template
 # web_include_css = "/assets/harro/css/harro.css"
@@ -190,7 +193,8 @@ doc_events = {
         "validate" : "harro.harro.docevents.project.validate"
     },
     "Task" : {
-        "validate" : "harro.harro.docevents.task.validate"
+        "validate" : "harro.harro.docevents.task.validate",
+        "on_update" : "harro.harro.docevents.task.update_parent_task_dependency_status"
     },
     "Material Request": {
         "on_update": "harro.harro.docevents.material_request.on_update",

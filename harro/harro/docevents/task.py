@@ -10,6 +10,13 @@ def validate(self, method=None):
     if not self.is_new():
         update_task_details_of_parent_task(self)
     
+    if not self.custom_assigned_to_responsible_user and self.custom_employee__assign_to_employee_:
+        user = frappe.db.get_value("Employee", self.custom_employee__assign_to_employee_, "user_id")
+        self.custom_assigned_to_responsible_user = user
+    
+    if not self.custom_employee__assign_to_employee_ and self.custom_assigned_to_responsible_user:
+        if employee := frappe.db.exists("Employee", {"user_id" : self.custom_assigned_to_responsible_user}):
+            self.custom_employee__assign_to_employee_ = employee
 
 def update_task_details_of_parent_task(self):
     if self.depends_on:
@@ -23,13 +30,13 @@ def update_task_details_of_parent_task(self):
                 task_doc = frappe.get_doc("Task", row.task)
 
                 # Update only if values are different
-                if task_doc.exp_start_date and row.custom_expected_start_date and task_doc.exp_start_date != row.custom_expected_start_date:
+                if row.custom_expected_start_date and task_doc.exp_start_date != row.custom_expected_start_date:
                     frappe.db.set_value("Task", row.task, "exp_start_date", row.custom_expected_start_date)
 
-                if task_doc.exp_end_date and row.custom_expected_end_date and task_doc.exp_end_date != row.custom_expected_end_date:
+                if row.custom_expected_end_date and task_doc.exp_end_date != row.custom_expected_end_date:
                     frappe.db.set_value("Task", row.task, "exp_end_date", row.custom_expected_end_date)
 
-                if task_doc.expected_time and row.custom_expected_time and task_doc.expected_time != row.custom_expected_time:
+                if row.custom_expected_time and task_doc.expected_time != row.custom_expected_time:
                     frappe.db.set_value("Task", row.task, "expected_time", row.custom_expected_time)
 
                 if not task_doc._assign:
@@ -83,6 +90,11 @@ def update_stop_task_log(arg, start_new=False):
     doc = frappe.get_doc("Task", args.get("task"))
     row = doc.unproductive_work_timelogs[-1]
     doc.unproductive_work_timelogs[-1].to_time = args.get("to_time")
+    if not row.get("to_time") or row.get("to_time") == '':
+        row.update({
+            "to_time" : args.get("to_time")
+        })
+
     doc.flags.ignore_permissions = True
     doc.save()
 
@@ -96,7 +108,7 @@ def update_stop_task_log(arg, start_new=False):
         timesheet_doc.append("time_logs", {
             "activity_type" : row.get("activity_type"),
             "from_time" : row.get("from_time"),
-            "from_time" : row.get("to_time"),
+            "to_time" : row.get("to_time"),
             "employee" : row.get("employee"),
             "project" : row.get("project"),
             "task" : args.get("task")
@@ -113,7 +125,7 @@ def update_stop_task_log(arg, start_new=False):
                 {
                     "activity_type" : row.get("activity_type"),
                     "from_time" : row.get("from_time"),
-                    "from_time" : row.get("to_time"),
+                    "to_time" : row.get("to_time"),
                     "employee" : row.get("employee"),
                     "project" : row.get("project"),
                     "task" : args.get("task")
@@ -132,18 +144,18 @@ def update_task_timer():
             from_time = get_datetime(doc.unproductive_work_timelogs[-1].from_time)
             current_time = get_datetime()
             diff_hours = (current_time - from_time).total_seconds() / 3600
-            permissable_hours = frappe.db.get_single_value("HR Settings", "task_permissable_limit")
+            permissable_hours = frappe.db.get_single_value("Projects Settings", "task_cut_of_time")
             if diff_hours >= permissable_hours:
                 doc.unproductive_work_timelogs[-1].to_time = now()
                 doc.working_status = "On Hold"
                 doc.flags.ignore_permissions = True
                 doc.save()
-                if doc.employee:
+                if doc.custom_employee__assign_to_employee_:
                     send_timer_stopper_notification(doc, permissable_hours)
 
 def send_timer_stopper_notification(doc, permissible_hours):
-    employee_name = frappe.db.get_value("Employee", doc.employee, "full_name")
-    user_id = frappe.db.get_value("Employee", doc.employee, "user_id")
+    employee_name = frappe.db.get_value("Employee", doc.custom_employee__assign_to_employee_, "employee_name")
+    user_id = frappe.db.get_value("Employee", doc.custom_employee__assign_to_employee_, "user_id")
     if not user_id:
         return
     message = f"""

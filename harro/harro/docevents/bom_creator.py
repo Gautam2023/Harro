@@ -54,31 +54,34 @@ def extract_bom_item_data(file_path, bom_c):
     # Map to track FG item → child table row idx
     fg_row_map = {}
 
-    for row in data:
+    for i, row in enumerate(data):
+        if not row.get("Artikel") or row.get("Artikel") =="None" or row.get("Artikel") == '':
+            continue
         artikel = row.get("Artikel")
         baugruppe = row.get("Baugruppe")
         menge = row.get("Menge")
         mengeneinheit = row.get("Mengeneinheit")
         StrukturklasseKopf = row.get("StrukturklasseKopf")
         StrukturklassePos = row.get("StrukturklassePos")
-
+        
         uom = None
         if mengeneinheit:
             if stock_uom := frappe.db.exists("UOM", {"custom_german_uom" : mengeneinheit}):
                 uom = stock_uom
-
+        
         # Create Item if it doesn't exist
         if not frappe.db.exists("Item", artikel ):
             create_item(artikel, row, uom, structureclass=StrukturklassePos)
         if not frappe.db.exists("Item", baugruppe ):
             create_item(baugruppe, row, uom=None, structureclass=StrukturklasseKopf)
 
+        update_correct_item_group(artikel, row)
+
         new_row = {
             "item_code": artikel,
             "fg_item": baugruppe,
             "qty" : menge
         }
-
         # Set parent_row_no only if FG item already exists in table
         if baugruppe in fg_row_map:
             new_row["parent_row_no"] = fg_row_map[baugruppe]
@@ -95,7 +98,13 @@ def extract_bom_item_data(file_path, bom_c):
 
 
 def create_item(item, row, uom=None, structureclass= None):
-    item_group = "All Item Groups"
+    Teilegruppe =  str(row.get("Commodity Group") or row.get("commodity group") or row.get("Teilegruppe") or row.get("teilegruppe"))
+    custom_teilegruppe = Teilegruppe.replace(".0",'')
+
+    if item_groups := frappe.db.sql(f"""Select name From `tabItem Group` where  custom_teilegruppe = '{custom_teilegruppe}' """, as_dict=1):
+        item_group = item_groups[0].get("name")
+    else:
+        item_group = "All Item Groups"
     if StructureClass := frappe.db.exists("Structure Class Head", {"strukturklasse" : structureclass}):
         structureclass = StructureClass
     else:
@@ -106,7 +115,7 @@ def create_item(item, row, uom=None, structureclass= None):
                 "doctype": "Structure Class Head"
             }
         ).insert()
-
+    
     item_doc = frappe.get_doc({
                 "doctype" : "Item",
                 "item_code" : item,
@@ -202,3 +211,11 @@ def create_item_group():
 def make_fieldname(label):
     return label.strip().lower().replace(" ", "_") 
     
+def update_correct_item_group(item, row):
+    Teilegruppe =  str(row.get("Commodity Group") or row.get("commodity group") or row.get("Teilegruppe") or row.get("teilegruppe"))
+    custom_teilegruppe = Teilegruppe.replace(".0",'')
+    existing_item_group = frappe.db.get_value("Item", item, "item_group")
+    if item_groups := frappe.db.sql(f"""Select name From `tabItem Group` where  custom_teilegruppe = '{custom_teilegruppe}' """, as_dict=1):
+        item_group = item_groups[0].get("name")
+        if existing_item_group != item_group:
+            frappe.db.set_value("Item", item, "item_group", item_group)

@@ -199,6 +199,9 @@ doc_events = {
     "Material Request": {
         "on_update": "harro.harro.docevents.material_request.on_update",
         "validate" : "harro.harro.docevents.material_request.validate",
+    },
+    "Employee Checkin" : {
+        "after_insert" : "harro.harro.docevents.employee_checkin.after_insert"
     }
 }
 
@@ -226,7 +229,10 @@ doc_events = {
 scheduler_events = {
 	"cron" : {
         "*/15 * * * *" : [
-            "harro.harro.docevents.task.update_task_timer"
+            "harro.harro.docevents.task.update_task_timer",
+            "harro.harro.api.update_the_task_timer_based_on_shift_end",
+            "harro.harro.api.update_the_job_card_timer_based_on_shift_end",
+            "harro.harro.api.stop_timer_for_jobcard_every_two_hours"
         ]
     }
 }

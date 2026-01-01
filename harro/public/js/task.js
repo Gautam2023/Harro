@@ -19,6 +19,11 @@ frappe.ui.form.on("Task", {
             }).addClass("btn-primary");
         }
         frm.trigger("make_dashboard");
+        // 
+        if (frm.doc.__islocal) return;
+
+		frm.dashboard.refresh();
+		frm.trigger('show_task_dependency_progress');
     },
     make_dashboard: function (frm) {
 		if (frm.doc.__islocal) return;
@@ -99,8 +104,67 @@ frappe.ui.form.on("Task", {
                 }
             })
         }
-    }
+    },
+    // 
+    show_task_dependency_progress(frm) {
+
+		let rows = frm.doc.depends_on || [];
+		let completed = 0;
+		let total = 0;
+		let promises = [];
+
+		if (!rows.length) {
+			add_task_progress(frm, 0, 0);
+			return;
+		}
+
+		rows.forEach(row => {
+			if (row.task) {
+				total++;
+				promises.push(
+					frappe.db.get_value('Task', row.task, 'status')
+						.then(r => {
+							if (r.message?.status === 'Completed') {
+								completed++;
+							}
+						})
+				);
+			}
+		});
+
+		if (!total) {
+			add_task_progress(frm, 0, 0);
+			return;
+		}
+
+		Promise.all(promises).then(() => {
+			add_task_progress(frm, completed, total);
+		});
+	}
 })
+
+// 
+function add_task_progress(frm, completed, total) {
+
+	let percent = total ? Math.round((completed / total) * 100) : 0;
+	let width = percent === 0 ? '0.5%' : percent + '%';
+
+	let title = __('{0} of {1} tasks completed ({2}%)', [
+		completed,
+		total,
+		percent
+	]);
+
+	let bars = [{
+		title: title,
+		width: width,
+		progress_class: 'progress-bar-success'
+	}];
+
+	frm.dashboard.add_progress(__('Dependency Status'), bars, title);
+}
+
+// 
 function update_start_job_log(frm){
     let d = new frappe.ui.Dialog({
         title: 'Update Time log',

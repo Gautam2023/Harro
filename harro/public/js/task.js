@@ -115,7 +115,6 @@ frappe.ui.form.on("Task", {
 		let promises = [];
 
 		if (!rows.length) {
-			add_task_progress(frm, 0, 0);
 			return;
 		}
 

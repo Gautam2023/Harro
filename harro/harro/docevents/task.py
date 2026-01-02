@@ -1,6 +1,6 @@
 import frappe
 import json
-from frappe.utils import now, get_datetime
+from frappe.utils import now, get_datetime, get_link_to_form
 from frappe.desk.form.assign_to import add as add_assignment
 
 
@@ -155,27 +155,60 @@ def update_task_timer():
                     send_timer_stopper_notification(doc, permissable_hours)
 
 def send_timer_stopper_notification(doc, permissible_hours):
-    employee_name = frappe.db.get_value("Employee", doc.custom_employee__assign_to_employee_, "employee_name")
-    user_id = frappe.db.get_value("Employee", doc.custom_employee__assign_to_employee_, "user_id")
+    employee_name = frappe.db.get_value(
+        "Employee",
+        doc.custom_employee__assign_to_employee_,
+        "employee_name"
+    )
+
+    user_id = frappe.db.get_value(
+        "Employee",
+        doc.custom_employee__assign_to_employee_,
+        "user_id"
+    )
+
     if not user_id:
         return
+
+    task_url = f"{frappe.utils.get_url()}/app/task/{doc.name}"
+
     message = f"""
-        <p>Hi {employee_name},</p>
+        <div style="font-family: Arial, Helvetica, sans-serif; color:#333; line-height:1.6;">
+            <p>Hi <strong>{employee_name}</strong>,</p>
 
-        <p>You have exceeded the permissible working limit of <b>{permissible_hours} hours</b>. 
-        If you are still working, please open the task below and restart the timer.</p>
+            <p style="font-size:14px;">
+                You have exceeded the permissible working limit of 
+                <strong>{permissible_hours} hours</strong>.
+                If you are still working, please open the task below and restart the timer.
+            </p>
 
-        <p><b>Task:</b> {doc.name}</p>
+            <div style="margin:18px 0; padding:12px 16px; background:#f8f9fa; border-left:4px solid #4b7bec;">
+                <p style="margin:0; font-size:14px;">
+                    <strong>Task:</strong>{get_link_to_form("Task", doc.name)}
+                </p>
+            </div>
 
-        <p>Thank you,<br>
-        Regards</p>
+            <p style="font-size:14px;">
+                Thank you,<br>
+                <span style="color:#555;">Regards</span>
+            </p>
 
-        <br><br>
-        <center><small>This is a system-generated email. Please do not reply.</small></center>
+            <hr style="border:none; border-top:1px solid #e0e0e0; margin-top:30px;">
+
+            <p style="text-align:center; font-size:12px; color:#888;">
+                This is a system-generated email. Please do not reply.
+            </p>
+        </div>
     """
 
     subject = "Action Required: Please Restart Your Task Timer"
-    frappe.sendmail(recipients=[user_id], subject=subject, message=message)
+
+    frappe.sendmail(
+        recipients=[user_id],
+        subject=subject,
+        message=message
+    )
+
 
 @frappe.whitelist()
 def get_employee_id(user):

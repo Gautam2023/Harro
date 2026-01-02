@@ -2,7 +2,7 @@ import frappe
 from frappe.utils import today, get_datetime, now_datetime, time_diff_in_seconds, now
 from harro.harro.docevents.task import update_stop_task_log
 from harro.harro.docevents.employee_checkin import update_unproductive_log_employee_wise, make_time_log
-from frappe.utils import get_url_to_form
+from frappe.utils import get_url_to_form, get_link_to_form
 from harro.harro.docevents.job_card import update_unproductive_log
 
 
@@ -175,24 +175,45 @@ def update_the_task_timer_based_on_shift_end():
                         recipients=[recipient_email],
                         subject="Task Timer Stopped Due to Shift End",
                         message=f"""
-                            <p>Hi,</p>
-                            <p>
-                                Your task timer has been stopped automatically because your
-                                working shift has ended.
-                            </p>
+                            <div style="font-family: Arial, Helvetica, sans-serif; color:#333; line-height:1.6;">
+                                
+                                <p>Hi,</p>
 
-                            <p>
-                                <b>Task:</b> <a href="{task_link}">{row.task_name}</a>
-                            </p>
+                                <p style="font-size:14px;">
+                                    Your task timer has been <strong>automatically stopped</strong> because your
+                                    working shift has ended.
+                                </p>
 
-                            <p>
-                                If you are still working on this task,
-                                please update the Timesheet or restart the task timer.
-                            </p>
+                                <div style="margin:18px 0; padding:12px 16px; background:#f8f9fa; border-left:4px solid #4b7bec;">
+                                    <p style="margin:0; font-size:14px;">
+                                        <strong>Task:</strong> {get_link_to_form("Task",row.task_name)}
+                                    </p>
+                                </div>
 
-                            <p>Thanks</p>
+                                <p style="font-size:14px;">
+                                    If you are still working on this task, please update the Timesheet or restart the task timer.
+                                </p>
+
+                                <p style="margin-top:22px;">
+                                    <a href="{task_link}" 
+                                        style="background:#1a73e8; color:#fff; padding:10px 16px; 
+                                            text-decoration:none; border-radius:4px; font-size:14px;">
+                                        Open Task
+                                    </a>
+                                </p>
+
+                                <p style="font-size:14px;">Thanks,</p>
+
+                                <hr style="border:none; border-top:1px solid #e0e0e0; margin-top:28px;">
+
+                                <p style="text-align:center; font-size:12px; color:#888;">
+                                    This is a system-generated email. Please do not reply.
+                                </p>
+
+                            </div>
                         """
                     )
+
 
                 except Exception:
                     frappe.log_error(

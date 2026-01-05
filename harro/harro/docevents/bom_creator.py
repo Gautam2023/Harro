@@ -197,19 +197,6 @@ def create_item(item, row, uom=None, structureclass= None):
         "Artikel Bez2",
         "Artikel Bez3",
         "Artikel Bez4",
-        "Baugruppe Bez1",
-        "Baugruppe Bez2",
-        "Baugruppe Bez3",
-        "Baugruppe Bez4",
-        "cLiefBez",
-        "cLiefBez2",
-        "cLiefBez3",
-        "cLiefBez4",
-        "cHerstellernr",
-        "cHerstellerBez",
-        "cHerstellerBez2",
-        "cHerstellerBez3",
-        "cHerstellerBez4",
     ]
 
     description = '<div>'
@@ -318,19 +305,6 @@ def update_correct_item_group_and_other_data(item, row):
         "Artikel Bez2",
         "Artikel Bez3",
         "Artikel Bez4",
-        "Baugruppe Bez1",
-        "Baugruppe Bez2",
-        "Baugruppe Bez3",
-        "Baugruppe Bez4",
-        "cLiefBez",
-        "cLiefBez2",
-        "cLiefBez3",
-        "cLiefBez4",
-        "cHerstellernr",
-        "cHerstellerBez",
-        "cHerstellerBez2",
-        "cHerstellerBez3",
-        "cHerstellerBez4",
     ]
 
     for l in labels:

@@ -205,7 +205,7 @@ def create_item(item, row, uom=None, structureclass= None):
         if not row.get(l):
             continue
         description = description + "<p>" + row.get(l) + "</p>"
-
+    description += "</div>"
     item_doc.description = description
 
     for l in labels:
@@ -317,4 +317,5 @@ def update_correct_item_group_and_other_data(item, row):
         if not row.get(l):
             continue
         description = description + "<p>" + row.get(l) + "</p>"
+    description += "</div>"
     frappe.db.set_value("Item", item, "description", description)

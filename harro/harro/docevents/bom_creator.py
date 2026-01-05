@@ -75,7 +75,7 @@ def extract_bom_item_data(file_path, bom_c):
         if not frappe.db.exists("Item", baugruppe ):
             create_item(baugruppe, row, uom=None, structureclass=StrukturklasseKopf)
 
-        update_correct_item_group(artikel, row)
+        update_correct_item_group_and_other_data(artikel, row)
 
         new_row = {
             "item_code": artikel,
@@ -192,6 +192,35 @@ def create_item(item, row, uom=None, structureclass= None):
         "Gesamtmenge"
     ]
 
+    for_description = [
+        "Artikel Bez1",
+        "Artikel Bez2",
+        "Artikel Bez3",
+        "Artikel Bez4",
+        "Baugruppe Bez1",
+        "Baugruppe Bez2",
+        "Baugruppe Bez3",
+        "Baugruppe Bez4",
+        "cLiefBez",
+        "cLiefBez2",
+        "cLiefBez3",
+        "cLiefBez4",
+        "cHerstellernr",
+        "cHerstellerBez",
+        "cHerstellerBez2",
+        "cHerstellerBez3",
+        "cHerstellerBez4",
+    ]
+
+    description = '<div>'
+    for l in for_description:
+        fieldname = make_fieldname(l)
+        if not row.get(l):
+            continue
+        description = description + "<p>" + row.get(l) + "</p>"
+
+    item_doc.description = description
+
     for l in labels:
         fieldname = make_fieldname(l)
         item_doc.update({
@@ -211,11 +240,107 @@ def create_item_group():
 def make_fieldname(label):
     return label.strip().lower().replace(" ", "_") 
     
-def update_correct_item_group(item, row):
+def update_correct_item_group_and_other_data(item, row):
     Teilegruppe =  str(row.get("Commodity Group") or row.get("commodity group") or row.get("Teilegruppe") or row.get("teilegruppe"))
     custom_teilegruppe = Teilegruppe.replace(".0",'')
     existing_item_group = frappe.db.get_value("Item", item, "item_group")
     if item_groups := frappe.db.sql(f"""Select name From `tabItem Group` where  custom_teilegruppe = '{custom_teilegruppe}' """, as_dict=1):
         item_group = item_groups[0].get("name")
         if existing_item_group != item_group:
-            frappe.db.set_value("Item", item, "item_group", item_group)
+            frappe.db.set_value("Item", item, "item_group", item_group, update_modified=False)
+    
+
+    labels = [
+        "Baugruppe",
+        "Baugruppe HH_India",
+        "StrukturklasseKopf",
+        "Revision",
+        "Revision alt",
+        "Position",
+        "Position alt",
+        "Artikel",
+        "Artikel HH_India",
+        "StrukturklassePos",
+        "Revision Artikel",
+        "Artikel alt",
+        "Artikel alt HH_India",
+        "StrukturklassePos alt",
+        "Revision Artikel alt",
+        "Menge",
+        "Mengeneinheit",
+        "Menge alt",
+        "Mengeneinheit alt",
+        "initial",
+        "status",
+        "cHerstellernr",
+        "cHerstellerBez",
+        "cHerstellerBez2",
+        "cHerstellerBez3",
+        "cHerstellerBez4",
+        "cBestellnummer",
+        "iLieferant",
+        "cLieferantSuchbegriff",
+        "cLiefBez",
+        "cLiefBez2",
+        "cLiefBez3",
+        "cLiefBez4",
+        "cLiefBestellnummer",
+        "Baugruppe Bez1",
+        "Baugruppe Bez2",
+        "Baugruppe Bez3",
+        "Baugruppe Bez4",
+        "Baugruppe pruefplan",
+        "Baugruppe Werkstoff",
+        "Baugruppe Oberflaechenbehandlung",
+        "Baugruppe Rohteil",
+        "Baugruppe Schweissteil",
+        "Baugruppe Halbzeug",
+        "Artikel Bez1",
+        "Artikel Bez2",
+        "Artikel Bez3",
+        "Artikel Bez4",
+        "Artikel pruefplan",
+        "Artikel Werkstoff",
+        "Artikel Oberflaechenbehandlung",
+        "Artikel Rohteil",
+        "Artikel Schweissteil",
+        "Artikel Halbzeug",
+        "Stufe Baugruppenpos",
+        "HerstellerNr HH_India",
+        "sequenz",
+        "Anzahl",
+        "Menge Brutto",
+        "Gesamtmenge"
+    ]
+
+    for_description = [
+        "Artikel Bez1",
+        "Artikel Bez2",
+        "Artikel Bez3",
+        "Artikel Bez4",
+        "Baugruppe Bez1",
+        "Baugruppe Bez2",
+        "Baugruppe Bez3",
+        "Baugruppe Bez4",
+        "cLiefBez",
+        "cLiefBez2",
+        "cLiefBez3",
+        "cLiefBez4",
+        "cHerstellernr",
+        "cHerstellerBez",
+        "cHerstellerBez2",
+        "cHerstellerBez3",
+        "cHerstellerBez4",
+    ]
+
+    for l in labels:
+        fieldname = make_fieldname(l)
+        frappe.db.set_value("Item", item, fieldname, row.get(l), update_modified=False)
+
+    description = '<div>'
+    for l in for_description:
+        fieldname = make_fieldname(l)
+        if not row.get(l):
+            continue
+        description = description + "<p>" + row.get(l) + "</p>"
+    frappe.db.set_value("Item", item, "description", description)

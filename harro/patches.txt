@@ -18,3 +18,4 @@ harro.patches.create_status_field_for_task_dependent
 harro.patches.update_task_dependency_status
 harro.patches.create_field_project_settings
 harro.patches.create_activity_type
+harro.patches.share_access_with_assignee

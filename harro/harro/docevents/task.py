@@ -50,12 +50,12 @@ def update_task_details_of_parent_task(self):
                     frappe.db.set_value("Task", row.task, "custom_assigned_to_responsible_user", row.custom_user)
                     frappe.db.set_value("Task", row.task, "custom_employee__assign_to_employee_", row.custom_employee)
                 else:
-                    if not task_doc.custom_assigned_to_responsible_user and row.custom_user:
+                    if row.custom_user and not task_doc.custom_assigned_to_responsible_user or row.custom_user != task_doc.custom_assigned_to_responsible_user:
                         frappe.db.set_value("Task", row.task, "custom_assigned_to_responsible_user", row.custom_user)
-                        if not check_if_assignment(self):
+                        if not check_if_assignment(self, user=row.custom_user, task=row.task):
                             add_assignment({"doctype": self.doctype, "name": row.task, "assign_to": [row.custom_user]})
                             share_a_task_access(self)
-                    if not task_doc.custom_employee__assign_to_employee_ and row.custom_employee:
+                    if  row.custom_employee and not task_doc.custom_employee__assign_to_employee_ or row.custom_employee != task_doc.custom_employee__assign_to_employee_:
                         frappe.db.set_value("Task", row.task, "custom_employee__assign_to_employee_", row.custom_employee)
     if self.custom_assigned_to_responsible_user and not check_if_assignment(self):
         add_assignment({"doctype": self.doctype, "name": self.name, "assign_to": [self.custom_assigned_to_responsible_user]})
@@ -66,13 +66,16 @@ def share_a_task_access(self):
         self.doctype, self.name, self.custom_assigned_to_responsible_user, write=1, share=0, flags={"ignore_share_permission": True}
     )
 
-def check_if_assignment(self):
-    user = self.custom_assigned_to_responsible_user
+def check_if_assignment(self, user=None, task=None):
+    if not task:
+        task = self.name
+    if not user:
+        user = self.custom_assigned_to_responsible_user
     if frappe.db.exists("ToDo", {
         "status" : "Open",
         "allocated_to" : user,
         "reference_type" : "Task",
-        "reference_name" : self.name
+        "reference_name" : task
     }):
         return True
     else:

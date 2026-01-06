@@ -43,8 +43,9 @@ def update_task_details_of_parent_task(self):
                     _assign = []
                 else:
                     _assign = eval(task_doc._assign)
-                if row.custom_user and row.custom_user not in _assign:
+                if row.custom_user and row.custom_user not in _assign and not check_if_assignment(self):
                     add_assignment({"doctype": self.doctype, "name": row.task, "assign_to": [row.custom_user]})
+                    share_a_task_access(self)
                     frappe.db.set_value("Task", row.task, "custom_assigned_to_responsible_user", row.custom_user)
                     frappe.db.set_value("Task", row.task, "custom_employee__assign_to_employee_", row.custom_employee)
                 else:
@@ -52,8 +53,26 @@ def update_task_details_of_parent_task(self):
                         frappe.db.set_value("Task", row.task, "custom_assigned_to_responsible_user", row.custom_user)
                     if not task_doc.custom_employee__assign_to_employee_ and row.custom_employee:
                         frappe.db.set_value("Task", row.task, "custom_employee__assign_to_employee_", row.custom_employee)
-    if self.custom_assigned_to_responsible_user:
+    if self.custom_assigned_to_responsible_user and not check_if_assignment(self):
         add_assignment({"doctype": self.doctype, "name": self.name, "assign_to": [self.custom_assigned_to_responsible_user]})
+        share_a_task_access(self)
+
+def share_a_task_access(self):
+    frappe.share.add_docshare(
+        self.doctype, self.name, self.custom_assigned_to_responsible_user, write=1, share=0, flags={"ignore_share_permission": True}
+    )
+
+def check_if_assignment(self):
+    user = self.custom_assigned_to_responsible_user
+    if frappe.db.exists("ToDo", {
+        "status" : "Open",
+        "allocated_to" : user,
+        "reference_type" : "Task",
+        "reference_name" : self.name
+    }):
+        return True
+    else:
+        return False
 
 
 

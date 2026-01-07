@@ -20,7 +20,11 @@ frappe.ui.form.on("Task", {
         }
         frm.trigger("make_dashboard");
         // 
-        
+        frm.set_query("completed_by", {
+			filters: {
+				"name": frappe.session.user,
+			},
+		});
 
 		frm.dashboard.refresh();
 		frm.trigger('show_task_dependency_progress');
@@ -140,7 +144,12 @@ frappe.ui.form.on("Task", {
 		Promise.all(promises).then(() => {
 			add_task_progress(frm, completed, total);
 		});
-	}
+	},
+    status(frm) {
+        if(frm.doc.status == "Completed"){
+            frm.set_value("completed_by", frappe.session.user)
+        }
+    } 
 })
 
 // 

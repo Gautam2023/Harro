@@ -26,7 +26,10 @@ app_license = "mit"
 
 # include js, css files in header of desk.html
 app_include_css = "/assets/harro/css/harro.css"
-app_include_js = "/assets/harro/js/frappe/views/gantt/gantt_view.js"
+app_include_js = [
+    "/assets/harro/js/frappe/views/gantt/gantt_view.js",
+    "/assets/harro/js/harro_hierarchy_chart.bundle.js"
+]
 
 # include js, css files in header of web template
 # web_include_css = "/assets/harro/css/harro.css"
@@ -190,11 +193,15 @@ doc_events = {
         "validate" : "harro.harro.docevents.project.validate"
     },
     "Task" : {
-        "validate" : "harro.harro.docevents.task.validate"
+        "validate" : "harro.harro.docevents.task.validate",
+        "on_update" : "harro.harro.docevents.task.update_parent_task_dependency_status"
     },
     "Material Request": {
         "on_update": "harro.harro.docevents.material_request.on_update",
         "validate" : "harro.harro.docevents.material_request.validate",
+    },
+    "Employee Checkin" : {
+        "after_insert" : "harro.harro.docevents.employee_checkin.after_insert"
     }
 }
 
@@ -222,8 +229,13 @@ doc_events = {
 scheduler_events = {
 	"cron" : {
         "*/15 * * * *" : [
-            "harro.harro.docevents.task.update_task_timer"
-        ]
+            "harro.harro.api.update_the_task_timer_based_on_shift_end",
+            "harro.harro.api.update_the_job_card_timer_based_on_shift_end",
+        ],
+        "*/5 * * * *" : [
+            "harro.harro.docevents.task.update_task_timer",
+            "harro.harro.api.stop_timer_for_jobcard_every_two_hours"
+        ],
     }
 }
 

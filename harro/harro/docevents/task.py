@@ -50,12 +50,12 @@ def update_task_details_of_parent_task(self):
                     frappe.db.set_value("Task", row.task, "custom_assigned_to_responsible_user", row.custom_user)
                     frappe.db.set_value("Task", row.task, "custom_employee__assign_to_employee_", row.custom_employee)
                 else:
-                    if row.custom_user and not task_doc.custom_assigned_to_responsible_user or row.custom_user != task_doc.custom_assigned_to_responsible_user:
+                    if row.custom_user and not task_doc.custom_assigned_to_responsible_user or (row.custom_user and row.custom_user != task_doc.custom_assigned_to_responsible_user):
                         frappe.db.set_value("Task", row.task, "custom_assigned_to_responsible_user", row.custom_user)
                         if not check_if_assignment(self, user=row.custom_user, task=row.task):
                             add_assignment({"doctype": self.doctype, "name": row.task, "assign_to": [row.custom_user]})
                             share_a_task_access(self, task=row.task, user=row.custom_user)
-                    if  row.custom_employee and not task_doc.custom_employee__assign_to_employee_ or row.custom_employee != task_doc.custom_employee__assign_to_employee_:
+                    if  row.custom_employee and not task_doc.custom_employee__assign_to_employee_ or (row.custom_employee and row.custom_employee != task_doc.custom_employee__assign_to_employee_):
                         frappe.db.set_value("Task", row.task, "custom_employee__assign_to_employee_", row.custom_employee)
     
     if self.custom_assigned_to_responsible_user and not check_if_assignment(self):

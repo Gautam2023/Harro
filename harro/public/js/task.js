@@ -209,12 +209,6 @@ function update_start_job_log(frm){
                 "fieldtype" : "Link",
                 "read_only" : 0
             },
-            {
-                "fieldname" : "expected_hrs",
-                "label" : "Expected Hrs",
-                "reqd" :  0,
-                "fieldtype" : "Float"
-            }
         ],
         size: 'small', // small, large, extra-large 
         primary_action_label: 'Update Timesheet Log',

@@ -23,7 +23,9 @@ def create_travel_plan(names):
 					"employee_name" : tr_doc.employee_name,
 					"travel_from" : tr.travel_from,
 					"travel_to" : tr.travel_to,
-					"mode_of_travel" : tr.mode_of_travel
+					"mode_of_travel" : tr.mode_of_travel,
+					"extra_baggage" : tr.custom_extra_baggage
+					
 				})
 		else:
 			travel_planing.append("travel_itinerary", {

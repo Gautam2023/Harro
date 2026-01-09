@@ -471,3 +471,14 @@ def stop_timer_for_jobcard_every_two_hours():
                     f"Job Card Cut-off Timer: Error sending email for Job Card {row.name}"
                 )
 
+@frappe.whitelist()
+def get_item_master_data_for_print(item, manufacturer_part_no=None):
+    uniq_part_no = []
+    doc = frappe.get_doc("Item", item)
+    uniq_part_no.append(manufacturer_part_no)
+    uniq_part_no.append(doc.cbestellnummer)
+    uniq_part_no.append(doc.cherstellerbez)
+
+    uniq_part_no = list(set(uniq_part_no))
+
+    return uniq_part_no

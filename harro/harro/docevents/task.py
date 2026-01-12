@@ -26,6 +26,15 @@ def validate(self, method=None):
                 self.act_end_date
             )
 
+def after_insert(self, method):
+    if task := frappe.db.exists("Task", {
+        "status" : "Template",
+        "is_milestone" : 1,
+        "subject" : self.subject
+    }):
+        frappe.db.set_value("Task", self.name, "is_milestone", 1)
+        
+
 
 def update_task_details_of_parent_task(self):
     if self.depends_on:

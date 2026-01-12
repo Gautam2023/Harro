@@ -193,7 +193,8 @@ doc_events = {
     },
     "Task" : {
         "validate" : "harro.harro.docevents.task.validate",
-        "on_update" : "harro.harro.docevents.task.update_parent_task_dependency_status"
+        "on_update" : "harro.harro.docevents.task.update_parent_task_dependency_status",
+        "after_insert" : "harro.harro.docevents.task.after_insert"
     },
     "Material Request": {
         "on_update": "harro.harro.docevents.material_request.on_update",

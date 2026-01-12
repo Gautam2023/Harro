@@ -117,6 +117,24 @@ def create_custom_fields_on_migrate():
                 "label" : "Job Card Cut of Time",
                 "fieldtype" : "Float",
             }
+        ],
+        "Activity Type" : [
+            {
+                "fieldname" : "parent_activity_type",
+                "label" : "Parent Activity",
+                "fieldtype" : "Link",
+                "options" : "Parent Activity",
+                "insert_after" : "custom_unproductive_work"
+            }
+        ],
+        "Travel Planning" : [
+            {
+                "fieldname" : "travel_requestor",
+                "label" : "Travel Requestor",
+                "fieldtype" : "Link",
+                "options" : "Employee",
+                "insert_after" : "travel_plan"
+            }
         ]
     }
 

@@ -193,6 +193,7 @@ def update_task_timer():
                 update_stop_task_log(arg, start_new=True)
                 if doc.custom_employee__assign_to_employee_:
                     send_timer_stopper_notification(doc, permissable_hours)
+                frappe.db.commit()
 
 def send_timer_stopper_notification(doc, permissible_hours):
     employee_name = frappe.db.get_value(

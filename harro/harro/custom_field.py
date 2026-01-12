@@ -45,6 +45,13 @@ def create_custom_fields_on_migrate():
                 "insert_after": "act_end_date",
                 "fieldtype": "Color",
                 "default" : "#FFC067"
+            },
+            {
+                "label": "Extra Days of Effort",
+                "fieldname": "extra_days",
+                "insert_after": "expected_time",
+                "fieldtype": "Data",
+                "read_only" : 1,
             }
         ],
         "Item Group" : [

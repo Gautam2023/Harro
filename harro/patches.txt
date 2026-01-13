@@ -21,3 +21,4 @@ harro.patches.create_activity_type
 harro.patches.share_access_with_assignee
 harro.patches.update_extra_days
 harro.patches.update_task_by_milestone
+harro.patches.update_item_description

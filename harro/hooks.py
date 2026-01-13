@@ -202,6 +202,9 @@ doc_events = {
     },
     "Employee Checkin" : {
         "after_insert" : "harro.harro.docevents.employee_checkin.after_insert"
+    },
+    "Employee": {
+        "validate" : "harro.harro.docevents.employee.on_employee_update"
     }
 }
 

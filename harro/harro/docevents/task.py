@@ -1,6 +1,6 @@
 import frappe
 import json
-from frappe.utils import now, get_datetime
+from frappe.utils import now, get_datetime, get_link_to_form, getdate, date_diff
 from frappe.desk.form.assign_to import add as add_assignment
 
 
@@ -17,6 +17,24 @@ def validate(self, method=None):
     if not self.custom_employee__assign_to_employee_ and self.custom_assigned_to_responsible_user:
         if employee := frappe.db.exists("Employee", {"user_id" : self.custom_assigned_to_responsible_user}):
             self.custom_employee__assign_to_employee_ = employee
+
+    if self.exp_start_date and self.exp_end_date and self.act_start_date and self.act_end_date:
+        self.extra_days = get_extra_days(
+                self.exp_start_date,
+                self.exp_end_date,
+                self.act_start_date,
+                self.act_end_date
+            )
+
+def after_insert(self, method):
+    if task := frappe.db.exists("Task", {
+        "status" : "Template",
+        "is_milestone" : 1,
+        "subject" : self.subject
+    }):
+        frappe.db.set_value("Task", self.name, "is_milestone", 1)
+        
+
 
 def update_task_details_of_parent_task(self):
     if self.depends_on:
@@ -44,16 +62,47 @@ def update_task_details_of_parent_task(self):
                 else:
                     _assign = eval(task_doc._assign)
                 if row.custom_user and row.custom_user not in _assign:
-                    add_assignment({"doctype": self.doctype, "name": row.task, "assign_to": [row.custom_user]})
+                    if not check_if_assignment(self, user=row.custom_user, task=row.task):
+                        add_assignment({"doctype": self.doctype, "name": row.task, "assign_to": [row.custom_user]})
+                        share_a_task_access(self, task=row.task, user=row.custom_user)
                     frappe.db.set_value("Task", row.task, "custom_assigned_to_responsible_user", row.custom_user)
                     frappe.db.set_value("Task", row.task, "custom_employee__assign_to_employee_", row.custom_employee)
                 else:
-                    if not task_doc.custom_assigned_to_responsible_user and row.custom_user:
+                    if row.custom_user and not task_doc.custom_assigned_to_responsible_user or (row.custom_user and row.custom_user != task_doc.custom_assigned_to_responsible_user):
                         frappe.db.set_value("Task", row.task, "custom_assigned_to_responsible_user", row.custom_user)
-                    if not task_doc.custom_employee__assign_to_employee_ and row.custom_employee:
+                        if not check_if_assignment(self, user=row.custom_user, task=row.task):
+                            add_assignment({"doctype": self.doctype, "name": row.task, "assign_to": [row.custom_user]})
+                            share_a_task_access(self, task=row.task, user=row.custom_user)
+                    if  row.custom_employee and not task_doc.custom_employee__assign_to_employee_ or (row.custom_employee and row.custom_employee != task_doc.custom_employee__assign_to_employee_):
                         frappe.db.set_value("Task", row.task, "custom_employee__assign_to_employee_", row.custom_employee)
-    if self.custom_assigned_to_responsible_user:
+    
+    if self.custom_assigned_to_responsible_user and not check_if_assignment(self):
         add_assignment({"doctype": self.doctype, "name": self.name, "assign_to": [self.custom_assigned_to_responsible_user]})
+        share_a_task_access(self)
+
+def share_a_task_access(self, task=None, user=None):
+    if not task:
+        task = self.name
+    if not user:
+        user = self.custom_assigned_to_responsible_user
+    frappe.share.add_docshare(
+        "Task", task, user, write=1, share=0, flags={"ignore_share_permission": True}
+    )
+
+def check_if_assignment(self, user=None, task=None):
+    if not task:
+        task = self.name
+    if not user:
+        user = self.custom_assigned_to_responsible_user
+    if frappe.db.exists("ToDo", {
+        "status" : "Open",
+        "allocated_to" : user,
+        "reference_type" : "Task",
+        "reference_name" : task
+    }):
+        return True
+    else:
+        return False
 
 
 
@@ -83,9 +132,9 @@ def update_time_log(arg):
 
 @frappe.whitelist()
 def update_stop_task_log(arg, start_new=False):
-    if not start_new:
+    try:
         args = json.loads(arg)
-    else:
+    except:
         args = arg
     doc = frappe.get_doc("Task", args.get("task"))
     row = doc.unproductive_work_timelogs[-1]
@@ -146,35 +195,70 @@ def update_task_timer():
             diff_hours = (current_time - from_time).total_seconds() / 3600
             permissable_hours = frappe.db.get_single_value("Projects Settings", "task_cut_of_time")
             if diff_hours >= permissable_hours:
-                doc.unproductive_work_timelogs[-1].to_time = now()
-                doc.working_status = "On Hold"
-                doc.flags.ignore_permissions = True
-                doc.save()
+                arg = {
+                    "task" : row.name,
+                    "to_time" : now()
+                }
+                update_stop_task_log(arg, start_new=True)
                 if doc.custom_employee__assign_to_employee_:
                     send_timer_stopper_notification(doc, permissable_hours)
+                frappe.db.commit()
 
 def send_timer_stopper_notification(doc, permissible_hours):
-    employee_name = frappe.db.get_value("Employee", doc.custom_employee__assign_to_employee_, "employee_name")
-    user_id = frappe.db.get_value("Employee", doc.custom_employee__assign_to_employee_, "user_id")
+    employee_name = frappe.db.get_value(
+        "Employee",
+        doc.custom_employee__assign_to_employee_,
+        "employee_name"
+    )
+
+    user_id = frappe.db.get_value(
+        "Employee",
+        doc.custom_employee__assign_to_employee_,
+        "user_id"
+    )
+
     if not user_id:
         return
+
+    task_url = f"{frappe.utils.get_url()}/app/task/{doc.name}"
+
     message = f"""
-        <p>Hi {employee_name},</p>
+        <div style="font-family: Arial, Helvetica, sans-serif; color:#333; line-height:1.6;">
+            <p>Hi <strong>{employee_name}</strong>,</p>
 
-        <p>You have exceeded the permissible working limit of <b>{permissible_hours} hours</b>. 
-        If you are still working, please open the task below and restart the timer.</p>
+            <p style="font-size:14px;">
+                You have exceeded the permissible working limit of 
+                <strong>{permissible_hours} hours</strong>.
+                If you are still working, please open the task below and restart the timer.
+            </p>
 
-        <p><b>Task:</b> {doc.name}</p>
+            <div style="margin:18px 0; padding:12px 16px; background:#f8f9fa; border-left:4px solid #4b7bec;">
+                <p style="margin:0; font-size:14px;">
+                    <strong>Task:</strong>{get_link_to_form("Task", doc.name)}
+                </p>
+            </div>
 
-        <p>Thank you,<br>
-        Regards</p>
+            <p style="font-size:14px;">
+                Thank you,<br>
+                <span style="color:#555;">Regards</span>
+            </p>
 
-        <br><br>
-        <center><small>This is a system-generated email. Please do not reply.</small></center>
+            <hr style="border:none; border-top:1px solid #e0e0e0; margin-top:30px;">
+
+            <p style="text-align:center; font-size:12px; color:#888;">
+                This is a system-generated email. Please do not reply.
+            </p>
+        </div>
     """
 
     subject = "Action Required: Please Restart Your Task Timer"
-    frappe.sendmail(recipients=[user_id], subject=subject, message=message)
+
+    frappe.sendmail(
+        recipients=[user_id],
+        subject=subject,
+        message=message
+    )
+
 
 @frappe.whitelist()
 def get_employee_id(user):
@@ -208,3 +292,26 @@ def update_parent_task_dependency_status(doc, method=None):
         if updated:
             parent_task.flags.ignore_permissions = True
             parent_task.save()
+
+
+
+def get_extra_days(exp_start_date, exp_end_date, act_start_date, act_end_date):
+    """
+    Calculate extra days taken compared to expected duration
+    using Frappe date utilities.
+    """
+
+    # Convert to date objects
+    exp_start_date = getdate(exp_start_date)
+    exp_end_date = getdate(exp_end_date)
+    act_start_date = getdate(act_start_date)
+    act_end_date = getdate(act_end_date)
+
+    # Duration calculations
+    expected_days = date_diff(exp_end_date, exp_start_date)
+    actual_days = date_diff(act_end_date, act_start_date)
+
+    extra_days = actual_days - expected_days
+
+    return max(extra_days, 0)
+

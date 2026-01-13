@@ -20,7 +20,11 @@ frappe.ui.form.on("Task", {
         }
         frm.trigger("make_dashboard");
         // 
-        if (frm.doc.__islocal) return;
+        frm.set_query("completed_by", {
+			filters: {
+				"name": frappe.session.user,
+			},
+		});
 
 		frm.dashboard.refresh();
 		frm.trigger('show_task_dependency_progress');
@@ -107,14 +111,14 @@ frappe.ui.form.on("Task", {
     },
     // 
     show_task_dependency_progress(frm) {
-
+        if (frm.doc.__islocal) return;
+        
 		let rows = frm.doc.depends_on || [];
 		let completed = 0;
 		let total = 0;
 		let promises = [];
 
 		if (!rows.length) {
-			add_task_progress(frm, 0, 0);
 			return;
 		}
 
@@ -140,7 +144,12 @@ frappe.ui.form.on("Task", {
 		Promise.all(promises).then(() => {
 			add_task_progress(frm, completed, total);
 		});
-	}
+	},
+    status(frm) {
+        if(frm.doc.status == "Completed"){
+            frm.set_value("completed_by", frappe.session.user)
+        }
+    } 
 })
 
 // 
@@ -200,12 +209,6 @@ function update_start_job_log(frm){
                 "fieldtype" : "Link",
                 "read_only" : 0
             },
-            {
-                "fieldname" : "expected_hrs",
-                "label" : "Expected Hrs",
-                "reqd" :  0,
-                "fieldtype" : "Float"
-            }
         ],
         size: 'small', // small, large, extra-large 
         primary_action_label: 'Update Timesheet Log',

@@ -46,7 +46,9 @@ def create_travel_plan(names):
 					"employee_hh_id" : tr_doc.employee,
 					"employee_name" : tr_doc.employee_name,
 					"travel_from" : tr.travel_from,
-					"travel_to" : tr.travel_to
+					"travel_to" : tr.travel_to,
+					"mode_of_travel" : tr.mode_of_travel,
+					"extra_baggage" : tr.custom_extra_baggage
 				})
 		else:
 			travel_plan.append("travel_itinerary", {
@@ -54,6 +56,15 @@ def create_travel_plan(names):
 				"employee_hh_id" : tr_doc.employee,
 				"employee_name" : tr_doc.employee_name,
 			})
+	
+	if employee := frappe.db.exists("Employee", {"user_id" : frappe.session.user}):
+			travel_plan.travel_requestor = employee
+
+	travel_plan.travel_type = tr_doc.travel_type
+	travel_plan.purpose_of_travel = tr_doc.purpose_of_travel
+
+	if travel_request:
+		travel_plan.ba_number = tr_doc.custom_ba_number
 
 	if to_create:
 		travel_plan.ba_number = tr_doc.custom_ba_number

@@ -45,6 +45,13 @@ def create_custom_fields_on_migrate():
                 "insert_after": "act_end_date",
                 "fieldtype": "Color",
                 "default" : "#FFC067"
+            },
+            {
+                "label": "Extra Days of Effort",
+                "fieldname": "extra_days",
+                "insert_after": "expected_time",
+                "fieldtype": "Data",
+                "read_only" : 1,
             }
         ],
         "Item Group" : [
@@ -109,6 +116,24 @@ def create_custom_fields_on_migrate():
                 "fieldname" : "job_card_cut_of_time",
                 "label" : "Job Card Cut of Time",
                 "fieldtype" : "Float",
+            }
+        ],
+        "Activity Type" : [
+            {
+                "fieldname" : "parent_activity_type",
+                "label" : "Parent Activity",
+                "fieldtype" : "Link",
+                "options" : "Parent Activity",
+                "insert_after" : "custom_unproductive_work"
+            }
+        ],
+        "Travel Planning" : [
+            {
+                "fieldname" : "travel_requestor",
+                "label" : "Travel Requestor",
+                "fieldtype" : "Link",
+                "options" : "Employee",
+                "insert_after" : "travel_plan"
             }
         ]
     }

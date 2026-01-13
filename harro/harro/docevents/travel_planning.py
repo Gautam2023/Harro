@@ -8,16 +8,40 @@ from frappe.utils import get_link_to_form
 @frappe.whitelist()
 def create_travel_plan(names):
 	travel_request = eval(names)
-	travel_planing_list = []
-	travel_planing = frappe.new_doc("Travel Planning")
+	skipped = []
+	to_create = []
 
-	for row in travel_request:
-		tr_doc = frappe.get_doc("Travel Request", row)
+	for req in travel_request:
+		plan = frappe.db.get_value(
+			"Travel Planning Employee Details",
+			{"travel_request": req},
+			"parent"
+		)
+		if plan:
+			skipped.append((req, plan))
+		else:
+			to_create.append(req)
+
+	if not to_create:
+		msg = "<p>Travel Planning already exists for selected requests:</p><ul>"
+		for req, plan in skipped:
+			msg += f"<li>{get_link_to_form('Travel Request', req)} → {get_link_to_form('Travel Planning', plan)}</li>"
+		msg += "</ul>"
+		frappe.throw(msg)
+
+	travel_plan = frappe.new_doc("Travel Planning")
+	for req in to_create:
+		tr_doc = frappe.get_doc("Travel Request", req)
 		if tr_doc.docstatus < 1:
-			frappe.throw("Travel Request should be submitted.<br><ul><li>{0}</li></ul>".format(get_link_to_form('Travel Request', row)))
+			frappe.throw(
+				"Travel Request should be submitted.<br><ul><li>{0}</li></ul>".format(
+					get_link_to_form('Travel Request', req)
+				)
+			)
+
 		if len(tr_doc.itinerary):
 			for tr in tr_doc.itinerary:
-				travel_planing.append("travel_itinerary", {
+				travel_plan.append("travel_itinerary", {
 					"travel_request" : tr_doc.name,
 					"employee_hh_id" : tr_doc.employee,
 					"employee_name" : tr_doc.employee_name,
@@ -25,20 +49,24 @@ def create_travel_plan(names):
 					"travel_to" : tr.travel_to
 				})
 		else:
-			travel_planing.append("travel_itinerary", {
+			travel_plan.append("travel_itinerary", {
 				"travel_request" : tr_doc.name,
 				"employee_hh_id" : tr_doc.employee,
 				"employee_name" : tr_doc.employee_name,
 			})
-	if travel_request:
-		travel_planing.ba_number = tr_doc.custom_ba_number
-	travel_planing.insert()
 
-	travel_planing_list.append(travel_planing.name)
+	if to_create:
+		travel_plan.ba_number = tr_doc.custom_ba_number
 
-	message = """ <p>Travel Planning is Created.</p> """
-	message += "<ul>"
-	for tp in travel_planing_list:
-		message += f"<li>{get_link_to_form('Travel Planning', tp)}</li>"
-	message += "</ul>"
-	frappe.msgprint(message)
+	travel_plan.insert()
+
+	msg = "<p>Travel Planning Created:</p>"
+	msg += f"<ul><li>{get_link_to_form('Travel Planning', travel_plan.name)}</li></ul>"
+
+	if skipped:
+		msg += "<p><b>Information:</b> A Travel Plan already exists for the following Travel Requests : </p><ul>"
+		for req, plan in skipped:
+			msg += f"<li>{get_link_to_form('Travel Request', req)} → {get_link_to_form('Travel Planning', plan)}</li>"
+		msg += "</ul>"
+
+	frappe.msgprint(msg)

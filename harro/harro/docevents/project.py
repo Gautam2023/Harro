@@ -105,13 +105,18 @@ def calculate_timesheet_hours(project):
 @frappe.whitelist()
 def get_timesheet_working_hours(name, unproductive):
     doc = frappe.get_doc("Project", name)
-    fielddetails = frappe.db.get_all("Activity Type", fields=["custom_update_to_project_field", "custom_planned_hours_field_name", "name"], filters={"custom_unproductive_work" : unproductive, "disabled" : 0})
+    fielddetails = frappe.db.get_all(
+                                     "Activity Type", 
+                                     fields=["custom_update_to_project_field", "custom_planned_hours_field_name", "name", "parent_activity_type"], 
+                                     filters={"custom_unproductive_work" : unproductive, "disabled" : 0}, 
+                                     group_by = "parent_activity_type"
+                                    )
     dataset = []
     count = 0 
     for row in fielddetails:
         if row.get("custom_update_to_project_field") and row.get("custom_planned_hours_field_name"):
             dataset.append({
-                "label": row.get("name"),
+                "label": row.get("parent_activity_type"),
                 "actual": doc.get(row.get("custom_update_to_project_field")),
                 "planned": doc.get(row.get("custom_planned_hours_field_name")),
                 "index": count
@@ -121,11 +126,17 @@ def get_timesheet_working_hours(name, unproductive):
 
 @frappe.whitelist() 
 def get_activity(unproductive=0):
-    fielddetails = frappe.db.get_all("Activity Type", fields=["custom_update_to_project_field", "custom_planned_hours_field_name", "name"], filters={"custom_unproductive_work" : unproductive, "disabled" : 0})
+    fielddetails = frappe.db.get_all(
+                                     "Activity Type", 
+                                     fields=["custom_update_to_project_field", "custom_planned_hours_field_name", "name", "parent_activity_type"], 
+                                     filters={"custom_unproductive_work" : unproductive, "disabled" : 0}, 
+                                     group_by = "parent_activity_type"
+                                    )
+    
     activity_list = []
     for row in fielddetails:
         if row.get("custom_update_to_project_field") and row.get("custom_planned_hours_field_name"):
-            activity_list.append(row.get("name"))
+            activity_list.append(row.get("parent_activity_type"))
         
     return activity_list
 

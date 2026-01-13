@@ -94,10 +94,9 @@ after_migrate = "harro.harro.custom_field.create_custom_fields_on_migrate"
 # ----------
 
 # add methods and filters to jinja environment
-# jinja = {
-# 	"methods": "harro.utils.jinja_methods",
-# 	"filters": "harro.utils.jinja_filters"
-# }
+jinja = {
+	"methods": "harro.harro.api.get_item_master_data_for_print",
+}
 fixtures = [
     {
         "doctype": "Custom Field",
@@ -194,7 +193,8 @@ doc_events = {
     },
     "Task" : {
         "validate" : "harro.harro.docevents.task.validate",
-        "on_update" : "harro.harro.docevents.task.update_parent_task_dependency_status"
+        "on_update" : "harro.harro.docevents.task.update_parent_task_dependency_status",
+        "after_insert" : "harro.harro.docevents.task.after_insert"
     },
     "Material Request": {
         "on_update": "harro.harro.docevents.material_request.on_update",
@@ -202,6 +202,9 @@ doc_events = {
     },
     "Employee Checkin" : {
         "after_insert" : "harro.harro.docevents.employee_checkin.after_insert"
+    },
+    "Employee": {
+        "validate" : "harro.harro.docevents.employee.on_employee_update"
     }
 }
 

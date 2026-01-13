@@ -1,6 +1,6 @@
 import frappe
 import json
-from frappe.utils import now, get_datetime, get_link_to_form
+from frappe.utils import now, get_datetime, get_link_to_form, getdate, date_diff
 from frappe.desk.form.assign_to import add as add_assignment
 
 
@@ -17,6 +17,24 @@ def validate(self, method=None):
     if not self.custom_employee__assign_to_employee_ and self.custom_assigned_to_responsible_user:
         if employee := frappe.db.exists("Employee", {"user_id" : self.custom_assigned_to_responsible_user}):
             self.custom_employee__assign_to_employee_ = employee
+
+    if self.exp_start_date and self.exp_end_date and self.act_start_date and self.act_end_date:
+        self.extra_days = get_extra_days(
+                self.exp_start_date,
+                self.exp_end_date,
+                self.act_start_date,
+                self.act_end_date
+            )
+
+def after_insert(self, method):
+    if task := frappe.db.exists("Task", {
+        "status" : "Template",
+        "is_milestone" : 1,
+        "subject" : self.subject
+    }):
+        frappe.db.set_value("Task", self.name, "is_milestone", 1)
+        
+
 
 def update_task_details_of_parent_task(self):
     if self.depends_on:
@@ -184,6 +202,7 @@ def update_task_timer():
                 update_stop_task_log(arg, start_new=True)
                 if doc.custom_employee__assign_to_employee_:
                     send_timer_stopper_notification(doc, permissable_hours)
+                frappe.db.commit()
 
 def send_timer_stopper_notification(doc, permissible_hours):
     employee_name = frappe.db.get_value(
@@ -273,3 +292,26 @@ def update_parent_task_dependency_status(doc, method=None):
         if updated:
             parent_task.flags.ignore_permissions = True
             parent_task.save()
+
+
+
+def get_extra_days(exp_start_date, exp_end_date, act_start_date, act_end_date):
+    """
+    Calculate extra days taken compared to expected duration
+    using Frappe date utilities.
+    """
+
+    # Convert to date objects
+    exp_start_date = getdate(exp_start_date)
+    exp_end_date = getdate(exp_end_date)
+    act_start_date = getdate(act_start_date)
+    act_end_date = getdate(act_end_date)
+
+    # Duration calculations
+    expected_days = date_diff(exp_end_date, exp_start_date)
+    actual_days = date_diff(act_end_date, act_start_date)
+
+    extra_days = actual_days - expected_days
+
+    return max(extra_days, 0)
+

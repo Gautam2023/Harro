@@ -157,7 +157,8 @@ fixtures = [
 
 override_doctype_class = {
 	"BOM Creator": "harro.harro.override.bom_creator.CustomBOMCreator",
-    "Production Plan" : "harro.harro.docevents.production_plan.CustomProductionPlan"
+    "Production Plan" : "harro.harro.docevents.production_plan.CustomProductionPlan",
+    "Job Card" : "harro.harro.override.job_card.CustomJobCard"
 }
 
 # Document Events

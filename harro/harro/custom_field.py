@@ -135,6 +135,16 @@ def create_custom_fields_on_migrate():
                 "options" : "Employee",
                 "insert_after" : "travel_plan"
             }
+        ],
+        "Job Card Time Log" : [
+            {
+                "fieldname" : "activity_type",
+                "label" : "Activity Type",
+                "fieldtype" : "Link",
+                "options" : "Activity Type",
+                "insert_after" : "employee",
+                "in_list_view" : 1
+            }
         ]
     }
 

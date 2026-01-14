@@ -12,7 +12,7 @@ def create_description(self, method):
         fieldname = make_fieldname(l)
         self.description = self.description + "<p>" + self.get(fieldname) + "</p>"
 
-    description += "</div>"
+    self.description += "</div>"
 
 
 

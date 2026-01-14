@@ -317,8 +317,9 @@ def update_correct_item_group_and_other_data(item, row):
     description = '<div>'
     for l in for_description:
         fieldname = make_fieldname(l)
-        if not row.get(l):
+        value = frappe.db.get_value("Item", item, fieldname)
+        if not value:
             continue
-        description = description + "<p>" + row.get(l) + "</p>"
+        description = description + "<p>" + value + "</p>"
     description += "</div>"
     frappe.db.set_value("Item", item, "description", description)

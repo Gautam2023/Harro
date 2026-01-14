@@ -18,11 +18,9 @@ def validate(self, method=None):
         if employee := frappe.db.exists("Employee", {"user_id" : self.custom_assigned_to_responsible_user}):
             self.custom_employee__assign_to_employee_ = employee
 
-    if self.exp_start_date and self.exp_end_date and self.act_start_date and self.act_end_date:
+    if self.exp_end_date and self.act_end_date:
         self.extra_days = get_extra_days(
-                self.exp_start_date,
                 self.exp_end_date,
-                self.act_start_date,
                 self.act_end_date
             )
 
@@ -295,23 +293,17 @@ def update_parent_task_dependency_status(doc, method=None):
 
 
 
-def get_extra_days(exp_start_date, exp_end_date, act_start_date, act_end_date):
+def get_extra_days(exp_end_date, act_end_date):
     """
     Calculate extra days taken compared to expected duration
     using Frappe date utilities.
     """
 
     # Convert to date objects
-    exp_start_date = getdate(exp_start_date)
     exp_end_date = getdate(exp_end_date)
-    act_start_date = getdate(act_start_date)
     act_end_date = getdate(act_end_date)
 
     # Duration calculations
-    expected_days = date_diff(exp_end_date, exp_start_date)
-    actual_days = date_diff(act_end_date, act_start_date)
-
-    extra_days = actual_days - expected_days
-
-    return max(extra_days, 0)
+    expected_days = date_diff(act_end_date ,exp_end_date)
+    return max(expected_days, 0)
 

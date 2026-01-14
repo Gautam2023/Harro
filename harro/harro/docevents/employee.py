@@ -18,7 +18,10 @@ def on_employee_update(doc, method):
             changed.append((row.visa_country, None, row.number))
 
     if changed:
-        send_visa_change_mail(doc, doc.user_id, changed)
+        email = None
+        if doc.reports_to:
+            email = frappe.db.get_value("Employee", doc.reports_to, "user_id")
+            send_visa_change_mail(doc, email, changed)
 
 
 def send_visa_change_mail(doc,email, changes):

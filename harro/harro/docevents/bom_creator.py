@@ -210,9 +210,10 @@ def create_item(item, row, uom=None, structureclass= None):
 
     for l in labels:
         fieldname = make_fieldname(l)
-        item_doc.update({
-            fieldname : row.get(l)
-        })
+        if not item_doc.get(fieldname):
+            item_doc.update({
+                fieldname : row.get(l)
+            })
     item_doc.insert(ignore_permissions=True)
 
     
@@ -309,13 +310,16 @@ def update_correct_item_group_and_other_data(item, row):
 
     for l in labels:
         fieldname = make_fieldname(l)
-        frappe.db.set_value("Item", item, fieldname, row.get(l), update_modified=False)
+        value = frappe.db.get_value("Item", item, fieldname)
+        if row.get(l) and value != row.get(l):
+            frappe.db.set_value("Item", item, fieldname, row.get(l), update_modified=False)
 
     description = '<div>'
     for l in for_description:
         fieldname = make_fieldname(l)
-        if not row.get(l):
+        value = frappe.db.get_value("Item", item, fieldname)
+        if not value:
             continue
-        description = description + "<p>" + row.get(l) + "</p>"
+        description = description + "<p>" + value + "</p>"
     description += "</div>"
     frappe.db.set_value("Item", item, "description", description)

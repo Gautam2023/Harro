@@ -470,14 +470,32 @@ def stop_timer_for_jobcard_every_two_hours():
                     frappe.get_traceback(),
                     f"Job Card Cut-off Timer: Error sending email for Job Card {row.name}"
                 )
-
+from harro.harro.docevents.bom_creator import make_fieldname
 @frappe.whitelist()
 def get_item_master_data_for_print(item, manufacturer_part_no=None):
     uniq_part_no = []
+    desc_data_list = []
+
     doc = frappe.get_doc("Item", item)
-    uniq_part_no.append(manufacturer_part_no)
-    uniq_part_no.append(doc.cbestellnummer)
-    uniq_part_no.append(doc.cherstellerbez)
+
+    for_description = [
+        "Artikel Bez1",
+        "Artikel Bez2",
+        "Artikel Bez3",
+        "Artikel Bez4",
+    ]
+    fieldname_list = []
+    for row in for_description:
+        fieldname = make_fieldname(row)
+        fieldname_list.append(fieldname)
+    for l in fieldname_list:
+        desc_data_list.append(doc.get(l))
+    if manufacturer_part_no not in desc_data_list:
+        uniq_part_no.append(manufacturer_part_no)
+    if doc.cbestellnummer not in desc_data_list:
+        uniq_part_no.append(doc.cbestellnummer)
+    if doc.cherstellerbez not in desc_data_list:
+        uniq_part_no.append(doc.cherstellerbez)
 
     uniq_part_no = list(set(uniq_part_no))
 

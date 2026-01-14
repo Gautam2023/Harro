@@ -7,30 +7,82 @@ frappe.ui.form.on("Job Card", {
     },
     start_job: function (frm, status, employee) {
         if (status == "Resume Job"){
-            frappe.call({
-                method: "harro.harro.docevents.job_card.resume_unproductive_log",
-                args : {
-                    to_time : frappe.datetime.now_datetime(),
-                    job_card : frm.doc.name
-                },
-                callback:(r)=>{
-                     const args = {
+            let d = new frappe.ui.Dialog({
+                title: 'Update Productivity',
+                fields : [
+                    {
+                        "fieldname" : "activity_type",
+                        "label" : "Activity Type",
+                        "options" : "Activity Type",
+                        "reqd" :  1,
+                        "fieldtype" : "Link",
+                        get_query: function () {
+                            return {
+                                filters: [["custom_unproductive_work" , "=", 0]],
+                            };
+                        },
+                    }
+                ],
+                size: 'small',
+                primary_action_label: 'Update Time Log',
+                primary_action(values) {
+                    values = d.get_values()
+                    activity_type = values.activity_type
+                    frappe.call({
+                        method: "harro.harro.docevents.job_card.resume_unproductive_log",
+                        args : {
+                            to_time : frappe.datetime.now_datetime(),
+                            job_card : frm.doc.name
+                        },
+                        callback:(r)=>{
+                            const args = {
+                                job_card_id: frm.doc.name,
+                                start_time: frappe.datetime.now_datetime(),
+                                employees: employee,
+                                status: status,
+                                activity_type : activity_type
+                            };
+                            frm.events.make_time_log(frm, args);
+                            d.hide()
+                        }
+                    })
+                }
+            })
+            d.show()
+        }else{
+            let d = new frappe.ui.Dialog({
+                title: 'Update Productivity',
+                fields : [
+                    {
+                        "fieldname" : "activity_type",
+                        "label" : "Activity Type",
+                        "options" : "Activity Type",
+                        "reqd" :  1,
+                        "fieldtype" : "Link",
+                        get_query: function () {
+                            return {
+                                filters: [["custom_unproductive_work" , "=", 0]],
+                            };
+                        },
+                    }
+                ],
+                size: 'small',
+                primary_action_label: 'Update Time Log',
+                primary_action(values) {
+                    values = d.get_values()
+                    activity_type = values.activity_type
+                    const args = {
                         job_card_id: frm.doc.name,
                         start_time: frappe.datetime.now_datetime(),
                         employees: employee,
                         status: status,
+                        activity_type : activity_type
                     };
                     frm.events.make_time_log(frm, args);
+                    d.hide()
                 }
             })
-        }else{
-            const args = {
-                job_card_id: frm.doc.name,
-                start_time: frappe.datetime.now_datetime(),
-                employees: employee,
-                status: status,
-            };
-            frm.events.make_time_log(frm, args);
+            d.show()
         }
 	},
     complete_job: function (frm, status, completed_qty) {

@@ -16,6 +16,11 @@ frappe.ui.form.on("Job Card", {
                         "options" : "Activity Type",
                         "reqd" :  1,
                         "fieldtype" : "Link",
+                        get_query: function () {
+                            return {
+                                filters: [["custom_unproductive_work" , "=", 0]],
+                            };
+                        },
                     }
                 ],
                 size: 'small',
@@ -54,6 +59,11 @@ frappe.ui.form.on("Job Card", {
                         "options" : "Activity Type",
                         "reqd" :  1,
                         "fieldtype" : "Link",
+                        get_query: function () {
+                            return {
+                                filters: [["custom_unproductive_work" , "=", 0]],
+                            };
+                        },
                     }
                 ],
                 size: 'small',

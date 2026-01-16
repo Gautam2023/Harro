@@ -4,15 +4,10 @@ from frappe.utils import flt
 def validate(self, method):
     self.planned_manufacturing_hours = round(flt(self.planned_mechanical_assembly) + flt(self.planned_electrical_assembly), 2)
 
-def calculate_project_working_hours(project):
+# This function is calculating a job card hours
+def calculate_productive_working_hours(project):
     if not project:
         return
-    # Get all submitted job cards for the project
-    job_cards = frappe.db.get_all(
-        "Job Card",
-        filters={"project": project, "docstatus": ["!=", 2]},
-        fields=["name", "operation", "total_time_in_mins"]
-    )
 
     job_cards = frappe.db.sql(f"""
                               
@@ -130,7 +125,7 @@ def get_timesheet_working_hours(name, unproductive):
     for row in fielddetails:
         if row.get("custom_update_to_project_field") and row.get("custom_planned_hours_field_name"):
             dataset.append({
-                "label": row.get("parent_activity_type"),
+                "label": row.get("parent_activity_type") or row.get("name"),
                 "actual": doc.get(row.get("custom_update_to_project_field")),
                 "planned": doc.get(row.get("custom_planned_hours_field_name")),
                 "index": count
@@ -150,7 +145,7 @@ def get_activity(unproductive=0):
     activity_list = []
     for row in fielddetails:
         if row.get("custom_update_to_project_field") and row.get("custom_planned_hours_field_name"):
-            activity_list.append(row.get("parent_activity_type"))
+            activity_list.append(row.get("parent_activity_type") or row.get("name"))
         
     return activity_list
 

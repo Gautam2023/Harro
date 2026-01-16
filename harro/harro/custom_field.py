@@ -158,6 +158,15 @@ def create_custom_fields_on_migrate():
                 "fieldtype" : "HTML",
                 "insert_after" : "custom_org_chart"
             }
+        ],
+        "Purchase Invoice" : [
+            {
+                "fieldname" : "travel_planning",
+                "label" : "Travel Planning",
+                "fieldtype" : "Link",
+                "options" : "Travel Planning",
+                "insert_after" : "due_date"
+            }
         ]
         
     }

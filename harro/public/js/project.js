@@ -3,25 +3,36 @@ frappe.ui.form.on("Project", {
         if (!frm.is_new()) {
             prepare_chart_design(frm)
         }
-        if (!frm.doc.name) return;
+        load_organisation_chart(frm)
+        // Set up tab click event
+        setupTabNavigation(frm);
+
+        // Load immediately if we're on the org_chart tab
+        if (cur_frm.get_active_tab() && cur_frm.get_active_tab().label === 'Org Chart') {
+            load_organisation_chart(frm);
+        }
+    }
+});
+
+function load_organisation_chart(frm){
+    if (!frm.doc.name) return;
 
         const wrapper = frm.fields_dict.custom_chart.$wrapper;
         wrapper.empty();
 
-        $(wrapper).bind("show", () => {
+        $(wrapper).bind("show", async () => {
+            // Load html2canvas first
+            await loadHtml2Canvas();
+            
+            // Then load your chart bundle
             frappe.require("harro_hierarchy_chart.bundle.js", () => {
-                if (!window.harro || !window.harro.HierarchyChart) {
-                    console.error("harro.HierarchyChart not loaded!");
-                    return;
-                }
-
                 let chart;
                 const method = "harro.harro.docevents.project.get_project_hierarchy";
 
                 if (frappe.is_mobile()) {
                     chart = new harro.HierarchyChartMobile("Employee", wrapper[0], method);
                 } else {
-                    chart = new harro.HierarchyChart("Employee", wrapper[0], method);
+                    chart = new window.HierarchyChart("Employee", wrapper[0], method);
                 }
 
                 chart.args = {
@@ -32,8 +43,7 @@ frappe.ui.form.on("Project", {
             });
         });
         $(wrapper).trigger("show");
-    }
-});
+}
 
 function prepare_chart_design(frm) {
     if (!frm.fields_dict.effort_overview) return;
@@ -489,4 +499,61 @@ function renderunproductiveTimesheetSpeedometer(frm, set) {
     // Value label
     document.getElementById(`unpro_timesheet_value_${index}_${frm.doc.name}`).innerHTML =
         `<b>${percentage.toFixed(1)}%</b><br>(${actual || 0} / ${planned || 0} hrs)`;
+}
+
+
+// Function to dynamically load html2canvas
+function loadHtml2Canvas() {
+    return new Promise((resolve, reject) => {
+        // Check if already loaded
+        if (window.html2canvas) {
+            resolve();
+            return;
+        }
+        
+        // Create script element
+        const script = document.createElement('script');
+        script.src = 'https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js';
+        script.integrity = 'sha512-BNaRQnYJYiPSqHHDb58B0yaPfCu+Wgds8Gp/gU33kqBtgNS4tSPHuGibyoeqMV/TJlSKda6FXzoEyYGjTe+vXA==';
+        script.crossOrigin = 'anonymous';
+        script.referrerPolicy = 'no-referrer';
+        
+        script.onload = () => {
+            console.log('html2canvas loaded successfully');
+            resolve();
+        };
+        
+        script.onerror = (error) => {
+            console.error('Failed to load html2canvas:', error);
+            reject(error);
+        };
+        
+        // Append to head
+        document.head.appendChild(script);
+    });
+}
+
+function setupTabNavigation(frm) {
+    // Wait a bit for tabs to render
+    setTimeout(() => {
+        // Find the org_chart tab by its label or fieldname
+        const orgChartTab = $(frm.wrapper).find('[data-fieldname="custom_org_chart"]');
+        
+        if (orgChartTab.length) {
+            // Remove any existing click handlers to avoid duplicates
+            orgChartTab.off('click.tab-chart');
+            
+            // Add click handler
+            orgChartTab.on('click.tab-chart', function() {
+                // Clear the tab content first
+                const tabContent = $(frm.wrapper).find('[data-fieldname="custom_chart"]');
+                if (tabContent.length) {
+                    tabContent.empty();
+                }
+                
+                // Load the chart
+                load_organisation_chart(frm);
+            });
+        }
+    }, 500);
 }

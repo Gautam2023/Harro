@@ -1,6 +1,6 @@
-import html2canvas from "html2canvas";
+// Remove this line: import html2canvas from "html2canvas";
 
-harro.HierarchyChart = class {
+window.HierarchyChart = class {
     constructor(doctype, wrapper, method) {
         // 'wrapper' is a DOM element from HTML field
         this.wrapper = $(wrapper);
@@ -137,6 +137,33 @@ harro.HierarchyChart = class {
     }
 
     export_chart() {
+        // Check if html2canvas is available
+        if (typeof html2canvas === 'undefined' && typeof window.html2canvas !== 'undefined') {
+            // Use window.html2canvas if global is available
+            window.html2canvas(document.querySelector("#hierarchy-chart-wrapper"), {
+                scrollY: -window.scrollY,
+                scrollX: 0,
+            })
+            .then(function (canvas) {
+                let dataURL = canvas.toDataURL("image/png");
+                let a = document.createElement("a");
+                a.href = dataURL;
+                a.download = "hierarchy_chart";
+                a.click();
+            })
+            .finally(() => {
+                frappe.dom.unfreeze();
+                this.setup_page_style();
+                $(".node-card").removeClass("exported");
+            });
+        } else {
+            frappe.msgprint(__("Export feature is not available. Please refresh the page."));
+            frappe.dom.unfreeze();
+            this.setup_page_style();
+            $(".node-card").removeClass("exported");
+            return;
+        }
+
         frappe.dom.freeze(__("Exporting..."));
         this.page.main.css({
             "min-height": "",
@@ -148,24 +175,6 @@ harro.HierarchyChart = class {
         });
 
         $(".node-card").addClass("exported");
-
-        html2canvas(document.querySelector("#hierarchy-chart-wrapper"), {
-            scrollY: -window.scrollY,
-            scrollX: 0,
-        })
-            .then(function (canvas) {
-                let dataURL = canvas.toDataURL("image/png");
-                let a = document.createElement("a");
-                a.href = dataURL;
-                a.download = "hierarchy_chart";
-                a.click();
-            })
-            .finally(() => {
-                frappe.dom.unfreeze();
-            });
-
-        this.setup_page_style();
-        $(".node-card").removeClass("exported");
     }
 
     setup_hierarchy() {

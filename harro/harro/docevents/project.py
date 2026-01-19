@@ -4,13 +4,22 @@ from frappe.utils import flt
 def validate(self, method):
     self.planned_manufacturing_hours = round(flt(self.planned_mechanical_assembly) + flt(self.planned_electrical_assembly), 2)
 
-def calculate_project_working_hours(project):
-    # Get all submitted job cards for the project
-    job_cards = frappe.db.get_all(
-        "Job Card",
-        filters={"project": project, "docstatus": 1},
-        fields=["name", "operation", "total_time_in_mins"]
-    )
+# This function is calculating a job card hours
+def calculate_productive_working_hours(project):
+    if not project:
+        return
+
+    job_cards = frappe.db.sql(f"""
+                              
+                                Select jc.name, jct.time_in_mins, jct.activity_type, at.custom_job_card_type as job_operation
+                                From `tabJob Card` as jc
+                                Left Join `tabJob Card Time Log` as jct ON jct.parent = jc.name
+                                Left Join `tabActivity Type` as at ON at.name = jct.activity_type
+                                Where jc.docstatus < 2 and jc.project = '{project}'
+                              
+                              """, as_dict=1)
+    
+
 
     # Dictionary to hold operation-wise total minutes
     if not job_cards:
@@ -22,22 +31,22 @@ def calculate_project_working_hours(project):
     operation_wise_time = {}
 
     for jc in job_cards:
-        operation = jc.operation or "Unknown"
-        total_time_in_mins = flt(jc.total_time_in_mins) or 0
+        operation = jc.job_operation or "Unknown"
+        total_time_in_mins = flt(jc.time_in_mins) or 0
 
         # Sum total time for each operation
         operation_wise_time[operation] = flt(operation_wise_time.get(operation, 0)) + total_time_in_mins
     
     current_actule_manufacturing_hours = frappe.db.get_value("Project", project, "actual_manufacturing_hours") or 0
 
-    if operation_wise_time.get("Mechanical Operation"):
-        frappe.db.set_value("Project", project, "actual_mechanical_assembly", round(operation_wise_time.get("Mechanical Operation")/60, 2))
+    if operation_wise_time.get("Mechanical"):
+        frappe.db.set_value("Project", project, "actual_mechanical_assembly", round(operation_wise_time.get("Mechanical")/60, 2))
 
-    if operation_wise_time.get("Electrical Operation"):
-        frappe.db.set_value("Project", project, "actual_electrical_assembly", round(operation_wise_time.get("Electrical Operation")/60, 2))
+    if operation_wise_time.get("Electrical"):
+        frappe.db.set_value("Project", project, "actual_electrical_assembly", round(operation_wise_time.get("Electrical")/60, 2))
     
-    actual_mechanical_assembly = flt(operation_wise_time.get("Mechanical Operation")) or 0
-    actual_electrical_assembly = flt(operation_wise_time.get("Electrical Operation")) or 0
+    actual_mechanical_assembly = flt(operation_wise_time.get("Mechanical")) or 0
+    actual_electrical_assembly = flt(operation_wise_time.get("Electrical")) or 0
 
     current_actule_manufacturing_hours = round(flt(actual_mechanical_assembly) + flt(actual_electrical_assembly) + flt(current_actule_manufacturing_hours), 2)
 
@@ -116,7 +125,7 @@ def get_timesheet_working_hours(name, unproductive):
     for row in fielddetails:
         if row.get("custom_update_to_project_field") and row.get("custom_planned_hours_field_name"):
             dataset.append({
-                "label": row.get("parent_activity_type"),
+                "label": row.get("parent_activity_type") or row.get("name"),
                 "actual": doc.get(row.get("custom_update_to_project_field")),
                 "planned": doc.get(row.get("custom_planned_hours_field_name")),
                 "index": count
@@ -136,7 +145,7 @@ def get_activity(unproductive=0):
     activity_list = []
     for row in fielddetails:
         if row.get("custom_update_to_project_field") and row.get("custom_planned_hours_field_name"):
-            activity_list.append(row.get("parent_activity_type"))
+            activity_list.append(row.get("parent_activity_type") or row.get("name"))
         
     return activity_list
 
@@ -233,14 +242,13 @@ def get_project_hierarchy(project, parent=None):
     # Get count of direct reports for each employee
     for emp in employees:
         # Count how many employees report to this person within the project
-        direct_reports = frappe.get_all(
+        direct_reports = frappe.db.count(
             "Employee",
             filters={
                 "reports_to": emp.id,
                 "name": ["in", project_employees],
                 "status": "Active"
             },
-            count=True
         )
         emp.connections = direct_reports
         emp.expandable = direct_reports > 0

@@ -27,8 +27,10 @@ def on_employee_update(doc, method):
 def send_visa_change_mail(doc,email, changes):
     if not email:
         return
-
-    employee_name = doc.employee_name or "Employee"
+    ## employee being updated
+    updated_employee_name = doc.employee_name or "Employee"
+    # reporting to employee name
+    reporting_to_name = frappe.db.get_value("Employee", doc.reports_to, "employee_name") or "Employee"
     rows = ""
     for c in changes:
         old_number = c[1] if c[1] else "—"
@@ -41,8 +43,8 @@ def send_visa_change_mail(doc,email, changes):
         """
 
     html_message = f"""
-        <p>Dear {employee_name},</p>
-        <p>The following Visa details have been updated in our system:</p>
+        <p>Dear {reporting_to_name},</p>
+        <p>The following Visa details have been updated for <b>{updated_employee_name}</b>:</p>
 
         <table style="border-collapse: collapse; font-size: 14px;">
             <tr style="background: #f5f5f5;">

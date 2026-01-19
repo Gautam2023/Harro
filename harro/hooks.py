@@ -28,7 +28,7 @@ app_license = "mit"
 app_include_css = "/assets/harro/css/harro.css"
 app_include_js = [
     "/assets/harro/js/frappe/views/gantt/gantt_view.js",
-    "/assets/harro/js/harro_hierarchy_chart.bundle.js"
+    "harro.bundle.js"
 ]
 
 # include js, css files in header of web template

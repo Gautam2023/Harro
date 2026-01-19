@@ -18,7 +18,7 @@ frappe.ui.form.on("Job Card", {
                         "fieldtype" : "Link",
                         get_query: function () {
                             return {
-                                filters: [["custom_unproductive_work" , "=", 0]],
+                                filters: [["custom_unproductive_work" , "=", 0], ["custom_job_card_type" , "!=", ""]],
                             };
                         },
                     }
@@ -61,7 +61,7 @@ frappe.ui.form.on("Job Card", {
                         "fieldtype" : "Link",
                         get_query: function () {
                             return {
-                                filters: [["custom_unproductive_work" , "=", 0]],
+                                filters: [["custom_unproductive_work" , "=", 0], ["custom_job_card_type" , "!=", ""]],
                             };
                         },
                     }
@@ -98,7 +98,7 @@ frappe.ui.form.on("Job Card", {
                     "fieldtype" : "Link",
                     get_query: function () {
 						return {
-							filters: [["custom_unproductive_work" , "=", 1]],
+							filters: [["custom_unproductive_work" , "=", 1], ["custom_job_card_type" , "!=", ""]],
 						};
 					},
                 },

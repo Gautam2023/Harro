@@ -167,7 +167,15 @@ def create_custom_fields_on_migrate():
                 "options" : "Travel Planning",
                 "insert_after" : "due_date"
             }
-        ]
+        ],
+        "Purchase Receipt Item" : [
+            {
+                "fieldname" : "ordered_qty",
+                "label" : "Ordered Qty",
+                "fieldtype" : "Float",
+                "insert_after" : "received_qty"
+            }
+        ] 
         
     }
 

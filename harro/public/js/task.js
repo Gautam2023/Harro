@@ -183,7 +183,12 @@ function update_start_job_log(frm){
                 "label" : "Activity Type",
                 "options" : "Activity Type",
                 "reqd" :  1,
-                "fieldtype" : "Link"
+                "fieldtype" : "Link",
+                get_query: function () {
+                    return {
+                        filters: [["custom_unproductive_work" , "=", 0], ["custom_job_card_type" , "=", ""]],
+                    };
+                },
             },
             {
                 "fieldname" : "project",

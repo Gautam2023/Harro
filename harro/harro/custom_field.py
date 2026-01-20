@@ -170,7 +170,7 @@ def create_custom_fields_on_migrate():
         ],
         "Purchase Receipt Item" : [
             {
-                "fieldname" : "ordered_qty",
+                "fieldname" : "ordered_qty_",
                 "label" : "Ordered Qty",
                 "fieldtype" : "Float",
                 "insert_after" : "received_qty"
@@ -180,3 +180,6 @@ def create_custom_fields_on_migrate():
     }
 
     create_custom_fields(fields)
+
+    if frappe.get_meta("Purchase Receipt Item").has_field("ordered_qty_"):
+        frappe.db.delete("Custom Field", "Purchase Receipt Item-ordered_qty")

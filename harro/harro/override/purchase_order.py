@@ -52,7 +52,7 @@ def make_purchase_receipt(source_name, target_doc=None, args=None):
 					"sales_order": "sales_order",
 					"sales_order_item": "sales_order_item",
 					"wip_composite_asset": "wip_composite_asset",
-					"qty": "ordered_qty"
+					"qty": "ordered_qty_"
 				},
 				"postprocess": update_item,
 				"condition": lambda doc: (

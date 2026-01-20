@@ -175,7 +175,16 @@ def create_custom_fields_on_migrate():
                 "fieldtype" : "Float",
                 "insert_after" : "received_qty"
             }
-        ] 
+        ],
+        "Travel Itinerary" : [
+            {
+                "fieldname" : "room_night",
+                "label" : "Room Night",
+                "fieldtype" : "Int",
+                "insert_after" : "check_out_date",
+                "depends_on" : "eval:doc.lodging_required == 1;"
+            }
+        ]
         
     }
 
@@ -183,3 +192,7 @@ def create_custom_fields_on_migrate():
 
     if frappe.get_meta("Purchase Receipt Item").has_field("ordered_qty_"):
         frappe.db.delete("Custom Field", "Purchase Receipt Item-ordered_qty")
+    
+    # delete Travel Itinerary-custom_room_night
+    if frappe.get_meta("Travel Itinerary").has_field("custom_room_night"):
+        frappe.db.delete("Custom Field", "Travel Itinerary-custom_room_night")

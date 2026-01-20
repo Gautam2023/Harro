@@ -62,7 +62,8 @@ doctype_js = {
         "Task" : "public/js/task.js",
         "Production Plan" : "public/js/production_plan.js",
         "Material Request" : "public/js/material_requiest.js",
-        "Request for Quotation" : "public/js/request_for_quotation.js"
+        "Request for Quotation" : "public/js/request_for_quotation.js",
+        "Travel Request" : "public/js/travel_request.js"
     }
 
 doctype_list_js = {"Task" : "public/js/task_list.js"}

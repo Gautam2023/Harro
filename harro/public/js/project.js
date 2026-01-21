@@ -11,6 +11,12 @@ frappe.ui.form.on("Project", {
         if (cur_frm.get_active_tab() && cur_frm.get_active_tab().label === 'Org Chart') {
             load_organisation_chart(frm);
         }
+        // add button organizational chart
+        frm.add_custom_button(__("Organizational Chart"), function () {
+            frappe.set_route('organisation-chart-h', {
+                project: frm.doc.name
+            })
+        })
     }
 });
 

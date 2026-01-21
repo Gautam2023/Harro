@@ -1,0 +1,23 @@
+{
+ "content": null,
+ "creation": "2026-01-20 12:06:58.573070",
+ "docstatus": 0,
+ "doctype": "Page",
+ "idx": 0,
+ "modified": "2026-01-20 12:06:58.573070",
+ "modified_by": "Administrator",
+ "module": "Harro",
+ "name": "organisation-chart-h",
+ "owner": "Administrator",
+ "page_name": "organisation-chart-h",
+ "roles": [
+  {
+   "role": "System Manager"
+  }
+ ],
+ "script": null,
+ "standard": "Yes",
+ "style": null,
+ "system_page": 0,
+ "title": "Organisation Chart Harro"
+}

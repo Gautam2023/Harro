@@ -14,4 +14,23 @@ frappe.ui.form.on("Travel Request", {
 			},__("Create"));
         }
 	},
+    custom_checkout_date_(frm) {
+        calculate_nights(frm);
+    },
+    custom_checkin_date(frm) {
+        calculate_nights(frm);
+    }
 });
+
+function calculate_nights(frm) {
+    if (frm.doc.custom_checkin_date && frm.doc.custom_checkout_date_) {
+        let check_in_date = frappe.datetime.str_to_obj(frm.doc.custom_checkin_date);
+        let check_out_date = frappe.datetime.str_to_obj(frm.doc.custom_checkout_date_);
+
+        let diff = frappe.datetime.get_diff(check_out_date, check_in_date);
+        // number of nights (checkout - checkin)
+        custom_room_night = diff > 0 ? diff : 0;
+        console.log(custom_room_night);
+        frm.set_value("custom_room_night", custom_room_night);
+    }
+}

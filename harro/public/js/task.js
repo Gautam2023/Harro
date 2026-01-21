@@ -149,6 +149,12 @@ frappe.ui.form.on("Task", {
         if(frm.doc.status == "Completed"){
             frm.set_value("completed_by", frappe.session.user)
         }
+    },
+    custom_employee__assign_to_employee_(frm) {
+        if (!frm.doc.custom_employee__assign_to_employee_) return;
+        frappe.model.get_value("Employee", frm.doc.custom_employee__assign_to_employee_, "department", (r)=>{
+            frm.set_value("department", r.department)
+        })
     } 
 })
 
@@ -186,7 +192,11 @@ function update_start_job_log(frm){
                 "fieldtype" : "Link",
                 get_query: function () {
                     return {
-                        filters: [["custom_unproductive_work" , "=", 0], ["custom_job_card_type" , "=", ""]],
+                        query : "harro.harro.docevents.task.get_activity_type",
+                        filters: {
+                            custom_unproductive_work : 0,
+                            department : frm.doc.department
+                        },
                     };
                 },
             },

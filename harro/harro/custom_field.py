@@ -189,10 +189,3 @@ def create_custom_fields_on_migrate():
     }
 
     create_custom_fields(fields)
-
-    if frappe.get_meta("Purchase Receipt Item").has_field("ordered_qty_"):
-        frappe.db.delete("Custom Field", "Purchase Receipt Item-ordered_qty")
-    
-    # delete Travel Itinerary-custom_room_night
-    if frappe.get_meta("Travel Itinerary").has_field("custom_room_night"):
-        frappe.db.delete("Custom Field", "Travel Itinerary-custom_room_night")

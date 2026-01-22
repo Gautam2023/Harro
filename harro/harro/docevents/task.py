@@ -23,6 +23,7 @@ def validate(self, method=None):
                 self.exp_end_date,
                 self.act_end_date
             )
+    update_department(self)
 
 def after_insert(self, method):
     if task := frappe.db.exists("Task", {
@@ -307,3 +308,28 @@ def get_extra_days(exp_end_date, act_end_date):
     expected_days = date_diff(act_end_date ,exp_end_date)
     return max(expected_days, 0)
 
+
+def update_department(self):
+    if not self.department:
+        self.department = frappe.db.get_value("Employee", self.custom_employee__assign_to_employee_, "department")
+    
+
+@frappe.whitelist()
+@frappe.validate_and_sanitize_search_inputs
+def get_activity_type(doctype, txt, searchfield, start, page_len, filters):
+    condition = ''
+    if filters.get("department"):
+        condition += f" AND pt.department = '{filters.get('department')}'"
+    if filters.get("custom_unproductive_work"):
+        condition += f" AND at.custom_unproductive_work = {filters.get('custom_unproductive_work')}"
+    else:
+        condition += f" AND at.custom_unproductive_work = 0"
+
+    return frappe.db.sql(f""" 
+                    
+                    Select at.name
+                    From `tabActivity Type` as at
+                    Left join `tabParent Activity` as pt ON pt.name = at.parent_activity_type
+                    Where (at.custom_job_card_type is null or at.custom_job_card_type = '') {condition}
+
+                """)

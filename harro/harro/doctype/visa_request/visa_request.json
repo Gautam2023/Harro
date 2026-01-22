@@ -7,12 +7,15 @@
  "engine": "InnoDB",
  "field_order": [
   "employee_id",
-  "employee_name",
-  "contact_email",
   "travel_request",
   "covering_letter",
+  "column_break_wvcp",
+  "employee_name",
+  "contact_email",
   "visa_country",
-  "visa_checklist"
+  "visa_checklist",
+  "section_break_qenr",
+  "check_list"
  ],
  "fields": [
   {
@@ -57,12 +60,26 @@
    "fieldtype": "Link",
    "label": "Visa Checklist",
    "options": "Country Wise visa Document Checklist"
+  },
+  {
+   "fieldname": "column_break_wvcp",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "section_break_qenr",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "check_list",
+   "fieldtype": "Table",
+   "label": "Check list",
+   "options": "Checklist Doc"
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-01-22 09:28:35.095745",
+ "modified": "2026-01-22 10:33:54.301589",
  "modified_by": "Administrator",
  "module": "Harro",
  "name": "Visa Request",

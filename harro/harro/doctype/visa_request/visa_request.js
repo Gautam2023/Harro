@@ -27,5 +27,26 @@ frappe.ui.form.on("Visa Request", {
                 frappe.msgprint(__('No checklist found for selected country'));
             }
         });
+    },
+    visa_checklist:(frm)=>{
+        if (frm.doc.visa_checklist){
+            frappe.call({
+                method : "harro.harro.doctype.visa_request.visa_request.get_visa_check_list_details",
+                args : {
+                    chekck_list : frm.doc.visa_checklist
+                },
+                callback:(r)=>{
+                    if(r.message){
+                        r.message.checklist.forEach(e => {
+                           let row = frm.add_child("check_list"); 
+                           row.catogory = e.catogory
+                           row.checklistname_of_document = e.checklistname_of_document
+                           row.options = e.options
+                        });
+                        frm.refresh_field("check_list")
+                    }
+                }
+            })
+        }
     }
 });

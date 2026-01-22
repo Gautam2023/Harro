@@ -93,6 +93,20 @@ def create_custom_fields_on_migrate():
                 "fieldname": "delete_selected_commodity_group_items",
                 "insert_after": "remove_based_item_group",
                 "fieldtype": "Button",
+            },
+            {
+                "insert_after" : "ignore_existing_ordered_qty",
+                "fieldname" : "items_to_reduce_qty",
+                "label" : "Items To Reduce Quantity",
+                "fieldtype" : "Table MultiSelect",
+                "options" : "Item To Reduce Quantity",
+                "description" : "Update the Sub Assembly Item to reduce item from below table"
+            },
+            {
+                "label" : "Reduce Item From Raw Material",
+                "fieldname" : "reduce_item_from_raw_material",
+                "insert_after" : "items_to_reduce_qty",
+                "fieldtype" : "Button"
             }
         ],
         "Material Request Plan Item" : [

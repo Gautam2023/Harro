@@ -1,9 +1,34 @@
 frappe.ui.form.on("Production Plan", {
-    refresh:(frm)=>{
+    refresh: (frm) => {
         override_setup_download(frm);
         override_bulk_edit_functions(frm);
         frm.get_docfield("sub_assembly_items").allow_bulk_edit = true
         frm.fields_dict.sub_assembly_items.grid.setup_allow_bulk_edit()
+
+        // filters for items_to_reduce_qty
+        frm.set_query("items_to_reduce_qty", function () {
+            let items = [];
+            if (frm.doc.sub_assembly_items) {
+                frm.doc.sub_assembly_items.forEach(row => {
+                    if (row.production_item) {
+                        items.push(row.production_item);
+                    }
+                });
+            }
+            // if no sub-assembly items, show nothing
+            if (!items.length) {
+                return {
+                    filters: {
+                        name: ["=", ""]
+                    }
+                }
+            }
+            return {
+                filters: {
+                    name: ["in", items]
+                }
+            }
+        });
     },
     delete_selected_commodity_group_items(frm) {
         // collect commodity groups selected for removal
@@ -20,6 +45,31 @@ frappe.ui.form.on("Production Plan", {
         });
 
         frm.refresh_field("mr_items");
+    },
+    reduce_item_from_raw_material(frm) {
+        if (!frm.doc.items_to_reduce_qty || !frm.doc.items_to_reduce_qty.length) {
+            frappe.msgprint(__("Please select items to reduce quantity."));
+            return;
+        }
+
+        frappe.confirm(
+            __("This will reduce raw material quantities. Are you sure you want to continue ?"),
+            () => {
+                frappe.call({
+                    method: "harro.harro.api.reduce_raw_material_qty",
+                    args: {
+                        production_plan: frm.doc.name,
+                        items: frm.doc.items_to_reduce_qty
+                    },
+                    freeze: true,
+                    callback() {
+                        frm.reload_doc()
+                        frappe.msgprint(__("Raw material quantities updated."));
+                    }
+
+                });
+            }
+        );
     }
 })
 
@@ -209,7 +259,7 @@ function override_bulk_edit_functions(frm) {
                                             var fieldname = fieldnames[ci];
                                             var df = frappe.meta.get_docfield(
                                                 me.df.options,
-                                               	fieldname
+                                                fieldname
                                             );
 
                                             if (df) {

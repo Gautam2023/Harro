@@ -317,21 +317,40 @@ def update_department(self):
 @frappe.whitelist()
 @frappe.validate_and_sanitize_search_inputs
 def get_activity_type(doctype, txt, searchfield, start, page_len, filters):
-    condition = ''
+    conditions = []
+    values = {}
+
     if filters.get("department"):
-        condition += f" AND pt.department = '{filters.get('department')}'"
-    if filters.get("custom_unproductive_work"):
-        condition += f" AND at.custom_unproductive_work = {filters.get('custom_unproductive_work')}"
+        conditions.append("pt.department = %(department)s")
+        values["department"] = filters.get("department")
+
+    if filters.get("custom_unproductive_work") is not None:
+        conditions.append("at.custom_unproductive_work = %(custom_unproductive_work)s")
+        values["custom_unproductive_work"] = filters.get("custom_unproductive_work")
     else:
-        condition += f" AND at.custom_unproductive_work = 0"
+        conditions.append("at.custom_unproductive_work = 0")
+
     if txt:
-        condition += f"AND at.name Like '{txt}'"
+        conditions.append("at.name LIKE %(txt)s")
+        values["txt"] = f"%{txt}%"
 
-    return frappe.db.sql(f""" 
-                    
-                    Select at.name
-                    From `tabActivity Type` as at
-                    Left join `tabParent Activity` as pt ON pt.name = at.parent_activity_type
-                    Where (at.custom_job_card_type is null or at.custom_job_card_type = '') {condition}
+    condition_sql = ""
+    if conditions:
+        condition_sql = " AND " + " AND ".join(conditions)
 
-                """)
+    return frappe.db.sql(
+        f"""
+        SELECT at.name
+        FROM `tabActivity Type` at
+        LEFT JOIN `tabParent Activity` pt
+            ON pt.name = at.parent_activity_type
+        WHERE (at.custom_job_card_type IS NULL OR at.custom_job_card_type = '')
+        {condition_sql}
+        LIMIT %(start)s, %(page_len)s
+        """,
+        {
+            **values,
+            "start": start,
+            "page_len": page_len
+        }
+    )

@@ -405,6 +405,8 @@ def get_items_for_material_requests(doc, warehouses=None, get_parent_warehouse_d
                 so_item_details[sales_order][item_code] = details
 
     mr_items = []
+    consumed_qty = defaultdict(float)
+
     for sales_order in so_item_details:
         item_dict = so_item_details[sales_order]
         for details in item_dict.values():
@@ -421,6 +423,7 @@ def get_items_for_material_requests(doc, warehouses=None, get_parent_warehouse_d
                     include_safety_stock,
                     warehouse,
                     bin_dict,
+                    consumed_qty
                 )
                 if items:
                     mr_items.append(items)

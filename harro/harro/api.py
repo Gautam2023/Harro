@@ -541,7 +541,7 @@ def reduce_raw_material_qty(production_plan, items):
         for row in data:
 
             item_code = row[0]
-            bom_qty = flt(row[3])
+            bom_qty = flt(row[5])
 
             if not item_code or item_code not in mr_items_map:
                 continue

@@ -5,9 +5,11 @@
  "doctype": "DocType",
  "engine": "InnoDB",
  "field_order": [
+  "title",
+  "column_break_offv",
+  "country",
   "section_break_exdg",
   "column_break_frci",
-  "title",
   "checklist",
   "please_note",
   "disclaimer",
@@ -86,13 +88,23 @@
    "print_hide": 1,
    "read_only": 1,
    "search_index": 1
+  },
+  {
+   "fieldname": "column_break_offv",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "country",
+   "fieldtype": "Link",
+   "label": "Country",
+   "options": "Country"
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2025-11-17 21:52:18.658457",
+ "modified": "2026-01-22 09:39:23.989115",
  "modified_by": "Administrator",
  "module": "Harro",
  "name": "Country Wise visa Document Checklist",

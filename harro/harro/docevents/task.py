@@ -324,6 +324,8 @@ def get_activity_type(doctype, txt, searchfield, start, page_len, filters):
         condition += f" AND at.custom_unproductive_work = {filters.get('custom_unproductive_work')}"
     else:
         condition += f" AND at.custom_unproductive_work = 0"
+    if txt:
+        condition += f"AND at.name Like '{txt}'"
 
     return frappe.db.sql(f""" 
                     

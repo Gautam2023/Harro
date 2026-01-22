@@ -17,9 +17,19 @@ frappe.ui.form.on("Job Card", {
                         "reqd" :  1,
                         "fieldtype" : "Link",
                         get_query: function () {
+                            let employee = false
+                            if (frm.doc.employee){
+                                employee = frm.doc.employee[0].employee
+                            }
                             return {
-                                filters: [["custom_unproductive_work" , "=", 0], ["custom_job_card_type" , "!=", ""]],
-                            };
+                                query : "harro.harro.docevents.task.get_activity_type",
+                                filters: {
+                                    custom_unproductive_work : 0,
+                                    department : frm.doc.department,
+                                    custom_job_card_type : 1,
+                                    employees : employee
+                                },
+                            }
                         },
                     }
                 ],
@@ -60,9 +70,19 @@ frappe.ui.form.on("Job Card", {
                         "reqd" :  1,
                         "fieldtype" : "Link",
                         get_query: function () {
+                            let employee = false
+                            if (frm.doc.employee){
+                                employee = frm.doc.employee[0].employee
+                            }
                             return {
-                                filters: [["custom_unproductive_work" , "=", 0], ["custom_job_card_type" , "!=", ""]],
-                            };
+                                query : "harro.harro.docevents.task.get_activity_type",
+                                filters: {
+                                    custom_unproductive_work : 0,
+                                    department : frm.doc.department,
+                                    custom_job_card_type : 1,
+                                    employees : employee
+                                },
+                            }
                         },
                     }
                 ],

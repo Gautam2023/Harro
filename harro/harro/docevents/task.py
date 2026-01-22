@@ -320,31 +320,55 @@ def get_activity_type(doctype, txt, searchfield, start, page_len, filters):
     conditions = []
     values = {}
 
+    # Department filter
     if filters.get("department"):
         conditions.append("pt.department = %(department)s")
         values["department"] = filters.get("department")
 
+    # Unproductive work filter
     if filters.get("custom_unproductive_work") is not None:
         conditions.append("at.custom_unproductive_work = %(custom_unproductive_work)s")
         values["custom_unproductive_work"] = filters.get("custom_unproductive_work")
     else:
         conditions.append("at.custom_unproductive_work = 0")
 
+    # Search text
     if txt:
         conditions.append("at.name LIKE %(txt)s")
         values["txt"] = f"%{txt}%"
+
+    # Employee-based department (only if department not already set)
+    if not values.get("department") and filters.get("employees"):
+        employee = filters.get("employees")
+        if employee:
+            department = frappe.db.get_value(
+                "Employee", employee, "department"
+            )
+            if department:
+                conditions.append("pt.department = %(department)s")
+                values["department"] = department
+
+    # Job Card Type condition (FIXED LOGIC)
+    if filters.get("custom_job_card_type"):
+        conditions.append(
+            "(at.custom_job_card_type IS NOT NULL OR at.custom_job_card_type != '')"
+        )
+    else:
+        conditions.append(
+            "(at.custom_job_card_type IS NULL OR at.custom_job_card_type = '')"
+        )
 
     condition_sql = ""
     if conditions:
         condition_sql = " AND " + " AND ".join(conditions)
 
-    return frappe.db.sql(
+    data = frappe.db.sql(
         f"""
         SELECT at.name
         FROM `tabActivity Type` at
         LEFT JOIN `tabParent Activity` pt
             ON pt.name = at.parent_activity_type
-        WHERE (at.custom_job_card_type IS NULL OR at.custom_job_card_type = '')
+        WHERE 1=1
         {condition_sql}
         LIMIT %(start)s, %(page_len)s
         """,
@@ -354,3 +378,4 @@ def get_activity_type(doctype, txt, searchfield, start, page_len, filters):
             "page_len": page_len
         }
     )
+    return data

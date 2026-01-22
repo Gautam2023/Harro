@@ -6,7 +6,7 @@ frappe.ui.form.on("Visa Request", {
         frm.set_query("visa_checklist", function(doc){
             return {
                 filters: {
-					counrty: doc.visa_country,
+					country: doc.visa_country,
 				},
             }
         })

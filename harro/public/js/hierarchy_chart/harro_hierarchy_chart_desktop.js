@@ -17,6 +17,7 @@ hrms.HierarchyChart = class {
 
 		this.nodes = {};
 		this.setup_node_class();
+        this.project = "";
 	}
 
 	setup_page_style() {
@@ -76,7 +77,9 @@ hrms.HierarchyChart = class {
 
 	show() {
 		this.setup_actions();
-		if (this.page.main.find('[data-fieldname="company"]').length) return;
+		if (this.page.main.find('[data-fieldname="company"]').length &&
+            this.page.main.find('[data-fieldname="project"]').length) return;
+
 		let me = this;
 
 		let company = this.page.add_field({
@@ -105,10 +108,63 @@ hrms.HierarchyChart = class {
 			},
 		});
 
+        let route_project = frappe.route_options?.project || null;
+
+		let project = this.page.add_field({
+			fieldtype: "Link",
+			options: "Project",
+			fieldname: "project",
+			placeholder: __("Select Project"),
+			only_select: true,
+			reqd: 0,
+			default: route_project,
+			change: () => {
+				me.project = "";
+				$("#hierarchy-chart-wrapper").remove();
+
+				if (project.get_value()) {
+					me.project = project.get_value();
+					me.render_chart();
+				} else if (company.get_value()) {
+					me.project = "";
+					me.render_chart();
+				}
+			},
+		});
+
+
 		company.refresh();
+        project.refresh();
+		if (route_project) {
+			project.set_value(route_project);
+		}
+
 		$(`[data-fieldname="company"]`).trigger("change");
 		$(`[data-fieldname="company"] .link-field`).css("z-index", 2);
+        $(`[data-fieldname="project"]`).trigger("change");
+        $(`[data-fieldname="project"] .link-field`).css("z-index", 2);
 	}
+
+
+    // Add this helper method to handle chart rendering
+    render_chart() {
+        let me = this;
+
+        let company_value = this.page.fields_dict.company.get_value();
+
+        if (!company_value) {
+            console.log("No company selected yet...");
+            return;
+        }
+
+        me.company = company_value;
+
+        $("#hierarchy-chart-wrapper").remove();
+        me.make_svg_markers();
+        me.setup_hierarchy();
+        me.render_root_nodes();
+        me.all_nodes_expanded = false;
+    }
 
 	setup_actions() {
 		let me = this;
@@ -224,6 +280,7 @@ hrms.HierarchyChart = class {
 				method: me.method,
 				args: {
 					company: me.company,
+                    project: me.project || null,
 				},
 			})
 			.then((r) => {
@@ -325,6 +382,7 @@ hrms.HierarchyChart = class {
 					args: {
 						parent: node_id,
 						company: me.company,
+                        project: me.project || null,
 					},
 				})
 				.then((r) => resolve(r.message));
@@ -373,6 +431,7 @@ hrms.HierarchyChart = class {
 				args: {
 					method: me.method,
 					company: me.company,
+                    project: me.project || null,
 				},
 				callback: (r) => {
 					resolve(r.message);

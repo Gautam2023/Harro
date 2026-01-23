@@ -15,14 +15,14 @@ frappe.ui.form.on("Travel Request", {
         }
 	},
     custom_checkout_date_(frm) {
-        calculate_nights(frm);
+        calculate_nights_parent(frm);
     },
     custom_checkin_date(frm) {
-        calculate_nights(frm);
+        calculate_nights_parent(frm);
     }
 });
 
-function calculate_nights(frm) {
+function calculate_nights_parent(frm) {
     if (frm.doc.custom_checkin_date && frm.doc.custom_checkout_date_) {
         let check_in_date = frappe.datetime.str_to_obj(frm.doc.custom_checkin_date);
         let check_out_date = frappe.datetime.str_to_obj(frm.doc.custom_checkout_date_);

@@ -1,6 +1,17 @@
+
+frappe.ui.form.on("Travel Request", {
+    // custom_checkin_date: function (frm) {
+    //     calculate_nights_parent(frm);
+    // },
+
+    // custom_checkout_date_: function (frm) {
+    //     calculate_nights_parent(frm);
+    // }
+});
+
+
 frappe.ui.form.on("Travel Itinerary", {
     check_in_date: function (frm, cdt, cdn) {
-        console.log("hello Hello jell")
         calculate_nights(cdt, cdn);
     },
 
@@ -20,7 +31,6 @@ function calculate_nights(cdt, cdn) {
 
         // Number of nights (checkout - checkin)
         room_night = diff > 0 ? diff : 0;
-        console.log(room_night)
         frappe.model.set_value(cdt, cdn, "room_night", room_night)
 
         refresh_field("travel_itinerary");

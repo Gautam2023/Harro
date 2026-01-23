@@ -7472,6 +7472,292 @@
     }
   });
 
+  // ../harro/harro/public/js/frappe/views/gantt/gantt_view.js
+  frappe.provide("frappe.views");
+  frappe.views.GanttView = class GanttView extends frappe.views.ListView {
+    get view_name() {
+      return "Gantt";
+    }
+    setup_defaults() {
+      return super.setup_defaults().then(() => {
+        this.page_title = this.page_title + " " + __("Gantt");
+        this.calendar_settings = frappe.views.calendar[this.doctype] || {};
+        if (typeof this.calendar_settings.gantt == "object") {
+          Object.assign(this.calendar_settings, this.calendar_settings.gantt);
+        }
+        if (this.calendar_settings.order_by) {
+          this.sort_by = this.calendar_settings.order_by;
+          this.sort_order = "asc";
+        } else {
+          this.sort_by = this.view_user_settings.sort_by || this.calendar_settings.field_map.start;
+          this.sort_order = this.view_user_settings.sort_order || "asc";
+        }
+      });
+    }
+    setup_view() {
+    }
+    prepare_data(data) {
+      super.prepare_data(data);
+      this.prepare_tasks();
+    }
+    prepare_tasks() {
+      var me = this;
+      var meta = this.meta;
+      var field_map = this.calendar_settings.field_map;
+      this.tasks = this.data.flatMap(function(item) {
+        var progress = 0;
+        if (field_map.progress && $.isFunction(field_map.progress)) {
+          progress = field_map.progress(item);
+        } else if (field_map.progress) {
+          progress = item[field_map.progress];
+        }
+        var label;
+        if (meta.title_field) {
+          label = item.progress ? __("{0} ({1}) - {2}%", [item[meta.title_field], item.name, item.progress]) : __("{0} ({1})", [item[meta.title_field], item.name]);
+        } else {
+          label = item[field_map.title];
+        }
+        let planned_bar = {
+          start: item[field_map.start],
+          end: item[field_map.end],
+          name: label + " (Planned)",
+          id: item[field_map.id || "name"],
+          doctype: me.doctype,
+          progress,
+          dependencies: item.depends_on_tasks || "",
+          bar_type: "planned"
+        };
+        let actual_bar = null;
+        const has_actual = field_map.actual_start && field_map.actual_end && item[field_map.actual_start] && item[field_map.actual_end] && moment(item[field_map.actual_start]).isValid() && moment(item[field_map.actual_end]).isValid();
+        if (has_actual) {
+          actual_bar = {
+            start: item[field_map.actual_start],
+            end: item[field_map.actual_end],
+            name: label + " (Actual)",
+            id: (item[field_map.id || "name"] || item.name) + "_actual",
+            doctype: me.doctype,
+            progress,
+            bar_type: "actual",
+            custom_class: "bar-actual"
+          };
+        }
+        planned_bar.custom_class = (planned_bar.custom_class || "") + " planned";
+        if (has_actual) {
+          actual_bar.custom_class = (actual_bar.custom_class || "") + " actual";
+        }
+        [planned_bar, actual_bar].forEach((bar) => {
+          if (!bar)
+            return;
+          if (item.color && frappe.ui.color.validate_hex(item.color) && bar["bar_type"] === "actual") {
+            bar["custom_class"] = "color-" + (item.actual_progress ? item.actual_progress.replace("#", "") : "FFC067");
+          } else if (item.color && frappe.ui.color.validate_hex(item.color) && bar["bar_type"] != "actual") {
+            bar["custom_class"] = "color-" + item.color.substr(1);
+          }
+          if (item.is_milestone) {
+            bar["custom_class"] = "bar-milestone";
+          }
+        });
+        return actual_bar ? [planned_bar, actual_bar] : [planned_bar];
+      });
+    }
+    inject_hatch_pattern() {
+      const svg = this.$result.find("svg")[0];
+      if (!svg)
+        return;
+      let defs = svg.querySelector("defs");
+      if (!defs) {
+        defs = document.createElementNS("http://www.w3.org/2000/svg", "defs");
+        svg.insertBefore(defs, svg.firstChild);
+      }
+      if (!svg.querySelector("#diagonalHatch")) {
+        const pattern = document.createElementNS("http://www.w3.org/2000/svg", "pattern");
+        pattern.setAttribute("id", "diagonalHatch");
+        pattern.setAttribute("patternUnits", "userSpaceOnUse");
+        pattern.setAttribute("width", "6");
+        pattern.setAttribute("height", "6");
+        pattern.innerHTML = `
+				<path d="M0,0 l6,6 M-6,0 l6,6 M0,-6 l6,6"
+					stroke="#555" stroke-width="1" />
+			`;
+        defs.appendChild(pattern);
+      }
+      const actualBars = document.querySelectorAll('g.bar-wrapper[data-id$="_actual"] .bar');
+      actualBars.forEach((bar) => {
+        bar.setAttribute("fill", "url(#diagonalHatch)");
+      });
+    }
+    render() {
+      this.load_lib.then(() => {
+        this.render_gantt();
+      });
+    }
+    render_header() {
+    }
+    render_gantt() {
+      const me = this;
+      const gantt_view_mode = this.view_user_settings.gantt_view_mode || "Day";
+      const field_map = this.calendar_settings.field_map;
+      const date_format = "YYYY-MM-DD";
+      this.$result.empty();
+      this.$result.addClass("gantt-modern");
+      this.gantt = new Gantt(this.$result[0], this.tasks, {
+        bar_height: 35,
+        bar_corner_radius: 4,
+        resize_handle_width: 8,
+        resize_handle_height: 28,
+        resize_handle_corner_radius: 3,
+        resize_handle_offset: 4,
+        view_mode: gantt_view_mode,
+        date_format: "YYYY-MM-DD",
+        on_click: (task) => {
+          frappe.set_route("Form", task.doctype, task.id.replace("_actual", ""));
+        },
+        on_date_change: (task, start, end) => {
+          if (!me.can_write)
+            return;
+          frappe.db.set_value(task.doctype, task.id, {
+            [field_map.start]: moment(start).format(date_format),
+            [field_map.end]: moment(end).format(date_format)
+          });
+        },
+        on_progress_change: (task, progress) => {
+          if (!me.can_write)
+            return;
+          var progress_fieldname = "progress";
+          if ($.isFunction(field_map.progress)) {
+            progress_fieldname = null;
+          } else if (field_map.progress) {
+            progress_fieldname = field_map.progress;
+          }
+          if (progress_fieldname) {
+            frappe.db.set_value(task.doctype, task.id, {
+              [progress_fieldname]: parseInt(progress)
+            });
+          }
+        },
+        on_view_change: (mode) => {
+          me.save_view_user_settings({
+            gantt_view_mode: mode
+          });
+        },
+        custom_popup_html: (task) => {
+          var item = me.get_item(task.id);
+          var html = `<div class="title">${task.name}</div>
+					<div class="subtitle">${moment(task._start).format("MMM D")} - ${moment(task._end).format(
+            "MMM D"
+          )}</div>`;
+          var custom = me.settings.gantt_custom_popup_html;
+          if (custom && $.isFunction(custom)) {
+            var ganttobj = task;
+            html = custom(ganttobj, item);
+          }
+          return '<div class="details-container">' + html + "</div>";
+        }
+      });
+      this.setup_view_mode_buttons();
+      this.set_colors();
+      this.inject_hatch_pattern();
+    }
+    setup_view_mode_buttons() {
+      let $btn_group = this.$paging_area.find(".gantt-view-mode");
+      if ($btn_group.length > 0)
+        return;
+      const view_modes = this.gantt.options.view_modes || [];
+      const active_class = (view_mode) => this.gantt.view_is(view_mode) ? "btn-info" : "";
+      const html = `<div class="btn-group gantt-view-mode">
+				${view_modes.map(
+        (value) => `<button type="button"
+						class="btn btn-default btn-sm btn-view-mode ${active_class(value)}"
+						data-value="${value}">
+						${__(value)}
+					</button>`
+      ).join("")}
+			</div>`;
+      this.$paging_area.find(".level-left").append(html);
+      const change_view_mode = (value) => setTimeout(() => this.gantt.change_view_mode(value), 0);
+      this.$paging_area.on("click", ".btn-view-mode", (e) => {
+        const $btn = $(e.currentTarget);
+        this.$paging_area.find(".btn-view-mode").removeClass("btn-info");
+        $btn.addClass("btn-info");
+        const value = $btn.data().value;
+        change_view_mode(value);
+      });
+    }
+    set_colors() {
+      const classes = [...new Set(this.tasks.map((t) => t.custom_class).filter((c) => c && c.startsWith("color-")))];
+      let pattern_defs = "";
+      let css_rules = "";
+      classes.forEach((c) => {
+        const class_name = c.replace("#", "");
+        const hex = c.replace("color-", "").replace("#", "");
+        const bar_color = "#" + hex;
+        const pattern_id = `pattern_${hex}`;
+        css_rules += `
+			.gantt .bar-wrapper.${class_name} .bar {
+				fill: ${bar_color};
+			}
+			.gantt .bar-wrapper.${class_name}.bar-planned .bar {
+				fill: ${bar_color};
+			}
+			`;
+        pattern_defs += `
+				<pattern id="${pattern_id}" patternUnits="userSpaceOnUse" width="6" height="6" patternTransform="rotate(45)">
+					<rect width="6" height="6" fill="white" opacity="0"></rect>
+					<line x1="0" y1="0" x2="0" y2="6" stroke="${bar_color}" stroke-width="1"></line>
+				</pattern>
+			`;
+        css_rules += `
+			.gantt .bar-wrapper.bar-actual .bar {
+				fill: url(#diagonalHatch) !important;
+				stroke: #333 !important;
+				stroke-width: 1px;
+				height: 16px !important;
+				y: 10px !important;
+			}
+			`;
+        const progress_color = frappe.ui.color.get_contrast_color(bar_color);
+        css_rules += `
+			.gantt .bar-wrapper.${class_name} .bar-progress {
+				fill: ${progress_color};
+			}
+			`;
+      });
+      css_rules += `
+		.gantt .bar-wrapper.bar-actual .bar {
+			fill: url(#diagonalHatch) !important;
+			stroke: #333 !important;
+			stroke-width: 1px;
+			height: 16px !important;
+			y: 10px !important;
+		}
+		
+		.gantt .bar-wrapper.bar-actual.color-* .bar {
+			fill: url(#diagonalHatch) !important;
+			stroke: #333 !important;
+			stroke-width: 1px;
+			height: 16px !important;
+			y: 10px !important;
+		}
+		`;
+      const style = `
+		<svg width="0" height="0" style="position:absolute">
+			<defs>${pattern_defs}</defs>
+			</svg>
+			<style>${css_rules}</style>
+		`;
+      this.$result.prepend(style);
+    }
+    get_item(name) {
+      return this.data.find((item) => item.name === name);
+    }
+    get required_libs() {
+      return [
+        "assets/frappe/node_modules/frappe-gantt/dist/frappe-gantt.css",
+        "assets/frappe/node_modules/frappe-gantt/dist/frappe-gantt.min.js"
+      ];
+    }
+  };
+
   // ../harro/harro/public/js/hierarchy_chart/harro_hierarchy_chart_desktop.js
   var import_html2canvas = __toESM(require_html2canvas());
   hrms.HierarchyChart = class {
@@ -7483,7 +7769,6 @@
       this.page.main.addClass("frappe-card");
       this.nodes = {};
       this.setup_node_class();
-      this.project = "";
     }
     setup_page_style() {
       this.page.main.css({
@@ -7532,9 +7817,8 @@
       node.$link = $(`[id="${node.id}"]`);
     }
     show() {
-      var _a;
       this.setup_actions();
-      if (this.page.main.find('[data-fieldname="company"]').length && this.page.main.find('[data-fieldname="project"]').length)
+      if (this.page.main.find('[data-fieldname="company"]').length)
         return;
       let me = this;
       let company = this.page.add_field({
@@ -7559,50 +7843,9 @@
           }
         }
       });
-      let route_project = ((_a = frappe.route_options) == null ? void 0 : _a.project) || null;
-      let project = this.page.add_field({
-        fieldtype: "Link",
-        options: "Project",
-        fieldname: "project",
-        placeholder: __("Select Project"),
-        only_select: true,
-        reqd: 0,
-        default: route_project,
-        change: () => {
-          me.project = "";
-          $("#hierarchy-chart-wrapper").remove();
-          if (project.get_value()) {
-            me.project = project.get_value();
-            me.render_chart();
-          } else if (company.get_value()) {
-            me.project = "";
-            me.render_chart();
-          }
-        }
-      });
       company.refresh();
-      project.refresh();
-      if (route_project) {
-        project.set_value(route_project);
-      }
       $(`[data-fieldname="company"]`).trigger("change");
       $(`[data-fieldname="company"] .link-field`).css("z-index", 2);
-      $(`[data-fieldname="project"]`).trigger("change");
-      $(`[data-fieldname="project"] .link-field`).css("z-index", 2);
-    }
-    render_chart() {
-      let me = this;
-      let company_value = this.page.fields_dict.company.get_value();
-      if (!company_value) {
-        console.log("No company selected yet...");
-        return;
-      }
-      me.company = company_value;
-      $("#hierarchy-chart-wrapper").remove();
-      me.make_svg_markers();
-      me.setup_hierarchy();
-      me.render_root_nodes();
-      me.all_nodes_expanded = false;
     }
     setup_actions() {
       let me = this;
@@ -7695,8 +7938,7 @@
       return frappe.call({
         method: me.method,
         args: {
-          company: me.company,
-          project: me.project || null
+          company: me.company
         }
       }).then((r) => {
         if (r.message.length) {
@@ -7779,8 +8021,7 @@
           method: me.method,
           args: {
             parent: node_id,
-            company: me.company,
-            project: me.project || null
+            company: me.company
           }
         }).then((r) => resolve(r.message));
       });
@@ -7818,8 +8059,7 @@
           method: "hrms.utils.hierarchy_chart.get_all_nodes",
           args: {
             method: me.method,
-            company: me.company,
-            project: me.project || null
+            company: me.company
           },
           callback: (r) => {
             resolve(r.message);
@@ -8006,447 +8246,6 @@
     }
   };
 
-  // ../harro/harro/public/js/hierarchy_chart/harro_hierarchy_chart_mobile.js
-  window.HierarchyChartMobile = class {
-    constructor(doctype, wrapper, method) {
-      this.wrapper = $(wrapper);
-      this.method = method;
-      this.doctype = doctype;
-      this.page = {
-        main: this.wrapper,
-        clear_inner_toolbar: () => {
-          this.wrapper.find(".chart-toolbar").remove();
-        },
-        add_inner_button: (label, onClick) => {
-          let toolbar = this.wrapper.find(".chart-toolbar");
-          if (!toolbar.length) {
-            toolbar = $('<div class="chart-toolbar" style="margin-bottom: 15px;"></div>');
-            this.wrapper.prepend(toolbar);
-          }
-          $('<button class="btn btn-default btn-sm">' + label + "</button>").appendTo(toolbar).click(onClick);
-        },
-        remove_inner_button: (label) => {
-          this.wrapper.find('.chart-toolbar button:contains("' + label + '")').remove();
-        },
-        add_field: () => {
-          console.log("add_field not implemented for HTML field wrapper");
-        },
-        find: (selector) => {
-          return this.wrapper.find(selector);
-        }
-      };
-      this.page.main.css({
-        "min-height": "300px",
-        "max-height": "600px",
-        overflow: "auto",
-        position: "relative"
-      });
-      this.page.main.addClass("frappe-card");
-      this.nodes = {};
-      this.setup_node_class();
-      this.args = {};
-    }
-    setup_node_class() {
-      let me = this;
-      this.Node = class {
-        constructor({
-          id,
-          parent,
-          parent_id,
-          image,
-          name,
-          title,
-          expandable,
-          connections,
-          is_root
-        }) {
-          $.extend(this, arguments[0]);
-          this.expanded = 0;
-          me.nodes[this.id] = this;
-          me.make_node_element(this);
-          me.setup_node_click_action(this);
-          me.setup_edit_node_action(this);
-        }
-      };
-    }
-    make_node_element(node) {
-      let node_card = frappe.render_template("node_card", {
-        id: node.id,
-        name: node.name,
-        title: node.title,
-        image: node.image,
-        parent: node.parent_id,
-        connections: node.connections,
-        is_mobile: true
-      });
-      node.parent.append(node_card);
-      node.$link = $(`[id="${node.id}"]`);
-      node.$link.addClass("mobile-node");
-    }
-    show() {
-      let me = this;
-      me.project = this.args.project || "";
-      if (!me.project) {
-        frappe.throw(__("Project is required."));
-      }
-      me.make_svg_markers();
-      if (me.$sibling_group)
-        me.$sibling_group.remove();
-      me.$sibling_group = $(`<div class="sibling-group mt-4 mb-4"></div>`);
-      me.wrapper.append(me.$sibling_group);
-      me.setup_hierarchy();
-      me.render_root_nodes();
-    }
-    make_svg_markers() {
-      $("#arrows").remove();
-      this.wrapper.prepend(`
-            <svg id="arrows" width="100%" height="100%">
-                <defs>
-                    <marker id="arrowhead-active" viewBox="0 0 10 10" refX="3" refY="5" markerWidth="6" markerHeight="6" orient="auto" fill="var(--gray-500)">
-                        <path d="M 0 0 L 10 5 L 0 10 z"></path>
-                    </marker>
-                    <marker id="arrowhead-collapsed" viewBox="0 0 10 10" refX="3" refY="5" markerWidth="6" markerHeight="6" orient="auto" fill="var(--gray-300)">
-                        <path d="M 0 0 L 10 5 L 0 10 z"></path>
-                    </marker>
-
-                    <marker id="arrowstart-active" viewBox="0 0 10 10" refX="3" refY="5" markerWidth="8" markerHeight="8" orient="auto" fill="var(--gray-500)">
-                        <circle cx="4" cy="4" r="3.5" fill="white" stroke="var(--gray-500)"/>
-                    </marker>
-                    <marker id="arrowstart-collapsed" viewBox="0 0 10 10" refX="3" refY="5" markerWidth="8" markerHeight="8" orient="auto" fill="var(--gray-300)">
-                        <circle cx="4" cy="4" r="3.5" fill="white" stroke="var(--gray-300)"/>
-                    </marker>
-                </defs>
-                <g id="connectors" fill="none">
-                </g>
-            </svg>`);
-    }
-    setup_hierarchy() {
-      $(`#connectors`).empty();
-      if (this.$hierarchy)
-        this.$hierarchy.remove();
-      if (this.$sibling_group)
-        this.$sibling_group.empty();
-      this.$hierarchy = $(
-        `<ul class="hierarchy-mobile">
-                <li class="root-level level"></li>
-            </ul>`
-      );
-      this.wrapper.append(this.$hierarchy);
-    }
-    render_root_nodes() {
-      let me = this;
-      frappe.call({
-        method: me.method,
-        args: {
-          project: me.project
-        }
-      }).then((r) => {
-        if (r.message.length) {
-          let root_level = me.$hierarchy.find(".root-level");
-          root_level.empty();
-          $.each(r.message, (_i, data) => {
-            return new me.Node({
-              id: data.id,
-              parent: root_level,
-              parent_id: "",
-              image: data.image,
-              name: data.name,
-              title: data.title,
-              expandable: true,
-              connections: data.connections,
-              is_root: true
-            });
-          });
-        }
-      });
-    }
-    expand_node(node) {
-      const is_same_node = this.selected_node && this.selected_node.id === node.id;
-      this.set_selected_node(node);
-      this.show_active_path(node);
-      if (this.$sibling_group) {
-        const sibling_parent = this.$sibling_group.find(".node-group").attr("data-parent");
-        if (node.parent_id != "" && node.parent_id != sibling_parent)
-          this.$sibling_group.empty();
-      }
-      if (!is_same_node) {
-        this.refresh_connectors(node.parent_id, node.id);
-        let grandparent = $(`[id="${node.parent_id}"]`).attr("data-parent");
-        this.refresh_connectors(grandparent, node.parent_id);
-      }
-      if (node.expandable && !node.expanded) {
-        return this.load_children(node);
-      }
-    }
-    collapse_node() {
-      let node = this.selected_node;
-      if (node.expandable && node.$children) {
-        node.$children.hide();
-        node.expanded = 0;
-        let node_parent = node.$link.parent();
-        node_parent.prepend(`<div class="collapsed-level d-flex flex-row"></div>`);
-        node_parent.find(".collapsed-level").append(node.$link);
-        frappe.run_serially([
-          () => this.get_child_nodes(node.parent_id, node.id),
-          (child_nodes) => this.get_node_group(child_nodes, node.parent_id),
-          (node_group) => node_parent.find(".collapsed-level").append(node_group),
-          () => this.setup_node_group_action()
-        ]);
-      }
-    }
-    show_active_path(node) {
-      $(`[id="${node.parent_id}"]`).addClass("active-path");
-    }
-    load_children(node) {
-      if (!this.project) {
-        frappe.throw(__("Project is required"));
-      }
-      frappe.run_serially([
-        () => this.get_child_nodes(node.id),
-        (child_nodes) => this.render_child_nodes(node, child_nodes)
-      ]);
-    }
-    get_child_nodes(node_id, exclude_node = null) {
-      let me = this;
-      return new Promise((resolve) => {
-        frappe.call({
-          method: me.method,
-          args: {
-            parent: node_id,
-            project: me.project,
-            exclude_node
-          }
-        }).then((r) => resolve(r.message));
-      });
-    }
-    render_child_nodes(node, child_nodes) {
-      if (!node.$children) {
-        node.$children = $('<ul class="node-children"></ul>').hide().appendTo(node.$link.parent());
-        node.$children.empty();
-        if (child_nodes) {
-          $.each(child_nodes, (_i, data) => {
-            this.add_node(node, data);
-            $(`[id="${data.id}"]`).addClass("active-child");
-            setTimeout(() => {
-              this.add_connector(node.id, data.id);
-            }, 250);
-          });
-        }
-      }
-      node.$children.show();
-      node.expanded = 1;
-    }
-    add_node(node, data) {
-      var $li = $('<li class="child-node"></li>');
-      return new this.Node({
-        id: data.id,
-        parent: $li.appendTo(node.$children),
-        parent_id: node.id,
-        image: data.image,
-        name: data.name,
-        title: data.title,
-        expandable: data.expandable,
-        connections: data.connections,
-        children: null
-      });
-    }
-    add_connector(parent_id, child_id) {
-      const parent_node = document.getElementById(`${parent_id}`);
-      const child_node = document.getElementById(`${child_id}`);
-      const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
-      let connector = null;
-      if ($(`[id="${parent_id}"]`).hasClass("active")) {
-        connector = this.get_connector_for_active_node(parent_node, child_node);
-      } else if ($(`[id="${parent_id}"]`).hasClass("active-path")) {
-        connector = this.get_connector_for_collapsed_node(parent_node, child_node);
-      }
-      path.setAttribute("d", connector);
-      this.set_path_attributes(path, parent_id, child_id);
-      document.getElementById("connectors").appendChild(path);
-    }
-    get_connector_for_active_node(parent_node, child_node) {
-      let pos_parent_bottom = {
-        x: parent_node.offsetLeft + 20,
-        y: parent_node.offsetTop + parent_node.offsetHeight
-      };
-      let pos_child_left = {
-        x: child_node.offsetLeft - 5,
-        y: child_node.offsetTop + child_node.offsetHeight / 2
-      };
-      let connector = "M" + pos_parent_bottom.x + "," + pos_parent_bottom.y + " L" + pos_parent_bottom.x + "," + (pos_child_left.y - 10) + " a10,10 1 0 0 10,10 L" + pos_child_left.x + "," + pos_child_left.y;
-      return connector;
-    }
-    get_connector_for_collapsed_node(parent_node, child_node) {
-      let pos_parent_bottom = {
-        x: parent_node.offsetLeft + 20,
-        y: parent_node.offsetTop + parent_node.offsetHeight
-      };
-      let pos_child_top = {
-        x: child_node.offsetLeft + 20,
-        y: child_node.offsetTop
-      };
-      let connector = "M" + pos_parent_bottom.x + "," + pos_parent_bottom.y + " L" + pos_child_top.x + "," + pos_child_top.y;
-      return connector;
-    }
-    set_path_attributes(path, parent_id, child_id) {
-      path.setAttribute("data-parent", parent_id);
-      path.setAttribute("data-child", child_id);
-      const parent = $(`[id="${parent_id}"]`);
-      if (parent.hasClass("active")) {
-        path.setAttribute("class", "active-connector");
-        path.setAttribute("marker-start", "url(#arrowstart-active)");
-        path.setAttribute("marker-end", "url(#arrowhead-active)");
-      } else if (parent.hasClass("active-path")) {
-        path.setAttribute("class", "collapsed-connector");
-      }
-    }
-    set_selected_node(node) {
-      if (this.selected_node)
-        this.selected_node.$link.removeClass("active");
-      this.selected_node = node;
-      node.$link.addClass("active");
-    }
-    setup_node_click_action(node) {
-      let me = this;
-      let node_element = $(`[id="${node.id}"]`);
-      node_element.click(function() {
-        let el = null;
-        if (node.is_root) {
-          el = $(this).detach();
-          me.$hierarchy.empty();
-          $(`#connectors`).empty();
-          me.add_node_to_hierarchy(el, node);
-        } else if (node_element.is(":visible") && node_element.hasClass("active-path")) {
-          me.remove_levels_after_node(node);
-          me.remove_orphaned_connectors();
-        } else {
-          el = $(this).detach();
-          me.add_node_to_hierarchy(el, node);
-          me.collapse_node();
-        }
-        me.expand_node(node);
-      });
-    }
-    setup_edit_node_action(node) {
-      let node_element = $(`[id="${node.id}"]`);
-      let me = this;
-      node_element.find(".btn-edit-node").click(function() {
-        frappe.set_route("Form", me.doctype, node.id);
-      });
-    }
-    setup_node_group_action() {
-      let me = this;
-      $(".node-group").on("click", function() {
-        let parent = $(this).attr("data-parent");
-        if (parent == "") {
-          me.setup_hierarchy();
-          me.render_root_nodes();
-        } else {
-          me.expand_sibling_group_node(parent);
-        }
-      });
-    }
-    add_node_to_hierarchy(node_element, node) {
-      this.$hierarchy.append(`<li class="level"></li>`);
-      node_element.removeClass("active-child active-path");
-      this.$hierarchy.find(".level:last").append(node_element);
-      let node_object = this.nodes[node.id];
-      node_object.expanded = 0;
-      node_object.$children = null;
-      this.nodes[node.id] = node_object;
-    }
-    get_node_group(nodes, parent, collapsed = true) {
-      let limit = 2;
-      const display_nodes = nodes.slice(0, limit);
-      const extra_nodes = nodes.slice(limit);
-      let html = display_nodes.map((node) => this.get_avatar(node)).join("");
-      if (extra_nodes.length === 1) {
-        let node = extra_nodes[0];
-        html += this.get_avatar(node);
-      } else if (extra_nodes.length > 1) {
-        html = `
-                ${html}
-                <span class="avatar avatar-small">
-                    <div class="avatar-frame standard-image avatar-extra-count"
-                        title="${extra_nodes.map((node) => node.name).join(", ")}">
-                        +${extra_nodes.length}
-                    </div>
-                </span>
-            `;
-      }
-      if (html) {
-        const $node_group = $(`<div class="node-group card cursor-pointer" data-parent=${parent}>
-                    <div class="avatar-group right overlap">
-                        ${html}
-                    </div>
-                </div>`);
-        if (collapsed)
-          $node_group.addClass("collapsed");
-        return $node_group;
-      }
-      return null;
-    }
-    get_avatar(node) {
-      return `<span class="avatar avatar-small" title="${node.name}">
-            <span class="avatar-frame" src=${node.image} style="background-image: url(${node.image})"></span>
-        </span>`;
-    }
-    expand_sibling_group_node(parent) {
-      let node_object = this.nodes[parent];
-      let node = node_object.$link;
-      node.removeClass("active-child active-path");
-      node_object.expanded = 0;
-      node_object.$children = null;
-      this.nodes[node.id] = node_object;
-      frappe.run_serially([
-        () => this.get_child_nodes(node_object.parent_id, node_object.id),
-        (child_nodes) => this.get_node_group(child_nodes, node_object.parent_id, false),
-        (node_group) => {
-          if (node_group)
-            this.$sibling_group.empty().append(node_group);
-        },
-        () => this.setup_node_group_action(),
-        () => this.reattach_and_expand_node(node, node_object)
-      ]);
-    }
-    reattach_and_expand_node(node, node_object) {
-      var el = node.detach();
-      this.$hierarchy.empty().append(`
-            <li class="level"></li>
-        `);
-      this.$hierarchy.find(".level").append(el);
-      $(`#connectors`).empty();
-      this.expand_node(node_object);
-    }
-    remove_levels_after_node(node) {
-      let level = $(`[id="${node.id}"]`).parent().parent().index();
-      level = $(".hierarchy-mobile > li:eq(" + level + ")");
-      level.nextAll("li").remove();
-      let node_object = this.nodes[node.id];
-      let current_node = level.find(`[id="${node.id}"]`).detach();
-      current_node.removeClass("active-child active-path");
-      node_object.expanded = 0;
-      node_object.$children = null;
-      level.empty().append(current_node);
-    }
-    remove_orphaned_connectors() {
-      let paths = $("#connectors > path");
-      $.each(paths, (_i, path) => {
-        const parent = $(path).data("parent");
-        const child = $(path).data("child");
-        if ($(`[id="${parent}"]`).length && $(`[id="${child}"]`).length)
-          return;
-        $(path).remove();
-      });
-    }
-    refresh_connectors(node_parent, node_id) {
-      if (!node_parent)
-        return;
-      $(`path[data-parent="${node_parent}"]`).remove();
-      this.add_connector(node_parent, node_id);
-    }
-  };
-
   // frappe-html:/Users/viralkansodiya/frappe-bench/apps/harro/harro/public/js/templates/node_card.html
   frappe.templates["node_card"] = `<div class="node-card card cursor-pointer" id="{%= id %}" data-parent="{%= parent %}">
 	<div class="node-meta d-flex flex-row">
@@ -8508,4 +8307,4 @@
     OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
     PERFORMANCE OF THIS SOFTWARE.
     ***************************************************************************** */
-//# sourceMappingURL=hierarchy-chart.bundle.RHDPI4K5.js.map
+//# sourceMappingURL=harro.bundle.XQBYIC5H.js.map

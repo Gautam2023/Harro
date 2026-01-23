@@ -1,4 +1,4 @@
-window.HierarchyChartMobile = class {
+hrms.HierarchyChartMobile = class {
     constructor(doctype, wrapper, method) {
         // 'wrapper' is a DOM element from HTML field
         this.wrapper = $(wrapper);

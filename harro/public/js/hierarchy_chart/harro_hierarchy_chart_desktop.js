@@ -1,5 +1,5 @@
 import html2canvas from "html2canvas";
-window.HierarchyChart = class {
+hrms.HierarchyChart = class {
 	/* Options:
 		- doctype
 		- wrapper: wrapper for the hierarchy view

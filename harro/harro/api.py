@@ -546,7 +546,7 @@ def reduce_raw_material_qty(production_plan, items):
             if not item_code or item_code not in mr_items_map:
                 continue
 
-            for mr_row in mr_items_map[item_code]:
+            for mr_row in list(mr_items_map[item_code]):
                 current_qty = flt(mr_row.quantity)
                 new_qty = current_qty - bom_qty
 
@@ -559,6 +559,9 @@ def reduce_raw_material_qty(production_plan, items):
                         """
                     )
 
-                mr_row.quantity = new_qty
+                if new_qty == 0:
+                    doc.remove(mr_row)
+                else:
+                    mr_row.quantity = new_qty
 
     doc.save(ignore_permissions=True)

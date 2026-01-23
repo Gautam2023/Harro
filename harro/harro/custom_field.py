@@ -160,19 +160,6 @@ def create_custom_fields_on_migrate():
                 "in_list_view" : 1
             }
         ],
-        "Project" : [
-            {
-                "fieldname" : "custom_org_chart",
-                "label" : "Org Chart",
-                "fieldtype" : "Tab Break",
-            },
-            {
-                "fieldname" : "custom_chart",
-                "label" : "Chart",
-                "fieldtype" : "HTML",
-                "insert_after" : "custom_org_chart"
-            }
-        ],
         "Purchase Invoice" : [
             {
                 "fieldname" : "travel_planning",

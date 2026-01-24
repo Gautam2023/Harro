@@ -185,8 +185,23 @@ def create_custom_fields_on_migrate():
                 "insert_after" : "check_out_date",
                 "depends_on" : "eval:doc.lodging_required == 1;"
             }
+        ],
+        "Operation" : [
+            {
+                "fieldname" : "department",
+                "label" : "Department",
+                "fieldtype" : "Link",
+                "insert_after" : "is_corrective_operation",
+                "options" : "Department",
+            }
         ]
         
     }
 
     create_custom_fields(fields)
+
+    if frappe.get_meta("Project").has_field("custom_org_chart"):
+        frappe.db.delete("Custom Field", "Project-custom_org_chart")
+
+    if frappe.get_meta("Project").has_field("custom_chart"):
+        frappe.db.delete("Custom Field", "Project-custom_chart")

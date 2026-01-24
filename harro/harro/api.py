@@ -470,8 +470,11 @@ def stop_timer_for_jobcard_every_two_hours():
                     frappe.get_traceback(),
                     f"Job Card Cut-off Timer: Error sending email for Job Card {row.name}"
                 )
+
+            
 from harro.harro.docevents.bom_creator import make_fieldname
-@frappe.whitelist()
+
+
 def get_item_master_data_for_print(item, manufacturer_part_no=None):
     uniq_part_no = []
     desc_data_list = []

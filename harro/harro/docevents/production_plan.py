@@ -67,8 +67,6 @@ class CustomProductionPlan(ProductionPlan):
 
             if not is_group_warehouse:
                 data.fg_warehouse = self.sub_assembly_warehouse
-                    
-    v15
 
     @frappe.whitelist()
     def make_material_request(self):

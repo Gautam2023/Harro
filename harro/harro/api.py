@@ -550,16 +550,7 @@ def reduce_raw_material_qty(production_plan, items):
                 current_qty = flt(mr_row.quantity)
                 new_qty = current_qty - bom_qty
 
-                if new_qty < 0:
-                    frappe.throw(
-                        f"""
-                        Insufficient raw material for item <b>{item_code}</b><br>
-                        Required: {bom_qty}<br>
-                        Available: {current_qty}
-                        """
-                    )
-
-                if new_qty == 0:
+                if new_qty <= 0:
                     doc.remove(mr_row)
                 else:
                     mr_row.quantity = new_qty

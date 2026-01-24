@@ -127,3 +127,40 @@ def resume_unproductive_log(to_time, job_card):
     doc.save()
 
     return {"status": "success"}
+
+@frappe.whitelist()
+@frappe.validate_and_sanitize_search_inputs
+def get_operation_wise_activity(doctype, txt, searchfield, start, page_len, filters):
+    custom_unproductive_work = 1 if filters.get("custom_unproductive_work") else 0
+
+    operation = filters.get("operation")
+    if not operation:
+        frappe.msgprint("Operation is not set in current Job Card")
+        return []
+
+    department = frappe.db.get_value("Operation", operation, "department")
+    if not department:
+        return []
+
+    return frappe.db.sql(
+        """
+        SELECT at.name
+        FROM `tabActivity Type` at
+        LEFT JOIN `tabParent Activity` pa
+            ON pa.name = at.parent_activity_type
+        WHERE
+            pa.department = %s
+            AND at.custom_unproductive_work = %s
+            AND at.name LIKE %s
+        ORDER BY at.name
+        LIMIT %s OFFSET %s
+        """,
+        (
+            department,
+            custom_unproductive_work,
+            f"%{txt}%",
+            page_len,
+            start,
+        ),
+    )
+

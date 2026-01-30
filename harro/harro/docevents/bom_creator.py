@@ -75,7 +75,7 @@ def extract_bom_item_data(file_path, bom_c):
         if not frappe.db.exists("Item", baugruppe ):
             create_item(baugruppe, row, uom=None, structureclass=StrukturklasseKopf)
 
-        update_correct_item_group_and_other_data(artikel, row)
+        update_correct_item_group_and_other_data(artikel, row, structureclass=StrukturklassePos)
 
         new_row = {
             "item_code": artikel,
@@ -237,6 +237,19 @@ def update_correct_item_group_and_other_data(item, row):
         item_group = item_groups[0].get("name")
         if existing_item_group != item_group:
             frappe.db.set_value("Item", item, "item_group", item_group, update_modified=False)
+    
+    if StructureClass := frappe.db.exists("Structure Class Head", {"strukturklasse" : structureclass}):
+        structureclass = StructureClass
+    else:
+        frappe.get_doc(
+            {
+                "strukturklasse": structureclass,
+                "structure_class": structureclass,
+                "doctype": "Structure Class Head"
+            }
+        ).insert()
+    
+    frappe.db.set_value("Item", item, "custom_structure_class_head", structureclass, update_modified=False)
     
 
     labels = [

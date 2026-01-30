@@ -194,6 +194,16 @@ def create_custom_fields_on_migrate():
                 "insert_after" : "is_corrective_operation",
                 "options" : "Department",
             }
+        ],
+        "Production Plan Sub Assembly Item" : [
+            {
+                "fieldname" : "structure_class",
+                "label" : "Structure Class Head",
+                "fieldtype" : "Data",
+                "insert_after" : "supplier",
+                "read_only" : 1,
+                "fetch_from" : "production_item.custom_structure_class_head"
+            }
         ]
         
     }

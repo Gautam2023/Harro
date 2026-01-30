@@ -229,7 +229,7 @@ def create_item_group():
 def make_fieldname(label):
     return label.strip().lower().replace(" ", "_") 
     
-def update_correct_item_group_and_other_data(item, row):
+def update_correct_item_group_and_other_data(item, row, structureclass=None):
     Teilegruppe =  str(row.get("Commodity Group") or row.get("commodity group") or row.get("Teilegruppe") or row.get("teilegruppe"))
     custom_teilegruppe = Teilegruppe.replace(".0",'')
     existing_item_group = frappe.db.get_value("Item", item, "item_group")

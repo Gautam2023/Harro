@@ -2,6 +2,8 @@ import frappe
 import json
 from frappe.utils import now, get_datetime, get_link_to_form, getdate, date_diff
 from frappe.desk.form.assign_to import add as add_assignment
+from frappe.desk.form.assign_to import set_status
+
 
 
 def validate(self, method=None):
@@ -24,6 +26,7 @@ def validate(self, method=None):
                 self.act_end_date
             )
     update_department(self)
+    remove_assignment_while_changing(self)
 
 def after_insert(self, method):
     if task := frappe.db.exists("Task", {
@@ -379,3 +382,25 @@ def get_activity_type(doctype, txt, searchfield, start, page_len, filters):
         }
     )
     return data
+
+
+def remove_assignment_while_changing(self):
+    if self.is_new():
+        return
+    old_doc = self.get_doc_before_save()
+    if old_doc and old_doc.custom_assigned_to_responsible_user != self.custom_assigned_to_responsible_user:
+        remove_assignments(self, self.doctype, self.name, old_doc.custom_assigned_to_responsible_user, ignore_permissions=True)
+
+def remove_assignments(self, doctype, name, assignee, ignore_permissions=False):
+    if not assignee:
+        return
+
+    set_status(
+        doctype,
+        name,
+        todo=None,
+        assign_to=assignee,
+        status="Cancelled",
+        ignore_permissions=ignore_permissions,
+    )
+    frappe.share.add("Task", self.name, assignee, read=0, write=0, share=0)

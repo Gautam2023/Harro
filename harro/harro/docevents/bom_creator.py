@@ -204,7 +204,8 @@ def create_item(item, row, uom=None, structureclass= None):
         fieldname = make_fieldname(l)
         if not row.get(l):
             continue
-        description = description + "<p>" + row.get(l) + "</p>"
+        description = description + "<p>" + str(row.get(l)) + "</p>"
+       
     description += "</div>"
     item_doc.description = description
 

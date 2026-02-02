@@ -34,18 +34,26 @@ def extract_bom_item_data(file_path, bom_c):
             data.append(row_dict)
 
     elif file_path.endswith('.csv'):
-        # Read csv
         if "private" in file_path:
             file_path = file_path.replace("/private", '')
             public_file_path = frappe.get_site_path("private", file_path.lstrip("/"))
         else:
             public_file_path = frappe.get_site_path("public", file_path.lstrip("/"))
-        
+
         data = []
-        with open(public_file_path, mode='r', encoding='utf-8') as file:
-            reader = csv.DictReader(file)
-            for row in reader:
-                data.append(row)
+        try:
+            # utf-8
+            with open(public_file_path, mode='r', encoding='utf-8') as file:
+                reader = csv.DictReader(file)
+                for row in reader:
+                    data.append(row)
+
+        except UnicodeDecodeError:
+            with open(public_file_path, mode='r', encoding='cp1252') as file:
+                reader = csv.DictReader(file)
+                for row in reader:
+                    data.append(row)
+
     else:
         frappe.throw("Unsupported file type. Please upload a .xlsx or .csv file.")
 

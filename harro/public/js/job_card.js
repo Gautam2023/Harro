@@ -18,8 +18,12 @@ frappe.ui.form.on("Job Card", {
                         "fieldtype" : "Link",
                         get_query: function () {
                             return {
-                                filters: [["custom_unproductive_work" , "=", 0], ["custom_job_card_type" , "!=", ""]],
-                            };
+                                query : "harro.harro.docevents.job_card.get_operation_wise_activity",
+                                filters: {
+                                    operation : frm.doc.operation,
+                                    custom_unproductive_work : false
+                                },
+                            }
                         },
                     }
                 ],
@@ -61,8 +65,12 @@ frappe.ui.form.on("Job Card", {
                         "fieldtype" : "Link",
                         get_query: function () {
                             return {
-                                filters: [["custom_unproductive_work" , "=", 0], ["custom_job_card_type" , "!=", ""]],
-                            };
+                                query : "harro.harro.docevents.job_card.get_operation_wise_activity",
+                                filters: {
+                                    operation : frm.doc.operation,
+                                    custom_unproductive_work : false
+                                },
+                            }
                         },
                     }
                 ],

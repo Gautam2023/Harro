@@ -500,3 +500,59 @@ def get_item_master_data_for_print(item, manufacturer_part_no=None):
     uniq_part_no = list(set(uniq_part_no))
 
     return uniq_part_no
+
+## api to update raw material in production plan
+from frappe.utils import flt
+from erpnext.manufacturing.report.bom_stock_report.bom_stock_report import get_bom_stock
+
+@frappe.whitelist()
+def reduce_raw_material_qty(production_plan, items):
+    doc = frappe.get_doc("Production Plan", production_plan)
+    if isinstance(items, str):
+        items = frappe.parse_json(items)
+
+    # extract selected item codes from Table MultiSelect
+    selected_items = [d.get("item_code") for d in items if d.get("item_code")]
+    if not selected_items:
+        frappe.throw("No items selected")
+
+    # map mr items by item_code for fast lookup
+    mr_items_map = {}
+    for row in doc.mr_items:
+        mr_items_map.setdefault(row.item_code, []).append(row)
+
+    for sub in doc.sub_assembly_items:
+        if sub.production_item not in selected_items:
+            continue
+
+        if not sub.bom_no or not sub.fg_warehouse:
+            frappe.throw(
+                f"BOM or FG Warehouse missing for <b>{sub.production_item}</b>"
+            )
+
+        filters = frappe._dict({
+            "bom": sub.bom_no,
+            "warehouse": sub.fg_warehouse,
+            "qty_to_produce": sub.qty
+        })
+
+        data = get_bom_stock(filters) or []
+
+        for row in data:
+
+            item_code = row[0]
+            bom_qty = flt(row[5])
+
+            if not item_code or item_code not in mr_items_map:
+                continue
+
+            for mr_row in list(mr_items_map[item_code]):
+                current_qty = flt(mr_row.quantity)
+                new_qty = current_qty - bom_qty
+
+                if new_qty <= 0:
+                    doc.remove(mr_row)
+                else:
+                    mr_row.quantity = new_qty
+
+    doc.save(ignore_permissions=True)

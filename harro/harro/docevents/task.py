@@ -2,6 +2,8 @@ import frappe
 import json
 from frappe.utils import now, get_datetime, get_link_to_form, getdate, date_diff
 from frappe.desk.form.assign_to import add as add_assignment
+from frappe.desk.form.assign_to import set_status
+
 
 
 def validate(self, method=None):
@@ -23,6 +25,8 @@ def validate(self, method=None):
                 self.exp_end_date,
                 self.act_end_date
             )
+    update_department(self)
+    remove_assignment_while_changing(self)
 
 def after_insert(self, method):
     if task := frappe.db.exists("Task", {
@@ -307,3 +311,96 @@ def get_extra_days(exp_end_date, act_end_date):
     expected_days = date_diff(act_end_date ,exp_end_date)
     return max(expected_days, 0)
 
+
+def update_department(self):
+    if not self.department:
+        self.department = frappe.db.get_value("Employee", self.custom_employee__assign_to_employee_, "department")
+    
+
+@frappe.whitelist()
+@frappe.validate_and_sanitize_search_inputs
+def get_activity_type(doctype, txt, searchfield, start, page_len, filters):
+    conditions = []
+    values = {}
+
+    # Department filter
+    if filters.get("department"):
+        conditions.append("pt.department = %(department)s")
+        values["department"] = filters.get("department")
+
+    # Unproductive work filter
+    if filters.get("custom_unproductive_work") is not None:
+        conditions.append("at.custom_unproductive_work = %(custom_unproductive_work)s")
+        values["custom_unproductive_work"] = filters.get("custom_unproductive_work")
+    else:
+        conditions.append("at.custom_unproductive_work = 0")
+
+    # Search text
+    if txt:
+        conditions.append("at.name LIKE %(txt)s")
+        values["txt"] = f"%{txt}%"
+
+    # Employee-based department (only if department not already set)
+    if not values.get("department") and filters.get("employees"):
+        employee = filters.get("employees")
+        if employee:
+            department = frappe.db.get_value(
+                "Employee", employee, "department"
+            )
+            if department:
+                conditions.append("pt.department = %(department)s")
+                values["department"] = department
+
+    # Job Card Type condition (FIXED LOGIC)
+    if filters.get("custom_job_card_type"):
+        conditions.append(
+            "(at.custom_job_card_type IS NOT NULL OR at.custom_job_card_type != '')"
+        )
+    else:
+        conditions.append(
+            "(at.custom_job_card_type IS NULL OR at.custom_job_card_type = '')"
+        )
+
+    condition_sql = ""
+    if conditions:
+        condition_sql = " AND " + " AND ".join(conditions)
+
+    data = frappe.db.sql(
+        f"""
+        SELECT at.name
+        FROM `tabActivity Type` at
+        LEFT JOIN `tabParent Activity` pt
+            ON pt.name = at.parent_activity_type
+        WHERE 1=1
+        {condition_sql}
+        LIMIT %(start)s, %(page_len)s
+        """,
+        {
+            **values,
+            "start": start,
+            "page_len": page_len
+        }
+    )
+    return data
+
+
+def remove_assignment_while_changing(self):
+    if self.is_new():
+        return
+    old_doc = self.get_doc_before_save()
+    if old_doc and old_doc.custom_assigned_to_responsible_user != self.custom_assigned_to_responsible_user:
+        remove_assignments(self, self.doctype, self.name, old_doc.custom_assigned_to_responsible_user, ignore_permissions=True)
+
+def remove_assignments(self, doctype, name, assignee, ignore_permissions=False):
+    if not assignee:
+        return
+
+    set_status(
+        doctype,
+        name,
+        todo=None,
+        assign_to=assignee,
+        status="Cancelled",
+        ignore_permissions=ignore_permissions,
+    )
+    frappe.share.add("Task", self.name, assignee, read=0, write=0, share=0)

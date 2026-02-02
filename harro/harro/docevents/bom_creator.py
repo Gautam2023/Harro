@@ -75,7 +75,7 @@ def extract_bom_item_data(file_path, bom_c):
         if not frappe.db.exists("Item", baugruppe ):
             create_item(baugruppe, row, uom=None, structureclass=StrukturklasseKopf)
 
-        update_correct_item_group_and_other_data(artikel, row)
+        update_correct_item_group_and_other_data(artikel, row, structureclass=StrukturklassePos)
 
         new_row = {
             "item_code": artikel,
@@ -204,7 +204,8 @@ def create_item(item, row, uom=None, structureclass= None):
         fieldname = make_fieldname(l)
         if not row.get(l):
             continue
-        description = description + "<p>" + row.get(l) + "</p>"
+        description = description + "<p>" + str(row.get(l)) + "</p>"
+       
     description += "</div>"
     item_doc.description = description
 
@@ -228,7 +229,7 @@ def create_item_group():
 def make_fieldname(label):
     return label.strip().lower().replace(" ", "_") 
     
-def update_correct_item_group_and_other_data(item, row):
+def update_correct_item_group_and_other_data(item, row, structureclass=None):
     Teilegruppe =  str(row.get("Commodity Group") or row.get("commodity group") or row.get("Teilegruppe") or row.get("teilegruppe"))
     custom_teilegruppe = Teilegruppe.replace(".0",'')
     existing_item_group = frappe.db.get_value("Item", item, "item_group")
@@ -236,6 +237,19 @@ def update_correct_item_group_and_other_data(item, row):
         item_group = item_groups[0].get("name")
         if existing_item_group != item_group:
             frappe.db.set_value("Item", item, "item_group", item_group, update_modified=False)
+    
+    if StructureClass := frappe.db.exists("Structure Class Head", {"strukturklasse" : structureclass}):
+        structureclass = StructureClass
+    else:
+        frappe.get_doc(
+            {
+                "strukturklasse": structureclass,
+                "structure_class": structureclass,
+                "doctype": "Structure Class Head"
+            }
+        ).insert()
+    
+    frappe.db.set_value("Item", item, "custom_structure_class_head", structureclass, update_modified=False)
     
 
     labels = [

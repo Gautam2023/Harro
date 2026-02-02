@@ -93,6 +93,20 @@ def create_custom_fields_on_migrate():
                 "fieldname": "delete_selected_commodity_group_items",
                 "insert_after": "remove_based_item_group",
                 "fieldtype": "Button",
+            },
+            {
+                "insert_after" : "ignore_existing_ordered_qty",
+                "fieldname" : "items_to_reduce_qty",
+                "label" : "Items To Reduce Quantity",
+                "fieldtype" : "Table MultiSelect",
+                "options" : "Item To Reduce Quantity",
+                "description" : "Update the Sub Assembly Item to reduce item from below table"
+            },
+            {
+                "label" : "Reduce Item From Raw Material",
+                "fieldname" : "reduce_item_from_raw_material",
+                "insert_after" : "items_to_reduce_qty",
+                "fieldtype" : "Button"
             }
         ],
         "Material Request Plan Item" : [
@@ -146,19 +160,6 @@ def create_custom_fields_on_migrate():
                 "in_list_view" : 1
             }
         ],
-        "Project" : [
-            {
-                "fieldname" : "custom_org_chart",
-                "label" : "Org Chart",
-                "fieldtype" : "Tab Break",
-            },
-            {
-                "fieldname" : "custom_chart",
-                "label" : "Chart",
-                "fieldtype" : "HTML",
-                "insert_after" : "custom_org_chart"
-            }
-        ],
         "Purchase Invoice" : [
             {
                 "fieldname" : "travel_planning",
@@ -184,15 +185,33 @@ def create_custom_fields_on_migrate():
                 "insert_after" : "check_out_date",
                 "depends_on" : "eval:doc.lodging_required == 1;"
             }
+        ],
+        "Operation" : [
+            {
+                "fieldname" : "department",
+                "label" : "Department",
+                "fieldtype" : "Link",
+                "insert_after" : "is_corrective_operation",
+                "options" : "Department",
+            }
+        ],
+        "Production Plan Sub Assembly Item" : [
+            {
+                "fieldname" : "structure_class",
+                "label" : "Structure Class Head",
+                "fieldtype" : "Data",
+                "insert_after" : "supplier",
+                "read_only" : 1,
+                "fetch_from" : "production_item.custom_structure_class_head"
+            }
         ]
         
     }
 
     create_custom_fields(fields)
 
-    if frappe.get_meta("Purchase Receipt Item").has_field("ordered_qty_"):
-        frappe.db.delete("Custom Field", "Purchase Receipt Item-ordered_qty")
-    
-    # delete Travel Itinerary-custom_room_night
-    if frappe.get_meta("Travel Itinerary").has_field("custom_room_night"):
-        frappe.db.delete("Custom Field", "Travel Itinerary-custom_room_night")
+    if frappe.get_meta("Project").has_field("custom_org_chart"):
+        frappe.db.delete("Custom Field", "Project-custom_org_chart")
+
+    if frappe.get_meta("Project").has_field("custom_chart"):
+        frappe.db.delete("Custom Field", "Project-custom_chart")

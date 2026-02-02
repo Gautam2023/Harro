@@ -86,3 +86,17 @@ def create_purchase_invoice(source_name, target_doc=None):
 	)
 
 	return doclist
+
+@frappe.whitelist()
+def get_travel_dates(travel_request):
+    items = frappe.get_all(
+        "Travel Itinerary",
+        filters={"parent": travel_request},
+        fields=["custom_onward_travel_date","custom_return_travel_date"],
+        limit=1
+    )
+
+    if not items:
+        return {}
+    
+    return items[0]

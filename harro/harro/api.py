@@ -527,7 +527,7 @@ def reduce_raw_material_qty(production_plan, items):
         fg_warehouse = sub.fg_warehouse
         if not fg_warehouse:
             fg_warehouse = doc.sub_assembly_warehouse
-        if not sub.bom_no or not sub.fg_warehouse:
+        if not sub.bom_no or not fg_warehouse:
             frappe.throw(
                 f"BOM or FG Warehouse missing for <b>{sub.production_item}</b>"
             )

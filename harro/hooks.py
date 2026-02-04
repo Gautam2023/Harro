@@ -159,7 +159,9 @@ fixtures = [
 override_doctype_class = {
 	"BOM Creator": "harro.harro.override.bom_creator.CustomBOMCreator",
     "Production Plan" : "harro.harro.docevents.production_plan.CustomProductionPlan",
-    "Job Card" : "harro.harro.override.job_card.CustomJobCard"
+    "Job Card" : "harro.harro.override.job_card.CustomJobCard",
+    "Purchase Invoice" : "harro.harro.override.purchase_invoice.CustomPurchaseInvoice",
+    "Purchase Receipt" : "harro.harro.override.purchase_receipt.CustomPurchaseReceipt",
 }
 
 # Document Events
@@ -207,6 +209,9 @@ doc_events = {
     },
     "Employee": {
         "validate" : "harro.harro.docevents.employee.on_employee_update"
+    },
+    "Travel Request" : {
+        "on_update" : "harro.harro.docevents.travel_request.on_update"
     }
 }
 

@@ -43,7 +43,7 @@ app_include_js = [
 # webform_include_css = {"doctype": "public/css/doctype.css"}
 
 # include js in page
-# page_js = {"page" : "public/js/file.js"}
+page_js = {"bom-comparison-tool" : "public/js/page/bom_comparison_tool.js"}
 
 # include js in doctype views
 doctype_js = {
@@ -259,7 +259,8 @@ override_whitelisted_methods = {
     "erpnext.manufacturing.doctype.work_order.work_order.make_stock_entry": "harro.harro.override.work_order.make_stock_entry",
     "erpnext.controllers.subcontracting_controller.make_rm_stock_entry" : "harro.harro.override.subcontracting_order.make_rm_stock_entry",
     "erpnext.stock.doctype.material_request.material_request.make_purchase_order": "harro.harro.override.material_request.make_purchase_order",
-    "erpnext.buying.doctype.purchase_order.purchase_order.make_purchase_receipt": "harro.harro.override.purchase_order.make_purchase_receipt"
+    "erpnext.buying.doctype.purchase_order.purchase_order.make_purchase_receipt": "harro.harro.override.purchase_order.make_purchase_receipt",
+    "erpnext.manufacturing.doctype.bom.bom.get_bom_diff" : "harro.harro.docevents.bom.get_bom_diff"
 }
 #
 # each overriding function accepts a `data` argument;

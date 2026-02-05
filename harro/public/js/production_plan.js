@@ -4,7 +4,12 @@ frappe.ui.form.on("Production Plan", {
         override_bulk_edit_functions(frm);
         frm.get_docfield("sub_assembly_items").allow_bulk_edit = true
         frm.fields_dict.sub_assembly_items.grid.setup_allow_bulk_edit()
-
+        if(frm.doc.deleted_selected_commodity_group_items){
+            frm.set_df_property("delete_selected_commodity_group_items", "hidden", 1)
+        }
+        if(frm.doc.removed_reduce_item_from_raw_material){
+            frm.set_df_property("reduce_item_from_raw_material", "hidden", 1)
+        }
         // filters for items_to_reduce_qty
         frm.set_query("items_to_reduce_qty", function () {
             let items = [];
@@ -32,8 +37,10 @@ frappe.ui.form.on("Production Plan", {
     },
     delete_selected_commodity_group_items(frm) {
         // collect commodity groups selected for removal
+        if (!frm.doc.remove_based_item_group.length){
+            frappe.throw(__("No Commodity Group Selected."))
+        }
         let item_group_list = frm.doc.remove_based_item_group.map(e => e.commodity_group);
-
         // filter rows that should remain
         frm.doc.mr_items = frm.doc.mr_items.filter(row => {
             return !item_group_list.includes(row.commodity_group);
@@ -43,7 +50,10 @@ frappe.ui.form.on("Production Plan", {
         frm.doc.mr_items.forEach((row, index) => {
             row.idx = index + 1;   // Frappe child tables start at 1
         });
-
+        if(item_group_list.length){
+            frm.set_value("deleted_selected_commodity_group_items", 1)
+            frm.set_df_property("deleted_selected_commodity_group_items", "hidden", 1)
+        }
         frm.refresh_field("mr_items");
     },
     reduce_item_from_raw_material(frm) {
@@ -64,15 +74,50 @@ frappe.ui.form.on("Production Plan", {
                         items: frm.doc.items_to_reduce_qty
                     },
                     freeze: true,
-                    callback() {
+                    callback(r) {
                         frm.reload_doc()
+                        if(r.message){
+                            if(frm.doc.removed_reduce_item_from_raw_material){
+                                frm.set_df_property("reduce_item_from_raw_material", "hidden", 1)
+                            }
+                        }
                         frappe.msgprint(__("Raw material quantities updated."));
                     }
 
                 });
             }
         );
+    },
+    reduce_items(frm) {
+        frappe.confirm(
+            __("This will remove sub-assembly and raw material items as per BOM. Do you want to continue?"),
+            () => {
+                // YES → proceed
+                frappe.call({
+                    method: "harro.harro.docevents.production_plan.remove_items_as_per_bom",
+                    args: { doc: frm.doc },
+                    freeze: true,
+                    callback() {
+                        frm.reload_doc();
+
+                        frappe.show_alert({
+                            message: __("Items removed as per BOM"),
+                            indicator: "green"
+                        });
+                    }
+                });
+            },
+            () => {
+                // NO → optional UX feedback
+                frappe.show_alert({
+                    message: __("Operation cancelled"),
+                    indicator: "orange"
+                });
+            }
+        );
     }
+
+
 })
 
 function override_setup_download(frm) {

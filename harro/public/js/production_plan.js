@@ -74,20 +74,34 @@ frappe.ui.form.on("Production Plan", {
         );
     },
     reduce_items(frm) {
-        frappe.call({
-            method: "harro.harro.docevents.production_plan.remove_items_as_per_bom",
-            args: { doc: frm.doc },
-            freeze: true,
-            callback() {
-                frm.reload_doc();
+        frappe.confirm(
+            __("This will remove sub-assembly and raw material items as per BOM. Do you want to continue?"),
+            () => {
+                // YES → proceed
+                frappe.call({
+                    method: "harro.harro.docevents.production_plan.remove_items_as_per_bom",
+                    args: { doc: frm.doc },
+                    freeze: true,
+                    callback() {
+                        frm.reload_doc();
 
+                        frappe.show_alert({
+                            message: __("Items removed as per BOM"),
+                            indicator: "green"
+                        });
+                    }
+                });
+            },
+            () => {
+                // NO → optional UX feedback
                 frappe.show_alert({
-                    message: __("Items removed as per BOM"),
-                    indicator: "green"
+                    message: __("Operation cancelled"),
+                    indicator: "orange"
                 });
             }
-        });
+        );
     }
+
 
 })
 

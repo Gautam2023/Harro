@@ -18,7 +18,8 @@ class TravelRequest(Document):
     def send_feedback_link(self):
         if self.is_new():
             return
-
+        if frappe.db.exists("Travel Arrangement - Feedback", {"travel_request" : self.name}):
+            return
         old_doc = self.get_doc_before_save()
 
         if (

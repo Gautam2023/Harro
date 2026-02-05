@@ -7,7 +7,8 @@ from frappe.model.document import Document
 
 class TravelRequest(Document):
     def validate(self):
-        self.send_feedback_link()
+        pass
+        # self.send_feedback_link()
     
     def on_update_after_submit(self):
         self.send_feedback_link()

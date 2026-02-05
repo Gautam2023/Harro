@@ -52,6 +52,7 @@ frappe.ui.form.on("Production Plan", {
         });
         if(item_group_list.length){
             frm.set_value("deleted_selected_commodity_group_items", 1)
+            frm.set_df_property("deleted_selected_commodity_group_items", "hidden", 1)
         }
         frm.refresh_field("mr_items");
     },

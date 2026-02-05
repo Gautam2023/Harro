@@ -72,7 +72,23 @@ frappe.ui.form.on("Production Plan", {
                 });
             }
         );
+    },
+    reduce_items(frm) {
+        frappe.call({
+            method: "harro.harro.docevents.production_plan.remove_items_as_per_bom",
+            args: { doc: frm.doc },
+            freeze: true,
+            callback() {
+                frm.reload_doc();
+
+                frappe.show_alert({
+                    message: __("Items removed as per BOM"),
+                    indicator: "green"
+                });
+            }
+        });
     }
+
 })
 
 function override_setup_download(frm) {

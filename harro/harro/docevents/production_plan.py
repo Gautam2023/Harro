@@ -491,3 +491,71 @@ def remove_row_from_mr_items(self):
 
     # Replace original table with filtered table
     self.mr_items = filtered_items    
+
+
+
+import json
+import frappe
+from erpnext.manufacturing.doctype.bom.bom import get_bom_items
+
+@frappe.whitelist()
+def remove_items_as_per_bom(doc):
+    data = json.loads(doc)
+
+    # Load real document
+    plan = frappe.get_doc(data)
+
+    assemblies_to_remove = {
+        row["item_code"] for row in data["remove_from_sub_and_raw"]
+    }
+
+    bom_items_to_remove = set()
+
+    for row in plan.sub_assembly_items:
+        if row.production_item in assemblies_to_remove:
+            items = get_bom_items(
+                row.bom_no,
+                plan.company
+            )
+
+            for d in items:
+                bom_items_to_remove.add(d.item_code)
+
+            bom_items_to_remove.add(row.production_item)
+
+    # -------------------------
+    # Remove Sub Assemblies
+    # -------------------------
+    plan.sub_assembly_items = []
+    plan.sub_assembly_items = [
+        row for row in plan.sub_assembly_items
+        if row.production_item not in bom_items_to_remove
+    ]
+
+    # -------------------------
+    # Remove Raw Items
+    # -------------------------
+    plan.mr_items = []
+    plan.mr_items = [
+        row for row in plan.mr_items
+        if row.item_code not in bom_items_to_remove
+    ]
+
+    plan.save(ignore_permissions=True)
+
+
+    return {
+        "status": "success"
+    }
+
+
+
+
+
+
+            
+
+            
+    
+
+

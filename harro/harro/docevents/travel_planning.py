@@ -53,7 +53,8 @@ def create_travel_plan(names):
 					"check_out_date" : tr.check_out_date,
 					"room_night" : tr.room_night,
 					"lodging_required" : tr.lodging_required,
-					"preferred_area_for_lodging" : tr.preferred_area_for_lodging
+					"preferred_area_for_lodging" : tr.preferred_area_for_lodging,
+					"travel_request_itinerary": tr.name
 				})
 		else:
 			travel_plan.append("travel_itinerary", {

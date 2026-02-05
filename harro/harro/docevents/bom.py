@@ -22,6 +22,21 @@ def get_bom_diff(bom1, bom2):
 	out.removed = []
 
 	meta = doc1.meta
+	warehouse = "All Warehouses - HH"
+
+	def get_available_qty(item_code):
+		filters = frappe._dict({
+            "company": "Harro Hoefliger Packaging Systems Private Limited",
+            "from_date": "2022-01-01",
+            "to_date": today(),
+            "item_code": [item_code],
+            "rack": [],
+            "valuation_field_type": "Currency",
+            "warehouse": [warehouse],
+        })
+		stock_balance = get_stock_balance(filters)
+		balance = stock_balance[1] or []
+		return sum([row.bal_qty for row in balance])
 
 	identifiers = {
 		"operations": "operation",
@@ -44,63 +59,25 @@ def get_bom_diff(bom1, bom2):
 
 			# check rows for additions, changes
 			for i, d in enumerate(new_value):
+				item_code = d.get("item_code")
+				qty = get_available_qty(item_code)
+
 				if d.get(identifier) in old_row_by_identifier:
 					diff = get_diff(old_row_by_identifier[d.get(identifier)], d, for_child=True)
 					if diff and diff.changed:
 						out.row_changed.append((df.fieldname, i, d.get(identifier), diff.changed))
 				else:
-					item_code = d.get("item_code")
-
-					filters = frappe._dict({
-						'company': 'Harro Hoefliger Packaging Systems Private Limited',
-						'from_date': '2022-01-01',
-						'item_code': [item_code],
-						'rack': [],
-						'to_date': today(),
-						'valuation_field_type': 'Currency',
-						'warehouse': ['All Warehouses - HH']
-					})
-					print(item_code)
-					stock_balance = get_stock_balance(filters)
-
-					balance = stock_balance[1]
-					
-					qty_available = sum([
-						row.bal_qty for row in balance
-					])
-					
-					d.update({
-						"qty_available" : qty_available
-					})
-
-					out.added.append([df.fieldname, d.as_dict()])
+					row_dict = d.as_dict()
+					row_dict["qty_available"] = qty
+					out.added.append([df.fieldname, row_dict])
 
 			# check for deletions
 			for d in old_value:
 				if d.get(identifier) not in new_row_by_identifier:
-					
 					item_code = d.get("item_code")
-
-					filters = frappe._dict({
-						'company': 'Harro Hoefliger Packaging Systems Private Limited',
-						'from_date': '2022-01-01',
-						'item_code': [item_code],
-						'rack': [],
-						'to_date': today(),
-						'valuation_field_type': 'Currency',
-						'warehouse': ['All Warehouses - HH']
-					})
-
-					stock_balance = get_stock_balance(filters)
-
-					qty_available = sum([
-						row.bal_qty for row in balance
-					])
-					
-					d.update({
-						"qty_available" : qty_available
-					})
-
-					out.removed.append([df.fieldname, d.as_dict()])
+					qty = get_available_qty(item_code)
+					row_dict = d.as_dict()
+					row_dict["qty_available"] = qty
+					out.removed.append([df.fieldname, row_dict])
 
 	return out

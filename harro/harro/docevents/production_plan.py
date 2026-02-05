@@ -526,7 +526,6 @@ def remove_items_as_per_bom(doc):
     # -------------------------
     # Remove Sub Assemblies
     # -------------------------
-    plan.sub_assembly_items = []
     plan.sub_assembly_items = [
         row for row in plan.sub_assembly_items
         if row.production_item not in bom_items_to_remove
@@ -535,7 +534,6 @@ def remove_items_as_per_bom(doc):
     # -------------------------
     # Remove Raw Items
     # -------------------------
-    plan.mr_items = []
     plan.mr_items = [
         row for row in plan.mr_items
         if row.item_code not in bom_items_to_remove

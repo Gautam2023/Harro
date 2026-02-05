@@ -37,6 +37,9 @@ class TravelRequest(Document):
 
 def send_form_in_email(docname):
     doc = frappe.get_doc("Travel Request", docname)
+    
+    if frappe.db.exists("Travel Arrangement - Feedback", {"travel_request" : doc.name}):
+        return
 
     
     feedback_doc = frappe.get_doc({

@@ -11,7 +11,7 @@ frappe.ui.form.on("Travel Request", {
                         names : [frm.doc.name]
                     }
                 })
-			},__("Create"));
+            },__("Create"));
         }
 	},
     custom_checkout_date_(frm) {

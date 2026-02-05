@@ -2,7 +2,7 @@ import frappe
 
 WORKFLOW_TO_TRIP_STATUS = {
     "Trip Cancelled": "Cancelled",
-    "Trip Rescheduled": "Reschedule",
+    "Trip Rescheduled": "Rescheduled",
 }
 
 def on_update(doc, method=None):
@@ -21,8 +21,9 @@ def on_update(doc, method=None):
 
         for row in tp.travel_itinerary:
             if row.travel_request == doc.name:
-                if row.custom_trip_status != trip_status:
-                    row.custom_trip_status = trip_status
+                if row.custom_flight_booking_status != trip_status:
+                    row.custom_flight_booking_status = trip_status
+                    row.custom_hotel_booking_status = trip_status
                     updated = True
 
         if updated:

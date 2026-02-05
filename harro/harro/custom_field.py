@@ -240,6 +240,21 @@ def create_custom_fields_on_migrate():
                 "fieldtype" : "Check",
                 "insert_after" : "is_grouped_asset"
             }
+        ],
+        "Travel Planning Employee Details": [
+            {
+            "fieldname": "reference_section",
+            "label": "Reference Section",
+            "fieldtype": "Section Break",
+            "insert_after": "custom_taxi_required"
+            },
+            {
+            "fieldname": "travel_request_itinerary",
+            "label": "Travel Request Itinerary",
+            "fieldtype": "Data",
+            "insert_after": "reference",
+            "hidden" : 1
+            }
         ]
         
     }

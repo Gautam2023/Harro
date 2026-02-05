@@ -556,5 +556,6 @@ def reduce_raw_material_qty(production_plan, items):
                     doc.remove(mr_row)
                 else:
                     mr_row.quantity = new_qty
-
+    doc.removed_reduce_item_from_raw_material = 1
     doc.save(ignore_permissions=True)
+    return "success"

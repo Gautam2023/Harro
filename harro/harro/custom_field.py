@@ -95,6 +95,13 @@ def create_custom_fields_on_migrate():
                 "fieldtype": "Button",
             },
             {
+                "label": "Deleted Selected Commodity Group Items",
+                "fieldname": "deleted_selected_commodity_group_items",
+                "insert_after": "delete_selected_commodity_group_items",
+                "fieldtype": "Check",
+                "hidden" : 1
+            },
+            {
                 "insert_after" : "ignore_existing_ordered_qty",
                 "fieldname" : "items_to_reduce_qty",
                 "label" : "Items To Reduce Quantity",
@@ -107,6 +114,13 @@ def create_custom_fields_on_migrate():
                 "fieldname" : "reduce_item_from_raw_material",
                 "insert_after" : "items_to_reduce_qty",
                 "fieldtype" : "Button"
+            },
+            {
+                "label" : "Removed Reduce Item From Raw Material",
+                "fieldname" : "removed_reduce_item_from_raw_material",
+                "insert_after" : "reduce_item_from_raw_material",
+                "fieldtype" : "Check",
+                "hidden" : 1
             },
             {
                 "insert_after" : "skip_available_sub_assembly_item",

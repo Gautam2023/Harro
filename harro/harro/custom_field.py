@@ -204,6 +204,14 @@ def create_custom_fields_on_migrate():
                 "read_only" : 1,
                 "fetch_from" : "production_item.custom_structure_class_head"
             }
+        ],
+        "Item" : [
+            {
+                "fieldname" : "is_allowed_without_po",
+                "label" : "Is Allowed Without PO",
+                "fieldtype" : "Check",
+                "insert_after" : "is_grouped_asset"
+            }
         ]
         
     }

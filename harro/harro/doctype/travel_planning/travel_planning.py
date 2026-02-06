@@ -100,3 +100,47 @@ def get_travel_dates(travel_request):
         return {}
     
     return items[0]
+
+@frappe.whitelist()
+def create_travel_checklist(source_name):
+    tp = frappe.get_doc("Travel Planning", source_name)
+
+    created = []
+    skipped = []
+
+    for row in tp.travel_itinerary:
+        if not row.travel_request:
+            continue
+
+        # Check if Travel Checklist exists
+        tc_name = frappe.db.get_value(
+            "Travel Checklist",
+            {"custom_travel_request": row.travel_request},
+            "name"
+        )
+
+        if tc_name:
+            # Generate link to existing Travel Checklist
+            skipped.append(f'<a href="/app/travel-checklist/{tc_name}" target="_blank">{row.travel_request}</a>')
+            continue
+
+        # Create new Travel Checklist
+        tc = frappe.new_doc("Travel Checklist")
+        tc.custom_travel_request = row.travel_request
+        tc.travel_type = tp.travel_type
+        tc.travell_to = row.travel_to
+        tc.visit_no = 0
+        tc.insert(ignore_permissions=True)
+
+        # Add link for newly created checklist
+        created.append(f'<a href="/app/travel-checklist/{tc.name}" target="_blank">{row.travel_request}</a>')
+
+    # Build message with links
+    message = ""
+    if created:
+        message += f"Created Travel Checklist for: {', '.join(created)}<br>"
+    if skipped:
+        message += f"⚠ Already exists for: {', '.join(skipped)}"
+
+    return message
+

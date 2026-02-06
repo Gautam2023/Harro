@@ -17,6 +17,7 @@ from frappe.utils import (
 )
 import json
 from collections import defaultdict
+from erpnext.manufacturing.doctype.bom.bom import get_children as get_bom_children
 from erpnext.manufacturing.doctype.production_plan.production_plan import ProductionPlan
 from erpnext.manufacturing.report.bom_stock_report.bom_stock_report import get_bom_stock
 from erpnext.manufacturing.doctype.production_plan.production_plan import (
@@ -500,60 +501,186 @@ from erpnext.manufacturing.doctype.bom.bom import get_bom_items
 
 @frappe.whitelist()
 def remove_items_as_per_bom(doc):
-    data = json.loads(doc)
+    doc = frappe._dict(json.loads(doc))
+    doc = frappe.get_doc(doc)
 
-    # Load real document
-    plan = frappe.get_doc(data)
-
-    assemblies_to_remove = {
-        row["item_code"] for row in data["remove_from_sub_and_raw"]
-    }
-
-    bom_items_to_remove = set()
-
-    for row in plan.sub_assembly_items:
-        if row.production_item in assemblies_to_remove:
-            items = get_bom_items(
-                row.bom_no,
-                plan.company
-            )
-
-            for d in items:
-                bom_items_to_remove.add(d.item_code)
-
-            bom_items_to_remove.add(row.production_item)
-
-    # -------------------------
-    # Remove Sub Assemblies
-    # -------------------------
-    plan.sub_assembly_items = [
-        row for row in plan.sub_assembly_items
-        if row.production_item not in bom_items_to_remove
+    skip_items = [
+            row.item_code for row in doc.remove_from_sub_and_raw
     ]
+    
+    qty_map = {}
+    for row in doc.sub_assembly_items:
+        if row.production_item in skip_items:
+            if not qty_map.get(row.production_item):
+                qty_map[row.production_item] = row.qty
+                qty_map[f"bom-{row.production_item}"] = row.bom_no
+            else:
+                qty_map[row.production_item] += row.qty
+    
+    bom_stock_data = []
+    for row in skip_items:
+        filters = frappe._dict({
+            "bom" : qty_map.get(f"bom-{row}"),
+            "warehouse" : "Store - HH",
+            "show_exploded_view" : 1,
+            "qty_to_produce" : qty_map.get(row)
+        })
+        bom_stock_data += get_bom_stock(filters)
+    
+    bom_stock_data_map = {}
+    for row in bom_stock_data:
+        if not bom_stock_data_map.get(row[0]):
+            bom_stock_data_map[row[0]] = row[5]
+        else:
+            bom_stock_data_map[row[0]] += row[5]
 
-    # -------------------------
-    # Remove Raw Items
-    # -------------------------
-    plan.mr_items = [
-        row for row in plan.mr_items
-        if row.item_code not in bom_items_to_remove
-    ]
+    for row in list(doc.mr_items):
+        if bom_stock_data_map.get(row.item_code):
+            row.quantity = flt(row.quantity) - flt(bom_stock_data_map.get(row.item_code))
 
-    plan.save(ignore_permissions=True)
+        if row.quantity <= 0:
+            doc.remove(row)
 
+    get_sub_assembly_items(doc)
+
+    doc.save(ignore_permissions=True)
 
     return {
         "status": "success"
     }
 
+@frappe.whitelist()
+def get_sub_assembly_items(self, manufacturing_type=None):
+    "Fetch sub assembly items and optionally combine them."
+    self.sub_assembly_items = []
+    sub_assembly_items_store = []  # temporary store to process all subassembly items
+    bin_details = frappe._dict()
+
+    for row in self.po_items:
+        if self.skip_available_sub_assembly_item and not self.sub_assembly_warehouse:
+            frappe.throw(_("Row #{0}: Please select the Sub Assembly Warehouse").format(row.idx))
+
+        if not row.item_code:
+            frappe.throw(_("Row #{0}: Please select Item Code in Assembly Items").format(row.idx))
+
+        if not row.bom_no:
+            frappe.throw(_("Row #{0}: Please select the BOM No in Assembly Items").format(row.idx))
+
+        bom_data = []
+        skip_items = {
+            row.item_code for row in self.remove_from_sub_and_raw
+        }
+        get_sub_assembly_items_(
+            [item.production_item for item in sub_assembly_items_store],
+            bin_details,
+            row.bom_no,
+            bom_data,
+            row.planned_qty,
+            self.company,
+            warehouse=self.sub_assembly_warehouse,
+            skip_available_sub_assembly_item=self.skip_available_sub_assembly_item,
+            skip_items = skip_items
+        )
+        self.set_sub_assembly_items_based_on_level(row, bom_data, manufacturing_type)
+        sub_assembly_items_store.extend(bom_data)
+
+    if not sub_assembly_items_store and self.skip_available_sub_assembly_item:
+        message = (
+            _(
+                "As there are sufficient Sub Assembly Items, Work Order is not required for Warehouse {0}."
+            ).format(self.sub_assembly_warehouse)
+            + "<br><br>"
+        )
+        message += _(
+            "If you still want to proceed, please disable 'Skip Available Sub Assembly Items' checkbox."
+        )
+
+        frappe.msgprint(message, title=_("Note"))
+
+    if self.combine_sub_items:
+        # Combine subassembly items
+        sub_assembly_items_store = self.combine_subassembly_items(sub_assembly_items_store)
+
+    for idx, row in enumerate(sub_assembly_items_store):
+        row.idx = idx + 1
+        self.append("sub_assembly_items", row)
+
+    self.set_default_supplier_for_subcontracting_order()
 
 
+def get_sub_assembly_items_(
+    sub_assembly_items,
+    bin_details,
+    bom_no,
+    bom_data,
+    to_produce_qty,
+    company,
+    warehouse=None,
+    indent=0,
+    skip_available_sub_assembly_item=False,
+    skip_items=None,   # 👈 NEW
+):
+    skip_items = skip_items or set()
 
+    data = get_bom_children(parent=bom_no)
 
+    for d in data:
 
-            
+        # 🚫 Skip selected assembly and its whole tree
+        if d.item_code in skip_items:
+            continue
 
-            
-    
+        if d.expandable:
+            parent_item_code = frappe.get_cached_value("BOM", bom_no, "item")
+            stock_qty = (d.stock_qty / d.parent_bom_qty) * flt(to_produce_qty)
+
+            if skip_available_sub_assembly_item and d.item_code not in sub_assembly_items:
+                bin_details.setdefault(d.item_code, get_bin_details(d, company, for_warehouse=warehouse))
+
+                for _bin_dict in bin_details[d.item_code]:
+                    if _bin_dict.projected_qty > 0:
+                        if _bin_dict.projected_qty >= stock_qty:
+                            _bin_dict.projected_qty -= stock_qty
+                            stock_qty = 0
+                        else:
+                            stock_qty -= _bin_dict.projected_qty
+                            sub_assembly_items.append(d.item_code)
+
+            elif warehouse:
+                bin_details.setdefault(d.item_code, get_bin_details(d, company, for_warehouse=warehouse))
+
+            if stock_qty > 0:
+                bom_data.append(
+                    frappe._dict({
+                        "actual_qty": bin_details[d.item_code][0].get("actual_qty", 0)
+                        if bin_details.get(d.item_code) else 0,
+                        "parent_item_code": parent_item_code,
+                        "description": d.description,
+                        "production_item": d.item_code,
+                        "item_name": d.item_name,
+                        "stock_uom": d.stock_uom,
+                        "uom": d.stock_uom,
+                        "bom_no": d.value,
+                        "is_sub_contracted_item": d.is_sub_contracted_item,
+                        "bom_level": indent,
+                        "indent": indent,
+                        "stock_qty": stock_qty,
+                    })
+                )
+
+                # 🔁 Recurse only if not skipped
+                if d.value:
+                    get_sub_assembly_items_(
+                        sub_assembly_items,
+                        bin_details,
+                        d.value,
+                        bom_data,
+                        stock_qty,
+                        company,
+                        warehouse,
+                        indent + 1,
+                        skip_available_sub_assembly_item,
+                        skip_items,   # 👈 PASS DOWN
+                    )
 
 

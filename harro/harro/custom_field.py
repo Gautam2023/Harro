@@ -130,7 +130,7 @@ def create_custom_fields_on_migrate():
                 "options" : "Item To Reduce Quantity"
             },
             {
-                "label" : "Reduce Items",
+                "label" : "Remove Sub-Assembly and Raw Materials",
                 "fieldname" : "reduce_items",
                 "insert_after" : "remove_from_sub_and_raw",
                 "fieldtype" : "Button"

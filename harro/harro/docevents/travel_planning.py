@@ -54,7 +54,9 @@ def create_travel_plan(names):
 					"room_night" : tr.room_night,
 					"lodging_required" : tr.lodging_required,
 					"preferred_area_for_lodging" : tr.preferred_area_for_lodging,
-					"travel_request_itinerary": tr.name
+					"travel_request_itinerary": tr.name,
+					"custom_onward_travel_date": tr.custom_onward_travel_date,
+					"custom_return_travel_date": tr.custom_return_travel_date
 				})
 		else:
 			travel_plan.append("travel_itinerary", {

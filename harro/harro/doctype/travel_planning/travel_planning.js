@@ -11,6 +11,22 @@ frappe.ui.form.on("Travel Planning", {
                     frm: cur_frm,
                 });
             }, __("Create"))
+
+            frm.add_custom_button(__("Travel Checklist"), () => {
+                frappe.call({
+                    method: "harro.harro.doctype.travel_planning.travel_planning.create_travel_checklist",
+                    args: { source_name: frm.doc.name },
+                    callback: function(r) {
+                        if (r.message) {
+                            frappe.msgprint({
+                                title: __("Message"),
+                                message: r.message,
+                                indicator: "green"
+                            });
+                        }
+                    }
+                });
+            }, __("Create"));
         }
 	},
     travel_type(frm) {

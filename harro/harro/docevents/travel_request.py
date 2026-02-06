@@ -9,6 +9,16 @@ def on_update(doc, method=None):
     trip_status = WORKFLOW_TO_TRIP_STATUS.get(doc.workflow_state)
     if not trip_status:
         return
+    
+    tr_updated = False
+    for row in doc.itinerary:
+        if row.custom_flight_booking_status != trip_status:
+            row.custom_flight_booking_status = trip_status
+            row.custom_hotel_booking_status = trip_status
+            tr_updated = True
+    if tr_updated:
+        doc.flags.ingore_permissions = True
+        doc.save()
 
     travel_plannings = frappe.get_all(
         "Travel Planning",

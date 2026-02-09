@@ -7,7 +7,8 @@ from frappe.model.document import Document
 
 class TravelRequest(Document):
     def validate(self):
-        self.send_feedback_link()
+        pass
+        # self.send_feedback_link()
     
     def on_update_after_submit(self):
         self.send_feedback_link()
@@ -18,7 +19,8 @@ class TravelRequest(Document):
     def send_feedback_link(self):
         if self.is_new():
             return
-
+        if frappe.db.exists("Travel Arrangement - Feedback", {"travel_request" : self.name}):
+            return
         old_doc = self.get_doc_before_save()
 
         if (
@@ -36,6 +38,9 @@ class TravelRequest(Document):
 
 def send_form_in_email(docname):
     doc = frappe.get_doc("Travel Request", docname)
+    
+    if frappe.db.exists("Travel Arrangement - Feedback", {"travel_request" : doc.name}):
+        return
 
     
     feedback_doc = frappe.get_doc({

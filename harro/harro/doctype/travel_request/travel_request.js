@@ -3,7 +3,7 @@
 
 frappe.ui.form.on("Travel Request", {
 	refresh(frm) {
-        if(frm.doc.docstatus == 1){
+        if(frm.doc.workflow_state == "Trip Planned"){
             frm.add_custom_button(__("Travel Planning"), function () {
                 frappe.call({
                     method : "harro.harro.docevents.travel_planning.create_travel_plan",
@@ -11,7 +11,7 @@ frappe.ui.form.on("Travel Request", {
                         names : [frm.doc.name]
                     }
                 })
-			},__("Create"));
+            },__("Create"));
         }
 	},
     custom_checkout_date_(frm) {

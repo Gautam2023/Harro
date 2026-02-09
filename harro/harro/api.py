@@ -4,6 +4,7 @@ from harro.harro.docevents.task import update_stop_task_log
 from harro.harro.docevents.employee_checkin import update_unproductive_log_employee_wise, make_time_log
 from frappe.utils import get_url_to_form, get_link_to_form
 from harro.harro.docevents.job_card import update_unproductive_log
+import json
 
 
 @frappe.whitelist()
@@ -556,5 +557,43 @@ def reduce_raw_material_qty(production_plan, items):
                     doc.remove(mr_row)
                 else:
                     mr_row.quantity = new_qty
-
+    doc.removed_reduce_item_from_raw_material = 1
     doc.save(ignore_permissions=True)
+    return "success"
+
+
+@frappe.whitelist()
+def sync_booking_status_to_travel_request(tp_child):
+    if isinstance(tp_child, str):
+        tp_child = json.loads(tp_child)
+
+    travel_request_name = tp_child.get("travel_request")
+    travel_itinerary_name = tp_child.get("travel_request_itinerary")
+
+    if not travel_request_name:
+        frappe.throw("Travel Request not found")
+
+    if not travel_itinerary_name:
+        frappe.throw("Travel Request Itinerary link not found")
+
+    tr_doc = frappe.get_doc("Travel Request", travel_request_name)
+
+    updated = False
+    for tr_row in tr_doc.itinerary:
+        if tr_row.name == travel_itinerary_name:
+            tr_row.custom_flight_booking_status = tp_child.get("custom_flight_booking_status")
+            tr_row.custom_hotel_booking_status = tp_child.get("custom_hotel_booking_status")
+            updated = True
+            break
+
+    if not updated:
+        frappe.throw("Matching Travel Request itinerary row not found")
+
+    tr_doc.save(ignore_permissions=True)
+    frappe.db.commit()
+
+    return {
+        "status": "success",
+        "message": "Travel Request itinerary updated successfully"
+    }
+

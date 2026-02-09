@@ -32,12 +32,12 @@ def create_travel_plan(names):
 	travel_plan = frappe.new_doc("Travel Planning")
 	for req in to_create:
 		tr_doc = frappe.get_doc("Travel Request", req)
-		if tr_doc.docstatus < 1:
-			frappe.throw(
-				"Travel Request should be submitted.<br><ul><li>{0}</li></ul>".format(
-					get_link_to_form('Travel Request', req)
-				)
-			)
+		# if tr_doc.docstatus < 1:
+		# 	frappe.throw(
+		# 		"Travel Request should be submitted.<br><ul><li>{0}</li></ul>".format(
+		# 			get_link_to_form('Travel Request', req)
+		# 		)
+		# 	)
 
 		if len(tr_doc.itinerary):
 			for tr in tr_doc.itinerary:
@@ -53,7 +53,10 @@ def create_travel_plan(names):
 					"check_out_date" : tr.check_out_date,
 					"room_night" : tr.room_night,
 					"lodging_required" : tr.lodging_required,
-					"preferred_area_for_lodging" : tr.preferred_area_for_lodging
+					"preferred_area_for_lodging" : tr.preferred_area_for_lodging,
+					"travel_request_itinerary": tr.name,
+					"custom_onward_travel_date": tr.custom_onward_travel_date,
+					"custom_return_travel_date": tr.custom_return_travel_date
 				})
 		else:
 			travel_plan.append("travel_itinerary", {

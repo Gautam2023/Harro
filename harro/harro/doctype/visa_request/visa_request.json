@@ -14,6 +14,13 @@
   "contact_email",
   "visa_country",
   "visa_checklist",
+  "notes_section",
+  "please_note",
+  "disclaimer",
+  "note",
+  "to_applicant",
+  "from_company",
+  "general",
   "section_break_qenr",
   "check_list"
  ],
@@ -74,12 +81,59 @@
    "fieldtype": "Table",
    "label": "Check list",
    "options": "Checklist Doc"
+  },
+  {
+   "fieldname": "notes_section",
+   "fieldtype": "Section Break",
+   "label": "Notes"
+  },
+  {
+   "fetch_from": "visa_checklist.please_note",
+   "fieldname": "please_note",
+   "fieldtype": "Long Text",
+   "label": "Please Note",
+   "read_only": 1
+  },
+  {
+   "fetch_from": "visa_checklist.disclaimer",
+   "fieldname": "disclaimer",
+   "fieldtype": "Long Text",
+   "label": "Disclaimer",
+   "read_only": 1
+  },
+  {
+   "fetch_from": "visa_checklist.note",
+   "fieldname": "note",
+   "fieldtype": "Long Text",
+   "label": "Note",
+   "read_only": 1
+  },
+  {
+   "fetch_from": "visa_checklist.to_applicant",
+   "fieldname": "to_applicant",
+   "fieldtype": "Long Text",
+   "label": "To Applicant",
+   "read_only": 1
+  },
+  {
+   "fetch_from": "visa_checklist.from_company",
+   "fieldname": "from_company",
+   "fieldtype": "Long Text",
+   "label": "From Company",
+   "read_only": 1
+  },
+  {
+   "fetch_from": "visa_checklist.general",
+   "fieldname": "general",
+   "fieldtype": "Long Text",
+   "label": "General",
+   "read_only": 1
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-01-22 10:33:54.301589",
+ "modified": "2026-02-05 15:14:39.113393",
  "modified_by": "Administrator",
  "module": "Harro",
  "name": "Visa Request",

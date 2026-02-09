@@ -1,4 +1,5 @@
 import frappe
+from frappe.utils import get_link_to_form
 
 WORKFLOW_TO_TRIP_STATUS = {
     "Trip Cancelled": "Cancelled",
@@ -17,13 +18,15 @@ def on_update(doc, method=None):
             row.custom_hotel_booking_status = trip_status
             tr_updated = True
     if tr_updated:
-        doc.flags.ingore_permissions = True
+        doc.flags.ignore_permissions = True
         doc.save()
 
     travel_plannings = frappe.get_all(
         "Travel Planning",
         fields=["name"]
     )
+
+    linked_tp_names = []
 
     for tp_row in travel_plannings:
         tp = frappe.get_doc("Travel Planning", tp_row.name)
@@ -39,3 +42,37 @@ def on_update(doc, method=None):
         if updated:
             tp.flags.ignore_permissions = True
             tp.save()
+            linked_tp_names.append(tp.name)
+
+    if linked_tp_names:
+        travel_manager_users = frappe.get_all(
+            "Has Role",
+            filters={"role": "Travel Manager"},
+            fields=["parent"]
+        )
+        recipient_emails = []
+        for user in travel_manager_users:
+            email = frappe.get_value("User", user.parent, "email")
+            if email:
+                recipient_emails.append(email)
+        if recipient_emails:
+            travel_request_link = get_link_to_form("Travel Request", doc.name)
+            tp_links = [get_link_to_form("Travel Planning", tp) for tp in linked_tp_names]
+            tp_links_html = ", ".join(tp_links)
+            html_message = f"""
+            <p>Hello Travel Manager</p>
+
+            <p>The following Travel Request has been <strong>{trip_status}</strong>:</p>
+            <p>Travel Request: {travel_request_link}</p>
+
+            <p>Linked Travel Planning(s): {tp_links_html}</p>
+
+            <p>Regards,<br>HR Team</p>
+            """
+            frappe.sendmail(
+                recipients = recipient_emails,
+                subject = f"Travel Request {doc.name} {trip_status}",
+                message = html_message,
+                delayed = False
+            )
+            

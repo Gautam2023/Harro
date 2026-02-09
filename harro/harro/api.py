@@ -507,10 +507,10 @@ from frappe.utils import flt
 from erpnext.manufacturing.report.bom_stock_report.bom_stock_report import get_bom_stock
 
 @frappe.whitelist()
-def reduce_raw_material_qty(production_plan, items):
-    doc = frappe.get_doc("Production Plan", production_plan)
-    if isinstance(items, str):
-        items = frappe.parse_json(items)
+def reduce_raw_material_qty(doc):
+    doc = frappe._dict(json.loads(doc))
+    doc = frappe.get_doc(doc)
+    items = frappe.parse_json(doc.items_to_reduce_qty)
 
     # extract selected item codes from Table MultiSelect
     selected_items = [d.get("item_code") for d in items if d.get("item_code")]
@@ -558,6 +558,7 @@ def reduce_raw_material_qty(production_plan, items):
                 else:
                     mr_row.quantity = new_qty
     doc.removed_reduce_item_from_raw_material = 1
+
     doc.save(ignore_permissions=True)
     return "success"
 

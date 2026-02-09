@@ -61,17 +61,16 @@ frappe.ui.form.on("Production Plan", {
             frappe.msgprint(__("Please select items to reduce quantity."));
             return;
         }
-        if (frm.doc.__unsaved){
-            frappe.throw("Please save the document.")
-        }
+        // if (frm.doc.__unsaved){
+        //     frappe.throw("Please save the document.")
+        // }
         frappe.confirm(
             __("This will reduce raw material quantities. Are you sure you want to continue ?"),
             () => {
                 frappe.call({
                     method: "harro.harro.api.reduce_raw_material_qty",
                     args: {
-                        production_plan: frm.doc.name,
-                        items: frm.doc.items_to_reduce_qty
+                        doc : frm.doc
                     },
                     freeze: true,
                     callback(r) {

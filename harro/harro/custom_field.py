@@ -255,6 +255,14 @@ def create_custom_fields_on_migrate():
             "insert_after": "reference",
             "hidden" : 1
             }
+        ],
+        "Expense Details" : [
+            {
+                "fieldname": "create_purchase_invoice",
+                "label": "Create Purchase Invoice",
+                "fieldtype": "Button",
+                "insert_after": "profit"
+            }
         ]
         
     }

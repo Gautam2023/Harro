@@ -47,7 +47,7 @@ def on_update(doc, method=None):
     if linked_tp_names:
         travel_manager_users = frappe.get_all(
             "Has Role",
-            filters={"role": "Travel Manager"},
+            filters={"role": "Travel Desk Manager"},
             fields=["parent"]
         )
         recipient_emails = []

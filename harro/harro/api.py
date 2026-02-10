@@ -599,3 +599,31 @@ def sync_booking_status_to_travel_request(tp_child):
         "message": "Travel Request itinerary updated successfully"
     }
 
+@frappe.whitelist()
+def get_purchase_invoice_defaults(expense_detail_row, travel_doc):
+    import json
+    if isinstance(expense_detail_row, str):
+        expense_detail_row = json.loads(expense_detail_row)
+
+    expense = frappe._dict(expense_detail_row)
+    ba_number = frappe.get_value("Travel Planning", travel_doc, "ba_number")
+
+    doc = frappe.get_doc({
+        "doctype": "Purchase Invoice",
+        "supplier": expense.vendor_name,
+        "travel_planning": travel_doc,
+        "bill_no": expense.invoice_id,
+        "project": ba_number,
+    })
+    doc.append(
+        "items",
+        {
+            "item_code": expense.service_type,
+            "qty": 1,
+            "rate": expense.total_amount
+        }
+    )
+    doc.flags.ignore_permissions = True
+    doc.flags.ignore_mandatory = True
+    doc.save()
+    return doc.name

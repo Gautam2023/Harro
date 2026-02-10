@@ -106,3 +106,23 @@ function sync_booking_status(frm, cdt, cdn) {
         }
     });
 }
+
+frappe.ui.form.on('Expense Details', {
+    create_purchase_invoice: function(frm, cdt, cdn) {
+        let row = locals[cdt][cdn];
+
+        frappe.call({
+            method: "harro.harro.api.get_purchase_invoice_defaults",
+            args: {
+                expense_detail_row: row,
+                travel_doc: frm.doc.name
+            },
+            callback: function(r) {
+                if (r.message) {
+                    console.log(r.message);
+                    frappe.set_route('Form', 'Purchase Invoice', r.message);
+                }
+            }
+        });
+    }
+});

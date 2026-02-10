@@ -536,7 +536,8 @@ def reduce_raw_material_qty(doc):
         filters = frappe._dict({
             "bom": sub.bom_no,
             "warehouse": sub.fg_warehouse,
-            "qty_to_produce": sub.qty
+            "qty_to_produce": sub.qty,
+            "show_exploded_view" : 1
         })
 
         data = get_bom_stock(filters) or []

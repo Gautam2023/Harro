@@ -289,6 +289,41 @@ def create_custom_fields_on_migrate():
                 "insert_after": "taxi_requester_name",
                 "fetch_from": "taxi_requestor.user_id"
             }
+        ],
+        "Stock Entry Detail" : [
+            {
+                "fieldname": "section_bil_invoice",
+                "label": "",
+                "fieldtype": "Section Break",
+                "read_only": 0,
+            },
+            {
+                "fieldname": "invoice_no",
+                "label": "Invoice No",
+                "fieldtype": "Data",
+                "read_only": 0,
+                "insert_after" : "section_bil_invoice"
+            },
+            {
+                "fieldname": "column_bil_invoice",
+                "label": "",
+                "fieldtype": "Column Break",
+                "insert_after" : "invoice_no"
+            },
+            {
+                "fieldname": "bill_of_entry",
+                "label": "Bill of Entry",
+                "fieldtype": "Data",
+                "read_only": 0,
+                "insert_after" : "column_bil_invoice"
+            },
+            {
+                "fieldname": "section_bil_invoice_closed",
+                "label": "",
+                "fieldtype": "Section Break",
+                "read_only": 0,
+                "insert_after" : "bill_of_entry"
+            },
         ]
         
     }

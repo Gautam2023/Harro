@@ -608,6 +608,17 @@ def get_purchase_invoice_defaults(expense_detail_row, travel_doc):
     expense = frappe._dict(expense_detail_row)
     ba_number = frappe.get_value("Travel Planning", travel_doc, "ba_number")
 
+    mandatory_fields = {
+        "Vendor Name": expense.get("vendor_name"),
+        "Bill No": expense.get("invoice_id"),
+        "BA Number": ba_number,
+        "Service Type": expense.get("service_type"),
+        "Total Amount": expense.get("total_amount")
+    }
+    missing_fields = [field for field, value in mandatory_fields.items() if not value]
+    if missing_fields:
+        frappe.throw(f"Mandatory field(s) missing: {', '.join(missing_fields)}")
+
     doc = frappe.get_doc({
         "doctype": "Purchase Invoice",
         "supplier": expense.vendor_name,

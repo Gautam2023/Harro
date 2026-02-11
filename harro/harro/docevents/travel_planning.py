@@ -56,7 +56,8 @@ def create_travel_plan(names):
 					"preferred_area_for_lodging" : tr.preferred_area_for_lodging,
 					"travel_request_itinerary": tr.name,
 					"custom_onward_travel_date": tr.custom_onward_travel_date,
-					"custom_return_travel_date": tr.custom_return_travel_date
+					"custom_return_travel_date": tr.custom_return_travel_date,
+					"custom_taxi_required": tr.custom_taxi_required
 				})
 		else:
 			travel_plan.append("travel_itinerary", {

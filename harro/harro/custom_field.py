@@ -255,6 +255,40 @@ def create_custom_fields_on_migrate():
             "insert_after": "reference",
             "hidden" : 1
             }
+        ],
+        "Expense Details" : [
+            {
+                "fieldname": "create_purchase_invoice",
+                "label": "Create Purchase Invoice",
+                "fieldtype": "Button",
+                "insert_after": "profit"
+            }
+        ],
+        "Taxi" : [
+            {
+                "fieldname": "taxi_requestor",
+                "label": "Taxi Requestor",
+                "fieldtype": "Link",
+                "options": "Employee",
+                "insert_after": "is_paid"
+            },
+            {
+                "fieldname": "taxi_requester_name",
+                "label": "Taxi Requester Name",
+                "fieldtype": "Data",
+                "read_only": 1,
+                "insert_after": "taxi_requestor",
+                "fetch_from": "taxi_requestor.employee_name"
+            },
+            {
+                "fieldname": "taxi_requester_email",
+                "label": "Taxi Requestor Email",
+                "fieldtype": "Data",
+                "options": "Email",
+                "read_only": 1,
+                "insert_after": "taxi_requester_name",
+                "fetch_from": "taxi_requestor.user_id"
+            }
         ]
         
     }

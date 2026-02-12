@@ -638,3 +638,43 @@ def get_purchase_invoice_defaults(expense_detail_row, travel_doc):
     doc.flags.ignore_mandatory = True
     doc.save()
     return doc.name
+
+
+from frappe.utils import add_days, today, getdate
+import frappe
+
+def employee_visa_expiry_reminder():
+    target_date = add_days(today(),90)  
+
+    employees = frappe.get_all(
+        "Employee",
+        fields=["name", "employee_name", "user_id"]
+    )
+
+    for emp in employees:
+        doc = frappe.get_doc("Employee", emp.name)
+
+        for row in doc.custom_visa_details: 
+            print(row.to)
+            print(target_date) 
+            print(emp.user_id)
+            if getdate(row.to) and getdate(row.to) == getdate(target_date):  
+                print(row.to)
+                print(target_date)
+                if not emp.user_id:
+                    continue
+                print(emp.user_id)
+                subject = f"Visa Expiry Reminder - {emp.employee_name}"
+
+                message = f"""
+                Dear {emp.employee_name},<br><br>
+                Your visa for <b>{row.visa_country}</b> will expire on <b>{row.to}</b>.<br>
+                Please take necessary action to renew it.<br><br>
+                Employee ID: {emp.name}
+                """
+
+                frappe.sendmail(
+                    recipients=[emp.user_id],
+                    subject=subject,
+                    message=message
+                )

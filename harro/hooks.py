@@ -246,7 +246,10 @@ scheduler_events = {
             "harro.harro.docevents.task.update_task_timer",
             "harro.harro.api.stop_timer_for_jobcard_every_two_hours"
         ],
-    }
+    },
+    "daily" : [
+        "harro.harro.api.employee_visa_expiry_reminder"
+    ]
 }
 
 # Testing

@@ -32,9 +32,10 @@ def send_attachment_emails(docname):
     doc = frappe.get_doc("Travel Planning", docname)
 
     attachment_fields = [
-        "custom_flight_bill",
-        "custom_taxi_bill",
-        "custom_travel_insurance"
+        "custom_evisa",
+        "custom_travel_insurance",
+        "custom_flight_ticket",
+        "custom_hotel_voucher"
     ]
 
     for row in doc.travel_itinerary:

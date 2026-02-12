@@ -640,11 +640,27 @@ def get_purchase_invoice_defaults(expense_detail_row, travel_doc):
     return doc.name
 
 
-from frappe.utils import add_days, today, getdate
+from frappe.utils import add_days, today, getdate, formatdate, get_link_to_form
 import frappe
 
 def employee_visa_expiry_reminder():
     target_date = add_days(today(),90)  
+
+    travel_manager_users = frappe.get_all(
+        "Has Role",
+        filters={"role": "Travel Manager"},
+        pluck="parent"
+    )
+
+    travel_managers = frappe.get_all(
+        "User",
+        filters={
+            "name": ["in", travel_manager_users],
+            "enabled": 1,
+            "user_type": "System User"
+        },
+        pluck="email"
+    )
 
     employees = frappe.get_all(
         "Employee",
@@ -654,27 +670,57 @@ def employee_visa_expiry_reminder():
     for emp in employees:
         doc = frappe.get_doc("Employee", emp.name)
 
+        reports_to = doc.get("reports_to")
+        reports_to_user = None
+        reports_to_name = None
+
+        if reports_to:
+            reports_to_user, reports_to_name = frappe.db.get_value(
+                "Employee",
+                reports_to,
+                ["user_id", "employee_name"]
+            )
+
         for row in doc.custom_visa_details: 
-            print(row.to)
-            print(target_date) 
-            print(emp.user_id)
             if getdate(row.to) and getdate(row.to) == getdate(target_date):  
                 print(row.to)
                 print(target_date)
-                if not emp.user_id:
-                    continue
-                print(emp.user_id)
-                subject = f"Visa Expiry Reminder - {emp.employee_name}"
+                visa_expiry_date = row.to
+                formatted_date = formatdate(visa_expiry_date, "dd MMM yyyy")
 
-                message = f"""
-                Dear {emp.employee_name},<br><br>
-                Your visa for <b>{row.visa_country}</b> will expire on <b>{row.to}</b>.<br>
-                Please take necessary action to renew it.<br><br>
-                Employee ID: {emp.name}
+                subject = f"Visa Expiry Alert – {emp.employee_name} (Expires on {formatted_date})"
+                employee_link = get_link_to_form("Employee", emp.name)
+                
+                base_message = f"""
+                <p>This is to inform you that the visa of the below employee is set to expire within the next 3 months.</p>
+
+                <p>
+                <b>Employee Name:</b> {emp.employee_name}<br>
+                <b>Employee ID:</b> {employee_link}<br>
+                <b>Visa Expiry Date:</b> {formatted_date}
+                </p>
+
+                <p>Kindly take the necessary action to initiate the visa renewal process.</p>
+
+                <p>Regards,<br>
+                ERP System</p>
                 """
 
-                frappe.sendmail(
-                    recipients=[emp.user_id],
-                    subject=subject,
-                    message=message
-                )
+                # 1. Send to Reporting Manager
+                if reports_to_user and reports_to_name:
+                    message = f"<p>Dear {reports_to_name},</p>{base_message}"
+                    frappe.sendmail(
+                        recipients=[reports_to_user],
+                        subject=subject,
+                        message=message
+                    )
+
+                # 2. Send to Travel Managers
+                if travel_managers:
+                    print(travel_managers)
+                    message = f"<p>Dear Travel Manager,</p>{base_message}"
+                    frappe.sendmail(
+                        recipients=travel_managers,
+                        subject=subject,
+                        message=message
+                    )

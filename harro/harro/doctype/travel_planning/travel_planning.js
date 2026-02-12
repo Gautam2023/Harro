@@ -31,20 +31,39 @@ frappe.ui.form.on("Travel Planning", {
 	},
     travel_type(frm) {
         toggle_attach_fields(frm);
+    },
+    onload(frm) {
+        toggle_attach_fields(frm);
+    },
+    travel_itinerary_on_form_rendered(frm) {
+        console.log("Hello");
+        toggle_attach_fields(frm);
     }
 });
 
 function toggle_attach_fields(frm) {
+    console.log("Function Triggered");
+
     const is_international = frm.doc.travel_type === "International";
-    frm.fields_dict.travel_itinerary.grid.toggle_display(
+
+    let grid = frm.fields_dict.travel_itinerary?.grid;
+    if (!grid) return;
+
+    // Change grid field property (persistent for this form instance)
+    grid.update_docfield_property(
         "custom_travel_insurance",
-        is_international
+        "hidden",
+        !is_international
     );
 
-    frm.fields_dict.travel_itinerary.grid.toggle_display(
+    grid.update_docfield_property(
         "custom_evisa",
-        is_international
-    )
+        "hidden",
+        !is_international
+    );
+
+    // Refresh child table
+    frm.refresh_field("travel_itinerary");
 }
 
 frappe.ui.form.on("Travel Planning Employee Details" , {

@@ -625,6 +625,7 @@ def get_purchase_invoice_defaults(expense_detail_row, travel_doc):
         "travel_planning": travel_doc,
         "bill_no": expense.invoice_id,
         "project": ba_number,
+        "custom_supplier_invoice": expense.invoice_attachment
     })
     doc.append(
         "items",

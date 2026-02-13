@@ -324,6 +324,14 @@ def create_custom_fields_on_migrate():
                 "read_only": 0,
                 "insert_after" : "bill_of_entry"
             },
+        ],
+        "Expense Details" :[
+            {
+               "fieldname": "invoice_attachment",
+               "label": "Invoice Attachment",
+               "fieldtype": "Attach",
+               "insert_after": "service_type" 
+            }
         ]
         
     }

@@ -331,6 +331,21 @@ def create_custom_fields_on_migrate():
                "label": "Invoice Attachment",
                "fieldtype": "Attach",
                "insert_after": "service_type" 
+            },
+            {
+                "fieldname": "send_email",
+                "label": "Send Email",
+                "fieldtype": "Button",
+                "insert_after": "create_purchase_invoice"
+            },
+            {
+                "fieldname": "email_sent",
+                "label": "Email Sent",
+                "fieldtype": "Check",
+                "insert_after": "send_email",
+                "default": 0,
+                "read_only": 1,
+                "hidden": 1
             }
         ]
         

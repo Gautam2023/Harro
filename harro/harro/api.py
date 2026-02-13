@@ -725,3 +725,57 @@ def employee_visa_expiry_reminder():
                         subject=subject,
                         message=message
                     )
+
+
+@frappe.whitelist()
+def send_email(expense_detail_row, travel_planning):
+    row = frappe.parse_json(expense_detail_row)
+
+    child = frappe.get_doc("Expense Details", row.get("name"))
+
+    if child.email_sent:
+        frappe.throw("Email already sent for this row.")
+
+    accounts_managers = frappe.get_all(
+        "Has Role",
+        filters={"role": "Accounts Manager"},
+        pluck="parent"
+    )
+
+    recipients = frappe.get_all(
+        "User",
+        filters={
+            "name": ["in", accounts_managers],
+            "enabled": 1
+        },
+        pluck="email"
+    )
+
+    if not recipients:
+        frappe.throw("No active Accounts Manager found")
+
+    subject = "Action Required: Supplier Invoice Details Updated – Please Create Purchase Invoice"
+    doc_link = frappe.utils.get_url_to_form("Travel Planning", travel_planning)
+
+    message = f"""
+    <p>Dear Accounts Manager,</p>
+    <p>The <b>Travel Planning Expense Details</b> table has been updated.</p>
+    <p>
+        <a href="{doc_link}">Open Travel Planning: {travel_planning}</a>
+    </p>
+    <p>Regards,<br>Travel Manager</p>
+    """
+
+    frappe.sendmail(
+        recipients=recipients,
+        subject=subject,
+        message=message
+    )
+
+    child.db_set("email_sent", 1)
+
+    return "Email sent successfully"
+
+
+
+

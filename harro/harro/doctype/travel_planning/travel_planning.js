@@ -143,5 +143,30 @@ frappe.ui.form.on('Expense Details', {
                 }
             }
         });
+    },
+    send_email: function(frm, cdt, cdn) {
+        let row = locals[cdt][cdn];
+
+        if (row.email_sent) {
+            frappe.msgprint("Email already sent for this row.");
+            return;
+        }
+
+        frappe.call({
+            method: "harro.harro.api.send_email",
+            args: {
+                expense_detail_row: row,
+                travel_planning: frm.doc.name
+            },
+            callback: function(r) {
+                if (!r.exc) {
+                    frappe.msgprint("Email sent");
+
+                    // Mark locally and refresh grid
+                    row.email_sent = 1;
+                    frm.refresh_field("expense_details");
+                }
+            }
+        });
     }
 });

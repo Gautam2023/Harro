@@ -3,7 +3,6 @@
 
 frappe.ui.form.on("Travel Planning", {
 	refresh(frm) {
-        toggle_attach_fields(frm);
         if(!frm.is_new()){
             frm.add_custom_button(__("Purchase Invoice"), (frm)=>{
                 frappe.model.open_mapped_doc({
@@ -28,43 +27,8 @@ frappe.ui.form.on("Travel Planning", {
                 });
             }, __("Create"));
         }
-	},
-    travel_type(frm) {
-        toggle_attach_fields(frm);
-    },
-    onload(frm) {
-        toggle_attach_fields(frm);
-    },
-    travel_itinerary_on_form_rendered(frm) {
-        console.log("Hello");
-        toggle_attach_fields(frm);
-    }
+	}
 });
-
-function toggle_attach_fields(frm) {
-    console.log("Function Triggered");
-
-    const is_international = frm.doc.travel_type === "International";
-
-    let grid = frm.fields_dict.travel_itinerary?.grid;
-    if (!grid) return;
-
-    // Change grid field property (persistent for this form instance)
-    grid.update_docfield_property(
-        "custom_travel_insurance",
-        "hidden",
-        !is_international
-    );
-
-    grid.update_docfield_property(
-        "custom_evisa",
-        "hidden",
-        !is_international
-    );
-
-    // Refresh child table
-    frm.refresh_field("travel_itinerary");
-}
 
 frappe.ui.form.on("Travel Planning Employee Details" , {
     travel_request(frm, cdt, cdn) {

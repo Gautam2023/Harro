@@ -625,6 +625,7 @@ def get_purchase_invoice_defaults(expense_detail_row, travel_doc):
         "travel_planning": travel_doc,
         "bill_no": expense.invoice_id,
         "project": ba_number,
+        "custom_supplier_invoice": expense.invoice_attachment
     })
     doc.append(
         "items",
@@ -638,3 +639,143 @@ def get_purchase_invoice_defaults(expense_detail_row, travel_doc):
     doc.flags.ignore_mandatory = True
     doc.save()
     return doc.name
+
+
+from frappe.utils import add_days, today, getdate, formatdate, get_link_to_form
+import frappe
+
+def employee_visa_expiry_reminder():
+    target_date = add_days(today(),90)  
+
+    travel_manager_users = frappe.get_all(
+        "Has Role",
+        filters={"role": "Travel Manager"},
+        pluck="parent"
+    )
+
+    travel_managers = frappe.get_all(
+        "User",
+        filters={
+            "name": ["in", travel_manager_users],
+            "enabled": 1,
+            "user_type": "System User"
+        },
+        pluck="email"
+    )
+
+    employees = frappe.get_all(
+        "Employee",
+        fields=["name", "employee_name", "user_id"]
+    )
+
+    for emp in employees:
+        doc = frappe.get_doc("Employee", emp.name)
+
+        reports_to = doc.get("reports_to")
+        reports_to_user = None
+        reports_to_name = None
+
+        if reports_to:
+            reports_to_user, reports_to_name = frappe.db.get_value(
+                "Employee",
+                reports_to,
+                ["user_id", "employee_name"]
+            )
+
+        for row in doc.custom_visa_details: 
+            if getdate(row.to) and getdate(row.to) == getdate(target_date):  
+                print(row.to)
+                print(target_date)
+                visa_expiry_date = row.to
+                formatted_date = formatdate(visa_expiry_date, "dd MMM yyyy")
+
+                subject = f"Visa Expiry Alert – {emp.employee_name} (Expires on {formatted_date})"
+                employee_link = get_link_to_form("Employee", emp.name)
+                
+                base_message = f"""
+                <p>This is to inform you that the visa of the below employee is set to expire within the next 3 months.</p>
+
+                <p>
+                <b>Employee Name:</b> {emp.employee_name}<br>
+                <b>Employee ID:</b> {employee_link}<br>
+                <b>Visa Expiry Date:</b> {formatted_date}
+                </p>
+
+                <p>Kindly take the necessary action to initiate the visa renewal process.</p>
+
+                <p>Regards,<br>
+                ERP System</p>
+                """
+
+                # 1. Send to Reporting Manager
+                if reports_to_user and reports_to_name:
+                    message = f"<p>Dear {reports_to_name},</p>{base_message}"
+                    frappe.sendmail(
+                        recipients=[reports_to_user],
+                        subject=subject,
+                        message=message
+                    )
+
+                # 2. Send to Travel Managers
+                if travel_managers:
+                    print(travel_managers)
+                    message = f"<p>Dear Travel Manager,</p>{base_message}"
+                    frappe.sendmail(
+                        recipients=travel_managers,
+                        subject=subject,
+                        message=message
+                    )
+
+
+@frappe.whitelist()
+def send_email(expense_detail_row, travel_planning):
+    row = frappe.parse_json(expense_detail_row)
+
+    child = frappe.get_doc("Expense Details", row.get("name"))
+
+    if child.email_sent:
+        frappe.throw("Email already sent for this row.")
+
+    accounts_managers = frappe.get_all(
+        "Has Role",
+        filters={"role": "Accounts Manager"},
+        pluck="parent"
+    )
+
+    recipients = frappe.get_all(
+        "User",
+        filters={
+            "name": ["in", accounts_managers],
+            "enabled": 1
+        },
+        pluck="email"
+    )
+
+    if not recipients:
+        frappe.throw("No active Accounts Manager found")
+
+    subject = "Action Required: Supplier Invoice Details Updated – Please Create Purchase Invoice"
+    doc_link = frappe.utils.get_url_to_form("Travel Planning", travel_planning)
+
+    message = f"""
+    <p>Dear Accounts Manager,</p>
+    <p>The <b>Travel Planning Expense Details</b> table has been updated.</p>
+    <p>
+        <a href="{doc_link}">Open Travel Planning: {travel_planning}</a>
+    </p>
+    <p>Regards,<br>Travel Manager</p>
+    """
+
+    frappe.sendmail(
+        recipients=recipients,
+        subject=subject,
+        message=message
+    )
+
+    child.db_set("email_sent", 1)
+
+    return "Email sent successfully"
+
+
+
+

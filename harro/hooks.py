@@ -212,6 +212,9 @@ doc_events = {
     },
     "Travel Request" : {
         "on_update" : "harro.harro.docevents.travel_request.on_update"
+    },
+    "Payment Entry" : {
+        "before_insert": "harro.harro.docevents.set_company_contact_from_pi"
     }
 }
 
@@ -246,7 +249,10 @@ scheduler_events = {
             "harro.harro.docevents.task.update_task_timer",
             "harro.harro.api.stop_timer_for_jobcard_every_two_hours"
         ],
-    }
+    },
+    "daily" : [
+        "harro.harro.api.employee_visa_expiry_reminder"
+    ]
 }
 
 # Testing

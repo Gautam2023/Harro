@@ -1,7 +1,7 @@
 {
  "actions": [],
  "allow_rename": 1,
- "creation": "2025-11-14 16:42:43.756488",
+ "creation": "2026-02-16 14:50:59.479761",
  "doctype": "DocType",
  "engine": "InnoDB",
  "field_order": [
@@ -186,11 +186,11 @@
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2025-11-17 21:52:23.261405",
+ "modified": "2026-02-16 14:50:59.479761",
  "modified_by": "Administrator",
  "module": "Harro",
- "name": "Invitation Letter",
- "owner": "nasrin@fosserp.com",
+ "name": "Covering Letter",
+ "owner": "Administrator",
  "permissions": [
   {
    "create": 1,

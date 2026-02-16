@@ -49,6 +49,16 @@ def on_update(doc, method=None):
                 row.custom_taxi_required = tr_row.custom_taxi_required
                 updated = True
 
+            # Sync reason for cancellation
+            if tr_row and row.custom_reason_for_cancellation != tr_row.custom_reason_for_cancellation:
+                row.custom_reason_for_cancellation = tr_row.custom_reason_for_cancellation
+                updated = True
+
+            # Sync reason for rescheduling
+            if tr_row and row.custom_reason_for_rescheduling != tr_row.custom_reason_for_rescheduling:
+                row.custom_reason_for_rescheduling = tr_row.custom_reason_for_rescheduling
+                updated = True
+
             # Sync Workflow Status
             if trip_status:
                 if row.custom_flight_booking_status != trip_status:

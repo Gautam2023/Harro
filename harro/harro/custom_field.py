@@ -324,6 +324,44 @@ def create_custom_fields_on_migrate():
                 "read_only": 0,
                 "insert_after" : "bill_of_entry"
             },
+        ],
+        "Expense Details" :[
+            {
+               "fieldname": "invoice_attachment",
+               "label": "Invoice Attachment",
+               "fieldtype": "Attach",
+               "insert_after": "service_type" 
+            },
+            {
+                "fieldname": "send_email",
+                "label": "Send Email",
+                "fieldtype": "Button",
+                "insert_after": "create_purchase_invoice"
+            },
+            {
+                "fieldname": "email_sent",
+                "label": "Email Sent",
+                "fieldtype": "Check",
+                "insert_after": "send_email",
+                "default": 0,
+                "read_only": 1,
+                "hidden": 1
+            }
+        ],
+        "Stock Entry Detail" : [
+            {
+                "fieldname": "po_number",
+                "label": "Po Number",
+                "fieldtype": "Data",
+                "insert_after": "invoice_no"
+            },
+            {
+                "fieldname": "vender_name",
+                "label": "Vender Name",
+                "fieldtype": "Link",
+                "options" : "Supplier",
+                "insert_after": "po_number"
+            }
         ]
         
     }

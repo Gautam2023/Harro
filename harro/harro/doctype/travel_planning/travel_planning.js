@@ -3,7 +3,6 @@
 
 frappe.ui.form.on("Travel Planning", {
 	refresh(frm) {
-        toggle_attach_fields(frm);
         if(!frm.is_new()){
             frm.add_custom_button(__("Purchase Invoice"), (frm)=>{
                 frappe.model.open_mapped_doc({
@@ -28,24 +27,8 @@ frappe.ui.form.on("Travel Planning", {
                 });
             }, __("Create"));
         }
-	},
-    travel_type(frm) {
-        toggle_attach_fields(frm);
-    }
+	}
 });
-
-function toggle_attach_fields(frm) {
-    const is_international = frm.doc.travel_type === "International";
-    frm.fields_dict.travel_itinerary.grid.toggle_display(
-        "custom_travel_insurance",
-        is_international
-    );
-
-    frm.fields_dict.travel_itinerary.grid.toggle_display(
-        "custom_evisa",
-        is_international
-    )
-}
 
 frappe.ui.form.on("Travel Planning Employee Details" , {
     travel_request(frm, cdt, cdn) {
@@ -121,6 +104,31 @@ frappe.ui.form.on('Expense Details', {
                 if (r.message) {
                     console.log(r.message);
                     frappe.set_route('Form', 'Purchase Invoice', r.message);
+                }
+            }
+        });
+    },
+    send_email: function(frm, cdt, cdn) {
+        let row = locals[cdt][cdn];
+
+        if (row.email_sent) {
+            frappe.msgprint("Email already sent for this row.");
+            return;
+        }
+
+        frappe.call({
+            method: "harro.harro.api.send_email",
+            args: {
+                expense_detail_row: row,
+                travel_planning: frm.doc.name
+            },
+            callback: function(r) {
+                if (!r.exc) {
+                    frappe.msgprint("Email sent");
+
+                    // Mark locally and refresh grid
+                    row.email_sent = 1;
+                    frm.refresh_field("expense_details");
                 }
             }
         });

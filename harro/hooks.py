@@ -212,6 +212,9 @@ doc_events = {
     },
     "Travel Request" : {
         "on_update" : "harro.harro.docevents.travel_request.on_update"
+    },
+    "Payment Entry" : {
+        "before_insert": "harro.harro.docevents.set_company_contact_from_pi"
     }
 }
 

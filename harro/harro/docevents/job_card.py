@@ -1,4 +1,5 @@
 import frappe
+from frappe import _
 import json
 from harro.harro.docevents.project import calculate_productive_working_hours
 

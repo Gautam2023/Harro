@@ -264,9 +264,9 @@ function renderAllproductiveTimesheetSpeedometers(frm) {
 }
 // Productive Hours
 function renderproductiveTimesheetSpeedometer(frm, set) {
-    const { planned, actual, index } = set;
-    console.log(planned)
-    console.log(actual)
+    let planned = Number(set.planned) || 0;
+    let actual = Number(set.actual) || 0;
+    const { index } = set;
     const percentage = planned ? Math.min((actual / planned) * 100, 200) : 0;
 
     const ctx = document.getElementById(`timesheet_chart_${index}_${frm.doc.name}`);

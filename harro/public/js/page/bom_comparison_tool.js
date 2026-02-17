@@ -2,238 +2,271 @@ frappe.provide("harro");
 frappe.provide("erpnext");
 
 frappe.pages["bom-comparison-tool"].on_page_load = function (wrapper) {
-	var page = frappe.ui.make_app_page({
-		parent: wrapper,
-		title: __("BOM Comparison Tool"),
-		single_column: true,
-	});
+    var page = frappe.ui.make_app_page({
+        parent: wrapper,
+        title: __("BOM Comparison Tool"),
+        single_column: true,
+    });
 
-	new erpnext.BOMComparisonTool(page);
+    new erpnext.BOMComparisonTool(page);
 };
 
 erpnext.BOMComparisonTool = class BOMComparisonTool {
-	constructor(page) {
-		this.page = page;
-		this.make_form();
-	}
+    constructor(page) {
+        this.page = page;
+        this.selected_items = [];
+        frappe.route_options = null;
 
-	make_form() {
-		this.form = new frappe.ui.FieldGroup({
-			fields: [
-				{
-					label: __("BOM 1"),
-					fieldname: "name1",
-					fieldtype: "Link",
-					options: "BOM",
-					change: () => this.fetch_and_render(),
-					get_query: () => {
-						return {
-							filters: {
-								name: ["not in", [this.form.get_value("name2") || ""]],
-							},
-						};
-					},
-				},
-				{
-					fieldtype: "Column Break",
-				},
-				{
-					label: __("BOM 2"),
-					fieldname: "name2",
-					fieldtype: "Link",
-					options: "BOM",
-					change: () => this.fetch_and_render(),
-					get_query: () => {
-						return {
-							filters: {
-								name: ["not in", [this.form.get_value("name1") || ""]],
-							},
-						};
-					},
-				},
-				{
-					fieldtype: "Section Break",
-				},
-				{
-					fieldtype: "HTML",
-					fieldname: "preview",
-				},
-			],
-			body: this.page.body,
-		});
-		this.form.make();
-	}
+        this.make_form();
+        this.add_header_buttons();
+    }
 
-	fetch_and_render() {
-		let { name1, name2 } = this.form.get_values();
-		if (!(name1 && name2)) {
-			this.form.get_field("preview").html("");
-			return;
-		}
+    make_form() {
+        this.form = new frappe.ui.FieldGroup({
+            fields: [
+                {
+                    label: __("BOM 1"),
+                    fieldname: "name1",
+                    fieldtype: "Link",
+                    options: "BOM",
+                    change: () => this.fetch_and_render(),
+                    get_query: () => ({
+                        filters: {
+                            name: ["not in", [this.form.get_value("name2") || ""]],
+                        },
+                    }),
+                },
+                { fieldtype: "Column Break" },
+                {
+                    label: __("BOM 2"),
+                    fieldname: "name2",
+                    fieldtype: "Link",
+                    options: "BOM",
+                    change: () => this.fetch_and_render(),
+                    get_query: () => ({
+                        filters: {
+                            name: ["not in", [this.form.get_value("name1") || ""]],
+                        },
+                    }),
+                },
+                { fieldtype: "Section Break" },
+                { fieldtype: "HTML", fieldname: "preview" },
+            ],
+            body: this.page.body,
+        });
 
-		// set working state
-		this.form.get_field("preview").html(`
-			<div class="text-muted margin-top">
-				${__("Fetching...")}
-			</div>
-		`);
+        this.form.make();
+    }
 
-		frappe
-			.call("erpnext.manufacturing.doctype.bom.bom.get_bom_diff", {
-				bom1: name1,
-				bom2: name2,
-			})
-			.then((r) => {
-				let diff = r.message;
-				frappe.model.with_doctype("BOM", () => {
-					this.render("BOM", name1, name2, diff);
-				});
-			});
-	}
+    add_header_buttons() {
+        this.page.add_inner_button(__('Create Work Order'), () => {
+            if (!this.selected_items.length) {
+                frappe.msgprint(__("Please select sub-assembly items."));
+                return;
+            }
 
-	render(doctype, name1, name2, diff) {
-		let change_html = (title, doctype, changed) => {
-			let values_changed = this.get_changed_values(doctype, changed)
-				.map((change) => {
-					let [fieldname, value1, value2] = change;
-					return `
-						<tr>
-							<td>${frappe.meta.get_label(doctype, fieldname)}</td>
-							<td>${value1}</td>
-							<td>${value2}</td>
-						</tr>
-					`;
-				})
-				.join("");
+            frappe.call({
+                method: "harro.harro.docevents.bom_comparison_tool.create_work_orders",
+                args: { items: this.selected_items },
+                freeze: true,
+                freeze_message: __("Preparing Work Order..."),
+                callback: (r) => {
+                    if (r.message) {
+                        frappe.model.sync(r.message);
 
-			return `
-				<h4 class="margin-top">${title}</h4>
-				<div>
-					<table class="table table-bordered">
-						<tr>
-							<th width="33%">${__("Field")}</th>
-							<th width="33%">${name1}</th>
-							<th width="33%">${name2}</th>
-						</tr>
-						${values_changed}
-					</table>
-				</div>
-			`;
-		};
+                        frappe.set_route("Form", "Work Order", r.message.name);
+                    } else {
+                        frappe.msgprint(__("Work Order could not be prepared"));
+                    }
+                }
+            });
+        }).addClass('btn-primary');
 
-		let value_changes = change_html(__("Values Changed"), doctype, diff.changed);
 
-		let row_changes_by_fieldname = group_items(diff.row_changed, (change) => change[0]);
+        this.page.add_inner_button(__('Create Material Request'), () => {
+            if (!this.selected_items.length) {
+                frappe.msgprint(__("Please select items."));
+                return;
+            }
 
-		let table_changes = Object.keys(row_changes_by_fieldname)
-			.map((fieldname) => {
-				let changes = row_changes_by_fieldname[fieldname];
-				let df = frappe.meta.get_docfield(doctype, fieldname);
+            frappe.call({
+                method: "harro.harro.docevents.bom_comparison_tool.create_material_request",
+                args: { items: this.selected_items },
+                freeze: true,
+                freeze_message: __("Preparing Material Request..."),
+                callback: (r) => {
+                    if (r.message) {
+                        // Sync unsaved doc to client model
+                        let doc = frappe.model.sync(r.message)[0];
 
-				let html = changes
-					.map((change) => {
-						let [fieldname, , item_code, changes] = change;
-						let df = frappe.meta.get_docfield(doctype, fieldname);
-						let child_doctype = df.options;
-						let values_changed = this.get_changed_values(child_doctype, changes);
+                        // Redirect to form (unsaved)
+                        frappe.set_route("Form", doc.doctype, doc.name);
+                    } else {
+                        frappe.msgprint(__("Material Request could not be created"));
+                    }
+                }
+            });
+        }).addClass('btn-primary');
 
-						return values_changed
-							.map((change, i) => {
-								let [fieldname, value1, value2] = change;
-								let th =
-									i === 0 ? `<th rowspan="${values_changed.length}">${item_code}</th>` : "";
-								return `
-						<tr>
-							${th}
-							<td>${frappe.meta.get_label(child_doctype, fieldname)}</td>
-							<td>${value1}</td>
-							<td>${value2}</td>
-						</tr>
-					`;
-							})
-							.join("");
-					})
-					.join("");
+    }
 
-				return `
-				<h4 class="margin-top">${__("Changes in {0}", [df.label])}</h4>
-				<table class="table table-bordered">
-					<tr>
-						<th width="25%">${__("Item Code")}</th>
-						<th width="25%">${__("Field")}</th>
-						<th width="25%">${name1}</th>
-						<th width="25%">${name2}</th>
-					</tr>
-					${html}
-				</table>
-			`;
-			})
-			.join("");
+    fetch_and_render() {
+        let { name1, name2 } = this.form.get_values();
 
-		let get_added_removed_html = (title, grouped_items) => {
-			return Object.keys(grouped_items)
-				.map((fieldname) => {
-					let rows = grouped_items[fieldname];
-					let df = frappe.meta.get_docfield(doctype, fieldname);
-					let fields = frappe.meta.get_docfields(df.options).filter((df) => df.in_list_view);
-					fields.push({
-						'fieldname' : "qty_available",
-						"label" : "Available Qty"
-					})
-					let html = rows
-						.map((row) => {
-							let [, doc] = row;
-							let cells = fields.map((df) => `<td>${doc[df.fieldname]}</td>`).join("");
-							return `<tr>${cells}</tr>`;
-						})
-						.join("");
+        if (!(name1 && name2)) {
+            this.form.get_field("preview").html("");
+            return;
+        }
 
-					let header = fields.map((df) => `<th>${df.label}</th>`).join("");
-					return `
-					<h4 class="margin-top">${$.format(title, [df.label])}</h4>
-					<table class="table table-bordered">
-						<tr>${header}</tr>
-						${html}
-					</table>
-				`;
-				})
-				.join("");
-		};
+        this.form.get_field("preview").html(
+            `<div class="text-muted margin-top">${__("Fetching...")}</div>`
+        );
 
-		let added_by_fieldname = group_items(diff.added, (change) => change[0]);
-		let removed_by_fieldname = group_items(diff.removed, (change) => change[0]);
-		let added_html = get_added_removed_html(__("Rows Added in {0}"), added_by_fieldname);
-		let removed_html = get_added_removed_html(__("Rows Removed in {0}"), removed_by_fieldname);
+        frappe.call(
+            "erpnext.manufacturing.doctype.bom.bom.get_bom_diff",
+            { bom1: name1, bom2: name2 }
+        ).then(r => {
+            let diff = r.message;
+            frappe.model.with_doctype("BOM", () => {
+                this.render("BOM", name1, name2, diff);
+            });
+        });
+    }
 
-		let html = `
-			${value_changes}
-			${table_changes}
-			${added_html}
-			${removed_html}
-		`;
+    render(doctype, name1, name2, diff) {
+        let me = this;
+        this.selected_items = [];
 
-		this.form.get_field("preview").html(html);
-	}
+        let value_changes_html = this.get_values_changed_html(
+            doctype,
+            name1,
+            diff.changed
+        );
 
-	get_changed_values(doctype, changed) {
-		return changed.filter((change) => {
-			let [fieldname, value1, value2] = change;
-			if (!value1) value1 = "";
-			if (!value2) value2 = "";
-			if (value1 === value2) return false;
-			let df = frappe.meta.get_docfield(doctype, fieldname);
-			if (!df) return false;
-			if (df.hidden) return false;
-			return true;
-		});
-	}
+        let added_html = this.get_added_removed_html(
+            __("Rows Added in {0}"),
+            group_items(diff.added, r => r[0])
+        );
+
+        let removed_html = this.get_added_removed_html(
+            __("Rows Removed in {0}"),
+            group_items(diff.removed, r => r[0])
+        );
+
+        let html = `
+            ${value_changes_html}
+            ${added_html}
+            ${removed_html}
+        `;
+
+        this.form.get_field("preview").html(html);
+
+        $(document).off("change", ".select-item").on("change", ".select-item", function (e) {
+            e.stopPropagation();
+            let item_code = $(this).data("item-code");
+            let table = $(this).closest("table");
+
+            if (this.checked) {
+                if (!me.selected_items.includes(item_code)) {
+                    me.selected_items.push(item_code);
+                }
+            } else {
+                me.selected_items = me.selected_items.filter(i => i !== item_code);
+                table.find(".select-all").prop("checked", false);
+            }
+
+            let all_checked =
+                table.find(".select-item").length ===
+                table.find(".select-item:checked").length;
+
+            table.find(".select-all").prop("checked", all_checked);
+        });
+
+        $(document).off("change", ".select-all").on("change", ".select-all", function (e) {
+            e.stopPropagation();
+            let checked = this.checked;
+            let table = $(this).closest("table");
+
+            table.find(".select-item").each(function () {
+                $(this).prop("checked", checked).trigger("change");
+            });
+        });
+    }
+
+    get_values_changed_html(doctype, name1, changed) {
+        let rows = this.get_changed_values(doctype, changed)
+            .map(([fieldname, v1, v2]) => `
+                <tr>
+                    <td>${frappe.meta.get_label(doctype, fieldname)}</td>
+                    <td>${v1}</td>
+                    <td>${v2}</td>
+                </tr>
+            `).join("");
+
+        return `
+            <h4 class="margin-top">${__("Values Changed")}</h4>
+            <table class="table table-bordered">
+                <tr>
+                    <th>${__("Field")}</th>
+                    <th>${name1}</th>
+                    <th>${__("BOM 2")}</th>
+                </tr>
+                ${rows}
+            </table>
+        `;
+    }
+
+    get_added_removed_html(title, grouped_items) {
+        return Object.keys(grouped_items).map(fieldname => {
+            let rows = grouped_items[fieldname];
+            let df = frappe.meta.get_docfield("BOM", fieldname);
+            let fields = frappe.meta
+                .get_docfields(df.options)
+                .filter(df => df.in_list_view);
+
+            let html_rows = rows.map(([, doc]) => {
+                let checkbox = `<td>
+                    <input type="checkbox" class="select-item"
+                    data-item-code="${doc.item_code || doc.name}">
+                </td>`;
+
+                let cells = checkbox + fields
+                    .map(f => `<td>${doc[f.fieldname] || ""}</td>`)
+                    .join("");
+
+                return `<tr>${cells}</tr>`;
+            }).join("");
+
+            let header =
+                `<th><input type="checkbox" class="select-all"></th>` +
+                fields.map(f => `<th>${f.label}</th>`).join("");
+
+            return `
+                <h4 class="margin-top">${$.format(title, [df.label])}</h4>
+                <table class="table table-bordered">
+                    <tr>${header}</tr>
+                    ${html_rows}
+                </table>
+            `;
+        }).join("");
+    }
+
+    get_changed_values(doctype, changed) {
+        return changed.filter(([fieldname, v1, v2]) => {
+            v1 = v1 || "";
+            v2 = v2 || "";
+            if (v1 === v2) return false;
+
+            let df = frappe.meta.get_docfield(doctype, fieldname);
+            return df && !df.hidden;
+        });
+    }
 };
 
 function group_items(array, fn) {
-	return array.reduce((acc, item) => {
-		let key = fn(item);
-		acc[key] = acc[key] || [];
-		acc[key].push(item);
-		return acc;
-	}, {});
+    return array.reduce((acc, item) => {
+        let key = fn(item);
+        (acc[key] = acc[key] || []).push(item);
+        return acc;
+    }, {});
 }

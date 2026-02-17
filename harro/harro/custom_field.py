@@ -324,6 +324,19 @@ def create_custom_fields_on_migrate():
         ],
         "Batch" : [
             {
+                "fieldname": "po_number",
+                "label": "Po Number",
+                "fieldtype": "Data",
+                "insert_after": "invoice_no"
+            },
+            {
+                "fieldname": "vender_name",
+                "label": "Vender Name",
+                "fieldtype": "Link",
+                "options" : "Supplier",
+                "insert_after": "po_number"
+            },
+            {
                 "fieldname": "section_bil_invoice",
                 "label": "",
                 "fieldtype": "Section Break",

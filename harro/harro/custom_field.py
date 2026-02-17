@@ -292,6 +292,19 @@ def create_custom_fields_on_migrate():
         ],
         "Stock Entry Detail" : [
             {
+                "fieldname": "po_number",
+                "label": "Po Number",
+                "fieldtype": "Data",
+                "insert_after": "invoice_no"
+            },
+            {
+                "fieldname": "vender_name",
+                "label": "Vender Name",
+                "fieldtype": "Link",
+                "options" : "Supplier",
+                "insert_after": "po_number"
+            },
+            {
                 "fieldname": "section_bil_invoice",
                 "label": "",
                 "fieldtype": "Section Break",
@@ -324,6 +337,7 @@ def create_custom_fields_on_migrate():
                 "read_only": 0,
                 "insert_after" : "bill_of_entry"
             },
+            
         ],
         "Expense Details" :[
             {
@@ -348,21 +362,6 @@ def create_custom_fields_on_migrate():
                 "hidden": 1
             }
         ],
-        "Stock Entry Detail" : [
-            {
-                "fieldname": "po_number",
-                "label": "Po Number",
-                "fieldtype": "Data",
-                "insert_after": "invoice_no"
-            },
-            {
-                "fieldname": "vender_name",
-                "label": "Vender Name",
-                "fieldtype": "Link",
-                "options" : "Supplier",
-                "insert_after": "po_number"
-            }
-        ]
         
     }
 

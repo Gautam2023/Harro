@@ -1,0 +1,186 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "autoname": "{name_as_per_passport}.-.#####.",
+ "creation": "2026-02-06 12:09:34.964989",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "company_name",
+  "employee_id",
+  "name_as_per_passport",
+  "contact_number_of_passenger",
+  "residential_address",
+  "passport_number",
+  "date_of_birth",
+  "place_of_birth",
+  "beneficiary_name",
+  "relationship",
+  "emergency_contact_no",
+  "place_of_travel",
+  "policy_period_from",
+  "policy_period_to",
+  "section_break_pyof",
+  "vendor_name",
+  "service_item",
+  "column_break_oxfk",
+  "vendor_invoice",
+  "cost"
+ ],
+ "fields": [
+  {
+   "fieldname": "company_name",
+   "fieldtype": "Link",
+   "label": "Company Name",
+   "options": "Company"
+  },
+  {
+   "fieldname": "employee_id",
+   "fieldtype": "Link",
+   "label": "Employee ID",
+   "options": "Employee"
+  },
+  {
+   "fetch_from": "employee_id.custom_name_as_per_passport",
+   "fetch_if_empty": 1,
+   "fieldname": "name_as_per_passport",
+   "fieldtype": "Data",
+   "label": "Name as per Passport"
+  },
+  {
+   "fieldname": "contact_number_of_passenger",
+   "fieldtype": "Phone",
+   "label": "Contact Number of Passenger"
+  },
+  {
+   "fieldname": "residential_address",
+   "fieldtype": "Small Text",
+   "label": "Residential Address"
+  },
+  {
+   "fetch_from": "employee_id.passport_number",
+   "fieldname": "passport_number",
+   "fieldtype": "Data",
+   "label": "Passport Number"
+  },
+  {
+   "fetch_from": "employee_id.date_of_birth",
+   "fieldname": "date_of_birth",
+   "fieldtype": "Date",
+   "label": "Date of Birth"
+  },
+  {
+   "fieldname": "place_of_birth",
+   "fieldtype": "Data",
+   "label": "Place of Birth"
+  },
+  {
+   "fieldname": "beneficiary_name",
+   "fieldtype": "Data",
+   "label": "Beneficiary Name "
+  },
+  {
+   "depends_on": "beneficiary_name",
+   "fieldname": "relationship",
+   "fieldtype": "Data",
+   "label": "Relationship"
+  },
+  {
+   "fieldname": "emergency_contact_no",
+   "fieldtype": "Phone",
+   "label": "Emergency Contact No"
+  },
+  {
+   "fieldname": "place_of_travel",
+   "fieldtype": "Select",
+   "label": "Place of Travel",
+   "options": "\nIncluding America\nExcluding America"
+  },
+  {
+   "fieldname": "policy_period_from",
+   "fieldtype": "Date",
+   "label": "Policy Period From"
+  },
+  {
+   "fieldname": "policy_period_to",
+   "fieldtype": "Date",
+   "label": "Policy Period to"
+  },
+  {
+   "fieldname": "section_break_pyof",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "vendor_name",
+   "fieldtype": "Link",
+   "label": "Vendor Name",
+   "options": "Supplier"
+  },
+  {
+   "fieldname": "service_item",
+   "fieldtype": "Link",
+   "label": "Service Item",
+   "link_filters": "[[\"Item\",\"is_stock_item\",\"=\",0]]",
+   "options": "Item"
+  },
+  {
+   "fieldname": "column_break_oxfk",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "vendor_invoice",
+   "fieldtype": "Attach",
+   "label": "Vendor Invoice"
+  },
+  {
+   "fieldname": "cost",
+   "fieldtype": "Currency",
+   "label": "Cost"
+  }
+ ],
+ "grid_page_length": 50,
+ "index_web_pages_for_search": 1,
+ "links": [
+  {
+   "link_doctype": "Purchase Invoice",
+   "link_fieldname": "supplier"
+  }
+ ],
+ "modified": "2026-02-18 13:56:29.390087",
+ "modified_by": "Administrator",
+ "module": "Harro",
+ "name": "Travel Insurance Application Details",
+ "naming_rule": "Expression",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Travel Manager",
+   "share": 1,
+   "write": 1
+  }
+ ],
+ "row_format": "Dynamic",
+ "rows_threshold_for_grid_search": 20,
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": []
+}

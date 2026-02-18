@@ -214,7 +214,7 @@ doc_events = {
         "on_update" : "harro.harro.docevents.travel_request.on_update"
     },
     "Payment Entry" : {
-        "before_insert": "harro.harro.docevents.set_company_contact_from_pi"
+        "before_insert": "harro.harro.docevents.payment_entry.set_company_contact_from_pi"
     },
     "Serial and Batch Bundle" : {
         "on_submit" : "harro.harro.docevents.purchase_receipt.on_submit"

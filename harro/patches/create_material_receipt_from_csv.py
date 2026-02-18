@@ -42,29 +42,21 @@ def execute():
         frappe.log_error("No data found in CSV file", "Material Receipt CSV Import")
         return
     
-    # Group rows by invoice_no to create one Stock Entry per invoice
-    grouped_data = group_by_invoice(csv_data)
-    
-    created_count = 0
-    error_count = 0
-    
-    for invoice_no, items in grouped_data.items():
-        try:
-            create_stock_entry(invoice_no, items)
-            created_count += 1
-            frappe.db.commit()
-        except Exception as e:
-            error_count += 1
-            frappe.log_error(
-                f"Error creating Stock Entry for invoice {invoice_no}: {str(e)}",
-                "Material Receipt CSV Import"
-            )
-            frappe.db.rollback()
-    
-    frappe.msgprint(
-        f"Stock Entries created: {created_count}, Errors: {error_count}",
-        title="Import Status"
-    )
+    # Create a single Stock Entry with all items from CSV
+    try:
+        stock_entry = create_stock_entry(csv_data)
+        frappe.db.commit()
+        frappe.msgprint(
+            f"Created Stock Entry {stock_entry.name} with {len(stock_entry.items)} items",
+            title="Import Status"
+        )
+    except Exception as e:
+        frappe.log_error(
+            f"Error creating Stock Entry: {str(e)}",
+            "Material Receipt CSV Import"
+        )
+        frappe.db.rollback()
+        frappe.throw(f"Error creating Stock Entry: {str(e)}")
 
 
 def read_csv_file(file_path):
@@ -117,43 +109,25 @@ def read_csv_file(file_path):
     return data
 
 
-def group_by_invoice(csv_data):
-    """Group CSV rows by invoice_no"""
-    grouped = {}
+def create_stock_entry(csv_data):
+    """Create a single Material Receipt Stock Entry with all items from CSV"""
     
-    for row in csv_data:
-        invoice_no = row.get('invoice_no', '').strip()
-        
-        if not invoice_no:
-            continue
-        
-        if invoice_no not in grouped:
-            grouped[invoice_no] = []
-        
-        grouped[invoice_no].append(row)
+    if not csv_data:
+        frappe.throw("No data provided to create Stock Entry")
     
-    return grouped
-
-
-def create_stock_entry(invoice_no, items):
-    """Create a Material Receipt Stock Entry for given invoice"""
+    # Get common fields from first row
+    first_row = csv_data[0]
+    supplier_invoice_no = first_row.get('invoice_no', '').strip()
+    supplier_invoice_date = parse_date(first_row.get('custom_supplier_invoice_date', ''))
+    bill_of_entry = first_row.get('bill_of_entry', '').strip()
+    boe_date = parse_date(first_row.get('custom_boe_date', ''))
+    vender_name = first_row.get('custom_vender_name', '').strip()
     
-    if not items:
-        return
-    
-    # Get first item to extract common fields
-    first_item = items[0]
-    
-    # Extract common fields from first item
-    supplier_invoice_no = first_item.get('invoice_no', '').strip()
-    supplier_invoice_date = parse_date(first_item.get('custom_supplier_invoice_date', ''))
-    bill_of_entry = first_item.get('bill_of_entry', '').strip()
-    boe_date = parse_date(first_item.get('custom_boe_date', ''))
-    vender_name = first_item.get('custom_vender_name', '').strip()
-    target_warehouse = first_item.get('t_warehouse', '').strip()
+    # Get target warehouse from first row (assuming all rows have same warehouse)
+    target_warehouse = first_row.get('t_warehouse', '').strip()
     
     if not target_warehouse:
-        frappe.throw(f"Target warehouse is required for invoice {invoice_no}")
+        frappe.throw("Target warehouse is required")
     
     # Get company from warehouse
     company = frappe.db.get_value("Warehouse", target_warehouse, "company")
@@ -177,74 +151,81 @@ def create_stock_entry(invoice_no, items):
     else:
         stock_entry.posting_date = today()
     
-    # Add items
-    for item_row in items:
-        item_code = item_row.get('item_code', '').strip()
-        qty = flt(item_row.get('qty', 0))
+    # Add all items from CSV rows
+    valid_items_count = 0
+    for row in csv_data:
+        item_code = row.get('item_code', '').strip()
+        qty = flt(row.get('qty', 0))
         
+        # Skip rows without valid item code or quantity
         if not item_code or qty <= 0:
             continue
         
         # Check if item exists
         if not frappe.db.exists("Item", item_code):
             frappe.log_error(
-                f"Item {item_code} does not exist for invoice {invoice_no}",
+                f"Item {item_code} does not exist, skipping",
                 "Material Receipt CSV Import"
             )
             continue
         
+        # Get item details
+        item_stock_uom = frappe.db.get_value("Item", item_code, "stock_uom")
+        
+        # Use warehouse from row if different, otherwise use first row's warehouse
+        row_warehouse = row.get('t_warehouse', '').strip() or target_warehouse
+        
         # Create item row
         item_dict = {
             "item_code": item_code,
-            "t_warehouse": target_warehouse,
+            "t_warehouse": row_warehouse,
             "qty": qty,
-            "uom": item_row.get('uom', '').strip() or frappe.db.get_value("Item", item_code, "stock_uom"),
-            "stock_uom": frappe.db.get_value("Item", item_code, "stock_uom"),
-            "conversion_factor": flt(item_row.get('conversion_factor', 1)) or 1.0,
-            "transfer_qty": flt(item_row.get('transfer_qty', qty)) or qty,
+            "uom": row.get('uom', '').strip() or item_stock_uom,
+            "stock_uom": item_stock_uom,
+            "conversion_factor": flt(row.get('conversion_factor', 1)) or 1.0,
+            "transfer_qty": flt(row.get('transfer_qty', qty)) or qty,
         }
         
         # Add optional fields
-        if item_row.get('batch_no', '').strip():
-            item_dict["batch_no"] = item_row.get('batch_no', '').strip()
+        if row.get('batch_no', '').strip():
+            item_dict["batch_no"] = row.get('batch_no', '').strip()
         
-        if item_row.get('serial_no', '').strip():
-            item_dict["serial_no"] = item_row.get('serial_no', '').strip()
+        if row.get('serial_no', '').strip():
+            item_dict["serial_no"] = row.get('serial_no', '').strip()
         
-        if item_row.get('cost_center', '').strip():
-            item_dict["cost_center"] = item_row.get('cost_center', '').strip()
+        if row.get('cost_center', '').strip():
+            item_dict["cost_center"] = row.get('cost_center', '').strip()
         
-        if item_row.get('expense_account', '').strip():
-            item_dict["expense_account"] = item_row.get('expense_account', '').strip()
+        if row.get('expense_account', '').strip():
+            item_dict["expense_account"] = row.get('expense_account', '').strip()
         
-        if item_row.get('basic_rate', '').strip():
-            item_dict["basic_rate"] = flt(item_row.get('basic_rate', 0))
+        if row.get('basic_rate', '').strip():
+            item_dict["basic_rate"] = flt(row.get('basic_rate', 0))
         
-        if item_row.get('description', '').strip():
-            item_dict["description"] = item_row.get('description', '').strip()
+        if row.get('description', '').strip():
+            item_dict["description"] = row.get('description', '').strip()
         
-        if item_row.get('item_name', '').strip():
-            item_dict["item_name"] = item_row.get('item_name', '').strip()
+        if row.get('item_name', '').strip():
+            item_dict["item_name"] = row.get('item_name', '').strip()
         
         # Add rack/bin location if provided
-        if item_row.get('to_rack', '').strip():
-            item_dict["to_rack"] = item_row.get('to_rack', '').strip()
+        if row.get('to_rack', '').strip():
+            item_dict["to_rack"] = row.get('to_rack', '').strip() or "A1"
         
-        if item_row.get('to_bin_location', '').strip():
-            item_dict["to_bin_location"] = item_row.get('to_bin_location', '').strip()
+        if row.get('to_bin_location', '').strip():
+            item_dict["to_bin_location"] = row.get('to_bin_location', '').strip() or "A1-001"
         
         stock_entry.append("items", item_dict)
+        valid_items_count += 1
     
     if not stock_entry.items:
-        frappe.throw(f"No valid items found for invoice {invoice_no}")
+        frappe.throw("No valid items found in CSV data")
     
     # Set missing values
     stock_entry.set_missing_values()
     
     # Save Stock Entry
     stock_entry.insert(ignore_permissions=True)
-    
-    frappe.msgprint(f"Created Stock Entry {stock_entry.name} for invoice {invoice_no}")
     
     return stock_entry
 

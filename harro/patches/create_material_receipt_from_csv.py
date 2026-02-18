@@ -208,12 +208,22 @@ def create_stock_entry(csv_data):
         if row.get('item_name', '').strip():
             item_dict["item_name"] = row.get('item_name', '').strip()
         
-        # Add rack/bin location if provided
-        if row.get('to_rack', '').strip():
-            item_dict["to_rack"] = row.get('to_rack', '').strip() or "A1"
+        # Add rack/bin location if provided, create if not exists
+        rack_name = row.get('to_rack', '').strip()
+        bin_location_name = row.get('to_bin_location', '').strip()
         
-        if row.get('to_bin_location', '').strip():
-            item_dict["to_bin_location"] = row.get('to_bin_location', '').strip() or "A1-001"
+        if rack_name:
+            # Ensure rack exists, create if not
+            rack_name = ensure_rack_exists(rack_name)
+            item_dict["to_rack"] = rack_name
+        
+        if bin_location_name:
+            # Ensure bin location exists, create if not
+            # Bin location needs a rack, use the rack from row or default
+            rack_for_bin = rack_name or row.get('to_rack', '').strip() or "A1"
+            rack_for_bin = ensure_rack_exists(rack_for_bin)
+            bin_location_name = ensure_bin_location_exists(bin_location_name, rack_for_bin)
+            item_dict["to_bin_location"] = bin_location_name
         
         stock_entry.append("items", item_dict)
         valid_items_count += 1
@@ -228,6 +238,66 @@ def create_stock_entry(csv_data):
     stock_entry.insert(ignore_permissions=True)
     
     return stock_entry
+
+
+def ensure_rack_exists(rack_name):
+    """Ensure Rack exists, create if not"""
+    if not rack_name:
+        return None
+    
+    rack_name = rack_name.strip()
+    
+    # Check if rack exists
+    if not frappe.db.exists("Rack", rack_name):
+        try:
+            rack_doc = frappe.new_doc("Rack")
+            rack_doc.rack_name = rack_name
+            rack_doc.insert(ignore_permissions=True)
+            frappe.db.commit()
+        except Exception as e:
+            frappe.log_error(
+                f"Error creating Rack {rack_name}: {str(e)}",
+                "Material Receipt CSV Import"
+            )
+            # If creation fails, return the name anyway (might be a validation issue)
+            pass
+    
+    return rack_name
+
+
+def ensure_bin_location_exists(bin_location_name, rack_name):
+    """Ensure Bin Location exists, create if not"""
+    if not bin_location_name:
+        return None
+    
+    bin_location_name = bin_location_name.strip()
+    
+    # Ensure rack exists first
+    if rack_name:
+        ensure_rack_exists(rack_name)
+    
+    # Check if bin location exists
+    if not frappe.db.exists("Bin Location", bin_location_name):
+        try:
+            bin_location_doc = frappe.new_doc("Bin Location")
+            # Bin Location uses 'name' field directly (autoname)
+            bin_location_doc.name = bin_location_name
+            
+            # Set rack if provided
+            if rack_name:
+                bin_location_doc.rack_name = rack_name
+            
+            bin_location_doc.insert(ignore_permissions=True)
+            frappe.db.commit()
+        except Exception as e:
+            frappe.log_error(
+                f"Error creating Bin Location {bin_location_name}: {str(e)}",
+                "Material Receipt CSV Import"
+            )
+            # If creation fails, return the name anyway (might already exist or validation issue)
+            pass
+    
+    return bin_location_name
 
 
 def parse_date(date_str):

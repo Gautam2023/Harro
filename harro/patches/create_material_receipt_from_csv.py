@@ -290,7 +290,7 @@ def ensure_rack_exists(rack_name):
             # Already exists, just continue
             pass
         except Exception as e:
-            error_msg = str(e)[:100]  # Truncate error message
+            error_msg = str(e)[:10]  # Truncate error message
             frappe.log_error(
                 f"Error creating Rack {rack_name}: {error_msg}. Using default {default_rack}",
                 "Material Receipt CSV Import"
@@ -347,7 +347,7 @@ def ensure_bin_location_exists(bin_location_name, rack_name):
             # Already exists, just continue
             pass
         except Exception as e:
-            error_msg = str(e)[:100]  # Truncate error message
+            error_msg = str(e)[:10]  # Truncate error message
             frappe.log_error(
                 f"Error creating Bin Location {bin_location_name}: {error_msg}. Using default {default_bin_location}",
                 "Material Receipt CSV Import"

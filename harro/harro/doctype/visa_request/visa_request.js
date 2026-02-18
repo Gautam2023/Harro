@@ -3,6 +3,14 @@
 
 frappe.ui.form.on("Visa Request", {
 	refresh(frm) {
+        if (!frm.is_new() && frm.doc.workflow_state === "Waiting for Payment") {
+            frm.add_custom_button(__("Purchase Invoice"), (frm) => {
+                frappe.model.open_mapped_doc({
+                    method: "harro.harro.doctype.visa_request.visa_request.create_purchase_invoice",
+                    frm: cur_frm
+                });
+            }, __("Create"))
+        }
         frm.set_query("visa_checklist", function(doc){
             return {
                 filters: {

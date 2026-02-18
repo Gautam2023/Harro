@@ -153,48 +153,6 @@ def create_stock_entry(csv_data):
     else:
         stock_entry.posting_date = today()
     
-    # Pre-create all unique racks and bin locations to avoid validation errors
-    unique_racks = set()
-    unique_bin_locations = {}  # {bin_location_name: rack_name}
-    default_rack = "A1"
-    default_bin_location = "A1-001"
-    
-    for row in csv_data:
-        rack_name = row.get('to_rack', '').strip() or default_rack
-        bin_location_name = row.get('to_bin_location', '').strip() or default_bin_location
-        
-        # Always add rack (use default if not provided)
-        unique_racks.add(rack_name)
-        
-        # Always add bin location (use default if not provided)
-        # Get rack for this bin location
-        rack_for_bin = rack_name or default_rack
-        unique_bin_locations[bin_location_name] = rack_for_bin
-        unique_racks.add(rack_for_bin)
-    
-    # Ensure default rack exists
-    ensure_rack_exists(default_rack)
-    
-    # Ensure default bin location exists
-    ensure_bin_location_exists(default_bin_location, default_rack)
-    
-    # Create all racks first
-    for rack_name in unique_racks:
-        ensure_rack_exists(rack_name)
-    
-    # Create all bin locations
-    missing_bin_locations = []
-    for bin_location_name, rack_name in unique_bin_locations.items():
-        if not ensure_bin_location_exists(bin_location_name, rack_name):
-            missing_bin_locations.append(bin_location_name)
-    
-    # If any bin locations couldn't be created, log error but continue with defaults
-    if missing_bin_locations:
-        frappe.log_error(
-            message=f"The following bin locations could not be created and will use defaults: {', '.join(missing_bin_locations[:50])}" + 
-                   (f" and {len(missing_bin_locations)-50} more" if len(missing_bin_locations) > 50 else ""),
-            title="Bin Location Creation Issues"
-        )
     
     # Add all items from CSV rows
     valid_items_count = 0
@@ -252,12 +210,6 @@ def create_stock_entry(csv_data):
         if row.get('item_name', '').strip():
             item_dict["item_name"] = row.get('item_name', '').strip()
         
-        # Add rack/bin location (use defaults if not provided, already created above)
-        rack_name = row.get('to_rack', '').strip() or "A1"
-        bin_location_name = row.get('to_bin_location', '').strip() or "A1-001"
-        
-        item_dict["to_rack"] = rack_name
-        item_dict["to_bin_location"] = bin_location_name
         
         stock_entry.append("items", item_dict)
         valid_items_count += 1
@@ -277,114 +229,9 @@ def create_stock_entry(csv_data):
     stock_entry.set_missing_values()
     
     # Save Stock Entry
-    try:
-        stock_entry.insert(ignore_permissions=True)
-    except Exception as e:
-        error_msg = str(e)
-        # If it's a bin location error, provide a more helpful message
-        if "Bin Location" in error_msg:
-            # Extract the problematic bin locations from the error message
-            import re
-            bin_locations = re.findall(r'Bin Location:?\s*([A-Z0-9-]+)', error_msg)
-            if bin_locations:
-                frappe.log_error(
-                    message=f"Bin Location validation failed. Missing bin locations: {', '.join(bin_locations[:50])}" +
-                           (f" and {len(bin_locations)-50} more" if len(bin_locations) > 50 else ""),
-                    title="Bin Location Validation Error"
-                )
-        raise
+    stock_entry.insert(ignore_permissions=True)
     
     return stock_entry
-
-
-# Cache to track created racks and bin locations to avoid duplicate checks
-_rack_cache = set()
-_bin_location_cache = set()
-
-def ensure_rack_exists(rack_name):
-    """Ensure Rack exists, create if not. Returns True if successful or exists."""
-    if not rack_name:
-        rack_name = "A1"
-    
-    rack_name = rack_name.strip()
-    default_rack = "A1"
-    
-    # Check cache first
-    if rack_name in _rack_cache:
-        return True
-    
-    # Check if rack exists
-    if not frappe.db.exists("Rack", rack_name):
-        try:
-            rack_doc = frappe.new_doc("Rack")
-            rack_doc.rack_name = rack_name
-            rack_doc.insert(ignore_permissions=True)
-            frappe.db.commit()
-        except frappe.DuplicateEntryError:
-            # Already exists, just continue
-            pass
-        except Exception as e:
-            error_msg = str(e)[:100]  # Truncate error message
-            frappe.log_error(
-                message=f"Error creating Rack {rack_name}: {error_msg}",
-                title="Rack Creation Error"
-            )
-            # Add to cache anyway to avoid repeated attempts
-            _rack_cache.add(rack_name)
-            return False
-    
-    # Add to cache
-    _rack_cache.add(rack_name)
-    return True
-
-
-def ensure_bin_location_exists(bin_location_name, rack_name):
-    """Ensure Bin Location exists, create if not. Returns True if successful or exists."""
-    default_bin_location = "A1-001"
-    default_rack = "A1"
-    
-    if not bin_location_name:
-        bin_location_name = default_bin_location
-    
-    bin_location_name = bin_location_name.strip()
-    
-    # Check cache first
-    if bin_location_name in _bin_location_cache:
-        return True
-    
-    # Ensure rack exists first (use default if not provided)
-    if not rack_name:
-        rack_name = default_rack
-    ensure_rack_exists(rack_name)
-    
-    # Check if bin location exists
-    if not frappe.db.exists("Bin Location", bin_location_name):
-        try:
-            bin_location_doc = frappe.new_doc("Bin Location")
-            # Bin Location uses 'name' field directly (autoname)
-            bin_location_doc.name = bin_location_name
-            
-            # Set rack
-            bin_location_doc.rack_name = rack_name
-            
-            bin_location_doc.insert(ignore_permissions=True)
-            frappe.db.commit()
-        except frappe.DuplicateEntryError:
-            # Already exists, just continue
-            pass
-        except Exception as e:
-            error_msg = str(e)[:100]  # Truncate error message
-            frappe.log_error(
-                message=f"Error creating Bin Location {bin_location_name}: {error_msg}",
-                title="Bin Location Creation Error"
-            )
-            # Add to cache anyway to avoid repeated attempts
-            _bin_location_cache.add(bin_location_name)
-            return False
-    
-    # Add to cache
-    _bin_location_cache.add(bin_location_name)
-    return True
 
 
 def parse_date(date_str):

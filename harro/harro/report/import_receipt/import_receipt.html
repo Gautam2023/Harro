@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+</head>
+<body>
+<div class="print-format-container">
+	<div class="print-heading">
+		<h2 class="text-center" style="margin-bottom: 20px; font-size: 18px; font-weight: bold;">
+			Annexure-B
+		</h2>
+		<p class="text-center" style="margin-bottom: 30px; font-size: 12px;">
+			To be maintained by a unit operating under section 65 of the Customs Act for the receipt, processing and removal of goods.
+		</p>
+	</div>
+
+	<div class="unit-details" style="margin-bottom: 30px;">
+		<div style="margin-bottom: 10px;">
+			<strong>Name and address of the Unit:</strong> {{ unit_name }}, {{ unit_address }}
+		</div>
+		<div style="margin-bottom: 10px;">
+			<strong>IEC:</strong> {{ iec }}
+		</div>
+		<div style="margin-bottom: 10px;">
+			<strong>GSTIN:</strong> {{ gstin }}
+		</div>
+		<div style="margin-bottom: 10px;">
+			<strong>Commissionerate:</strong> {{ commissionerate }}
+		</div>
+	</div>
+
+	<div class="report-period" style="margin-bottom: 20px;">
+		<div><strong>Period:</strong> {{ from_date }} to {{ to_date }}</div>
+	</div>
+
+	<div class="table-container">
+		<h3 class="text-center" style="margin-bottom: 15px; font-size: 16px; font-weight: bold;">
+			{{ report_title }}
+		</h3>
+		
+		<table class="table table-bordered" style="width: 100%; border-collapse: collapse; font-size: 11px;">
+			<thead>
+				<tr style="background-color: #f0f0f0;">
+					<th style="border: 1px solid #000; padding: 8px; text-align: center; font-weight: bold;">Bill of Entry No. and date</th>
+					<th style="border: 1px solid #000; padding: 8px; text-align: center; font-weight: bold;">Customs Station of import</th>
+					<th style="border: 1px solid #000; padding: 8px; text-align: center; font-weight: bold;">Details of Bond</th>
+					<th style="border: 1px solid #000; padding: 8px; text-align: center; font-weight: bold;">Details of insurance</th>
+					<th style="border: 1px solid #000; padding: 8px; text-align: center; font-weight: bold;">Description of goods</th>
+					<th style="border: 1px solid #000; padding: 8px; text-align: center; font-weight: bold;">Invoice No. and date</th>
+					<th style="border: 1px solid #000; padding: 8px; text-align: center; font-weight: bold;">Quantity with UQC</th>
+					<th style="border: 1px solid #000; padding: 8px; text-align: center; font-weight: bold;">Assessable Value</th>
+					<th colspan="3" style="border: 1px solid #000; padding: 8px; text-align: center; font-weight: bold;">Duty assessed</th>
+					<th style="border: 1px solid #000; padding: 8px; text-align: center; font-weight: bold;">Registration No. of means of transport</th>
+					<th style="border: 1px solid #000; padding: 8px; text-align: center; font-weight: bold;">One-time<br>Lock no.</th>
+					<th style="border: 1px solid #000; padding: 8px; text-align: center; font-weight: bold;">Date and time of receipt at the warehouse</th>
+					<th style="border: 1px solid #000; padding: 8px; text-align: center; font-weight: bold;">Purchase Receipt</th>
+				</tr>
+				<tr style="background-color: #f0f0f0;">
+					<th colspan="8" style="border: 1px solid #000; padding: 0;"></th>
+					<th style="border: 1px solid #000; padding: 8px; text-align: center; font-weight: bold; font-size: 10px;">BCD</th>
+					<th style="border: 1px solid #000; padding: 8px; text-align: center; font-weight: bold; font-size: 10px;">IGST</th>
+					<th style="border: 1px solid #000; padding: 8px; text-align: center; font-weight: bold; font-size: 10px;">Comp. cess</th>
+					<th colspan="4" style="border: 1px solid #000; padding: 0;"></th>
+				</tr>
+			</thead>
+			<tbody>
+				{{ table_rows }}
+			</tbody>
+		</table>
+	</div>
+
+	<div class="footer" style="margin-top: 30px; font-size: 11px;">
+		<div style="margin-top: 20px;">
+			<strong>Note:</strong> This report is generated as per Annexure-B format for customs documentation.
+		</div>
+	</div>
+</div>
+
+<style>
+	.print-format-container {
+		padding: 20px;
+		font-family: Arial, sans-serif;
+	}
+	
+	.table {
+		width: 100%;
+		border-collapse: collapse;
+	}
+	
+	.table th,
+	.table td {
+		border: 1px solid #000;
+		padding: 6px;
+	}
+	
+	.text-center {
+		text-align: center;
+	}
+	
+	@media print {
+		.print-format-container {
+			padding: 10px;
+		}
+		
+		.table {
+			font-size: 10px;
+		}
+		
+		.table th,
+		.table td {
+			padding: 4px;
+		}
+	}
+</style>
+</body>
+</html>

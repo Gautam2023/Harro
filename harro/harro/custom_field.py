@@ -203,7 +203,39 @@ def create_custom_fields_on_migrate():
                 "label" : "Ordered Qty",
                 "fieldtype" : "Float",
                 "insert_after" : "received_qty"
-            }
+            },
+            {
+                "fieldname": "section_bil_invoice",
+                "label": "",
+                "fieldtype": "Section Break",
+                "read_only": 0,
+            },
+            {
+                "fieldname": "invoice_no",
+                "label": "Invoice No",
+                "fieldtype": "Data",
+                "read_only": 1,
+                "insert_after" : "section_bil_invoice"
+            },
+            {
+                "fieldname": "column_bil_invoice",
+                "label": "",
+                "fieldtype": "Column Break",
+                "insert_after" : "invoice_no"
+            },
+            {
+                "fieldname": "bill_of_entry",
+                "label": "Bill of Entry",
+                "fieldtype": "Data",
+                "read_only": 1,
+                "insert_after" : "column_bil_invoice"
+            },
+            {
+                "fieldname": "section_bil_invoice_closed",
+                "label": "",
+                "fieldtype": "Section Break",
+                "insert_after" : "bill_of_entry"
+            },
         ],
         "Travel Itinerary" : [
             {
@@ -290,6 +322,230 @@ def create_custom_fields_on_migrate():
                 "fetch_from": "taxi_requestor.user_id"
             }
         ],
+        "Batch" : [
+            {
+                "fieldname": "po_number",
+                "label": "Po Number",
+                "fieldtype": "Data",
+                "insert_after": "invoice_no"
+            },
+            {
+                "fieldname": "vender_name",
+                "label": "Vender Name",
+                "fieldtype": "Link",
+                "options" : "Supplier",
+                "insert_after": "po_number"
+            },
+            {
+                "fieldname": "section_bil_invoice",
+                "label": "",
+                "fieldtype": "Section Break",
+                "read_only": 0,
+                "insert_after" : "sb_disabled"
+            },
+            {
+                "fieldname": "invoice_no",
+                "label": "Invoice No",
+                "fieldtype": "Data",
+                "read_only": 1,
+                "insert_after" : "section_bil_invoice"
+            },
+            {
+                "fieldname": "column_bil_invoice",
+                "label": "",
+                "fieldtype": "Column Break",
+                "insert_after" : "invoice_no"
+            },
+            {
+                "fieldname": "bill_of_entry",
+                "label": "Bill of Entry",
+                "fieldtype": "Data",
+                "read_only": 1,
+                "insert_after" : "column_bil_invoice"
+            },
+            {
+                "fieldname": "section_bil_invoice_closed",
+                "label": "",
+                "fieldtype": "Section Break",
+                "read_only": 0,
+                "insert_after" : "bill_of_entry"
+            },
+            {
+                "fieldname": "rm_batch_details",
+                "label": "RM Batch Details",
+                "fieldtype": "Table",
+                "options" : "RM Batch details",
+                "read_only": 1,
+                "insert_after" : "description"
+            }
+        ],
+        "Purchase Receipt": [
+            {
+                "fieldname": "import_details",
+                "label": "Import Details",
+                "fieldtype": "Tab Break",
+                "insert_after": "other_details",
+            },
+            {
+                "fieldname": "section_import_details",
+                "label": "",
+                "fieldtype": "Section Break",
+                "insert_after": "import_details"
+            },
+            {
+                "fieldname": "supplier_eway_bill_no",
+                "label": "Supplier E-Way Bill No",
+                "fieldtype": "Data",
+                "insert_after": "section_import_details"
+            },
+            {
+                "fieldname": "iec_no",
+                "label": "IEC No",
+                "fieldtype": "Data",
+                "insert_after": "supplier_eway_bill_no"
+            },
+            {
+                "fieldname": "port_code",
+                "label": "Port Code",
+                "fieldtype": "Select",
+                "options": "INNSA\nINMUM\nINDEL\nINMAA\nINKOL",
+                "insert_after": "iec_no"
+            },
+            {
+                "fieldname": "assessable_value_inr",
+                "label": "Assessable Value (INR)",
+                "fieldtype": "Currency",
+                "insert_after": "port_code"
+            },
+            {
+                "fieldname": "basic_custom_duty_inr",
+                "label": "Basic Custom Duty (INR)",
+                "fieldtype": "Currency",
+                "insert_after": "assessable_value_inr"
+            },
+            {
+                "fieldname": "tax_amount_inr",
+                "label": "Tax Amount (INR)",
+                "fieldtype": "Currency",
+                "insert_after": "basic_custom_duty_inr"
+            },
+            {
+                "fieldname": "insurance_no",
+                "label": "Insurance No",
+                "fieldtype": "Data",
+                "options": "Insurance",
+                "insert_after": "tax_amount_inr"
+            },
+            {
+                "fieldname": "insurance_date",
+                "label": "Insurance Date",
+                "fieldtype": "Date",
+                "insert_after": "insurance_no"
+            },
+            {
+                "fieldname": "custom_column_break_qp2jh",
+                "label": "",
+                "fieldtype": "Column Break",
+                "insert_after": "insurance_date"
+            },
+            {
+                "fieldname": "supplier_invoice_no",
+                "label": "Supplier Invoice No",
+                "fieldtype": "Data",
+                "insert_after": "custom_mode_of_delivery",
+            },
+            {
+                "fieldname": "supplier_invoice_date",
+                "label": "Supplier Invoice Date",
+                "fieldtype": "Date",
+                "insert_after": "supplier_invoice_no",
+            },
+            {
+                "fieldname": "bill_of_entry",
+                "label": "Bill of Entry",
+                "fieldtype": "Data",
+                "insert_after": "custom_column_break_qp2jh",
+            },
+            {
+                "fieldname": "bill_of_entry_date",
+                "label": "Bill of Entry Date",
+                "fieldtype": "Date",
+                "insert_after": "bill_of_entry",
+                "reqd": 1
+            },
+            {
+                "fieldname": "bond_doc_type",
+                "label": "Bond Document Type",
+                "fieldtype": "Select",
+                "options": "Sea\nAir",
+                "insert_after": "bill_of_entry_date"
+            },
+            {
+                "fieldname": "bond_posting_date",
+                "label": "Bond Posting Date",
+                "fieldtype": "Date",
+                "insert_after": "bond_doc_type"
+            },
+            {
+                "fieldname": "bond_value_inr",
+                "label": "Bond Value (INR)",
+                "fieldtype": "Currency",
+                "insert_after": "bond_posting_date"
+            },
+            {
+                "fieldname": "bond_valid_till",
+                "label": "Bond Valid Till",
+                "fieldtype": "Date",
+                "insert_after": "bond_value_inr"
+            },
+            {
+                "fieldname": "vehicle_no",
+                "label": "Vehicle No",
+                "fieldtype": "Data",
+                "insert_after": "insurance_date"
+            },
+            {
+                "fieldname": "transporter_gst",
+                "label": "Transporter GST",
+                "fieldtype": "Data",
+                "insert_after": "vehicle_no"
+            },
+            {
+                "fieldname": "compensation_cess_inr",
+                "label": "Compensation Cess (INR)",
+                "fieldtype": "Currency",
+                "insert_after": "tax_amount_inr"
+            },
+            {
+                "fieldname": "lock_no",
+                "label": "One-time Lock No",
+                "fieldtype": "Data",
+                "insert_after": "transporter_gst"
+            },
+        ],
+        "Expense Details" :[
+            {
+               "fieldname": "invoice_attachment",
+               "label": "Invoice Attachment",
+               "fieldtype": "Attach",
+               "insert_after": "service_type" 
+            },
+            {
+                "fieldname": "send_email",
+                "label": "Send Email",
+                "fieldtype": "Button",
+                "insert_after": "create_purchase_invoice"
+            },
+            {
+                "fieldname": "email_sent",
+                "label": "Email Sent",
+                "fieldtype": "Check",
+                "insert_after": "send_email",
+                "default": 0,
+                "read_only": 1,
+                "hidden": 1
+            }
+        ],
         "Stock Entry Detail" : [
             {
                 "fieldname": "po_number",
@@ -336,39 +592,165 @@ def create_custom_fields_on_migrate():
                 "fieldtype": "Section Break",
                 "read_only": 0,
                 "insert_after" : "bill_of_entry"
-            },
-            
-        ],
-        "Expense Details" :[
-            {
-               "fieldname": "invoice_attachment",
-               "label": "Invoice Attachment",
-               "fieldtype": "Attach",
-               "insert_after": "service_type" 
-            },
-            {
-                "fieldname": "send_email",
-                "label": "Send Email",
-                "fieldtype": "Button",
-                "insert_after": "create_purchase_invoice"
-            },
-            {
-                "fieldname": "email_sent",
-                "label": "Email Sent",
-                "fieldtype": "Check",
-                "insert_after": "send_email",
-                "default": 0,
-                "read_only": 1,
-                "hidden": 1
             }
         ],
+        "Stock Entry" : [
+            {
+                "fieldname": "import_details",
+                "label": "Import Details",
+                "fieldtype": "Tab Break",
+                "insert_after": "total_additional_costs",
+                "depends_on" : "eval:doc.stock_entry_type == 'Material Receipt'"
+            },
+            {
+                "fieldname": "section_import_details",
+                "label": "",
+                "fieldtype": "Section Break",
+                "insert_after": "import_details"
+            },
+            {
+                "fieldname": "supplier_eway_bill_no",
+                "label": "Supplier E-Way Bill No",
+                "fieldtype": "Data",
+                "insert_after": "section_import_details"
+            },
+            {
+                "fieldname": "iec_no",
+                "label": "IEC No",
+                "fieldtype": "Data",
+                "insert_after": "supplier_eway_bill_no"
+            },
+            {
+                "fieldname": "port_code",
+                "label": "Port Code",
+                "fieldtype": "Select",
+                "options": "INNSA\nINMUM\nINDEL\nINMAA\nINKOL",
+                "insert_after": "iec_no"
+            },
+            {
+                "fieldname": "assessable_value_inr",
+                "label": "Assessable Value (INR)",
+                "fieldtype": "Currency",
+                "insert_after": "port_code"
+            },
+            {
+                "fieldname": "basic_custom_duty_inr",
+                "label": "Basic Custom Duty (INR)",
+                "fieldtype": "Currency",
+                "insert_after": "assessable_value_inr"
+            },
+            {
+                "fieldname": "tax_amount_inr",
+                "label": "Tax Amount (INR)",
+                "fieldtype": "Currency",
+                "insert_after": "basic_custom_duty_inr"
+            },
+            {
+                "fieldname": "insurance_no",
+                "label": "Insurance No",
+                "fieldtype": "Data",
+                "options": "Insurance",
+                "insert_after": "tax_amount_inr"
+            },
+            {
+                "fieldname": "insurance_date",
+                "label": "Insurance Date",
+                "fieldtype": "Date",
+                "insert_after": "insurance_no"
+            },
+            {
+                "fieldname": "custom_column_break_qp2jh",
+                "label": "",
+                "fieldtype": "Column Break",
+                "insert_after": "insurance_date"
+            },
+            {
+                "fieldname": "supplier_invoice_no",
+                "label": "Supplier Invoice No",
+                "fieldtype": "Data",
+                "insert_after": "custom_column_break_qp2jh",
+            },
+            {
+                "fieldname": "bill_of_entry",
+                "label": "Bill of Entry",
+                "fieldtype": "Data",
+                "insert_after": "supplier_invoice_no",
+            },
+            {
+                "fieldname": "bill_of_entry_date",
+                "label": "Bill of Entry Date",
+                "fieldtype": "Date",
+                "insert_after": "bill_of_entry",
+                "reqd": 1
+            },
+            {
+                "fieldname": "bond_doc_type",
+                "label": "Bond Document Type",
+                "fieldtype": "Select",
+                "options": "Sea\nAir",
+                "insert_after": "bill_of_entry_date"
+            },
+            {
+                "fieldname": "bond_posting_date",
+                "label": "Bond Posting Date",
+                "fieldtype": "Date",
+                "insert_after": "bond_doc_type"
+            },
+            {
+                "fieldname": "bond_value_inr",
+                "label": "Bond Value (INR)",
+                "fieldtype": "Currency",
+                "insert_after": "bond_posting_date"
+            },
+            {
+                "fieldname": "bond_valid_till",
+                "label": "Bond Valid Till",
+                "fieldtype": "Date",
+                "insert_after": "bond_value_inr"
+            },
+            {
+                "fieldname": "vehicle_no",
+                "label": "Vehicle No",
+                "fieldtype": "Data",
+                "insert_after": "insurance_date"
+            },
+            {
+                "fieldname": "transporter_gst",
+                "label": "Transporter GST",
+                "fieldtype": "Data",
+                "insert_after": "vehicle_no"
+            },
+            {
+                "fieldname": "supplier_invoice_date",
+                "label": "Supplier Invoice Date",
+                "fieldtype": "Date",
+                "insert_after": "supplier_invoice_no"
+            },
+            {
+                "fieldname": "compensation_cess_inr",
+                "label": "Compensation Cess (INR)",
+                "fieldtype": "Currency",
+                "insert_after": "tax_amount_inr"
+            },
+            {
+                "fieldname": "lock_no",
+                "label": "One-time Lock No",
+                "fieldtype": "Data",
+                "insert_after": "transporter_gst"
+            },
+        ]
         
     }
 
     create_custom_fields(fields)
 
-    if frappe.get_meta("Project").has_field("custom_org_chart"):
-        frappe.db.delete("Custom Field", "Project-custom_org_chart")
+    from harro.patches.migrate_data_to_standard_field import update_purchase_receipt_invoice_fields
 
-    if frappe.get_meta("Project").has_field("custom_chart"):
-        frappe.db.delete("Custom Field", "Project-custom_chart")
+    update_purchase_receipt_invoice_fields()
+
+    if frappe.get_meta("Purchase Receipt").has_field("custom_supplier_invoice_no"):
+        frappe.db.delete("Custom Field", "Purchase Receipt-custom_supplier_invoice_no")
+    
+    if frappe.get_meta("Purchase Receipt").has_field("custom_supplier_invoice_date"):
+        frappe.db.delete("Custom Field", "Purchase Receipt-custom_supplier_invoice_date")
+    

@@ -51,12 +51,14 @@ def execute():
             title="Import Status"
         )
     except Exception as e:
+        error_message = str(e)
+        # Log the full error in the error log's message field, not title
         frappe.log_error(
-            f"Error creating Stock Entry: {str(e)}",
-            "Material Receipt CSV Import"
+            message=error_message,
+            title="Material Receipt CSV Import Error"
         )
         frappe.db.rollback()
-        frappe.throw(f"Error creating Stock Entry: {str(e)}")
+        frappe.throw(f"Error creating Stock Entry. Check Error Log for details.")
 
 
 def read_csv_file(file_path):
@@ -181,12 +183,24 @@ def create_stock_entry(csv_data):
         ensure_rack_exists(rack_name)
     
     # Create all bin locations
+    missing_bin_locations = []
     for bin_location_name, rack_name in unique_bin_locations.items():
-        ensure_bin_location_exists(bin_location_name, rack_name)
+        if not ensure_bin_location_exists(bin_location_name, rack_name):
+            missing_bin_locations.append(bin_location_name)
+    
+    # If any bin locations couldn't be created, log error but continue with defaults
+    if missing_bin_locations:
+        frappe.log_error(
+            message=f"The following bin locations could not be created and will use defaults: {', '.join(missing_bin_locations[:50])}" + 
+                   (f" and {len(missing_bin_locations)-50} more" if len(missing_bin_locations) > 50 else ""),
+            title="Bin Location Creation Issues"
+        )
     
     # Add all items from CSV rows
     valid_items_count = 0
-    for row in csv_data:
+    missing_items = []
+    
+    for idx, row in enumerate(csv_data, start=1):
         item_code = row.get('item_code', '').strip()
         qty = flt(row.get('qty', 0))
         
@@ -196,10 +210,7 @@ def create_stock_entry(csv_data):
         
         # Check if item exists
         if not frappe.db.exists("Item", item_code):
-            frappe.log_error(
-                f"Item {item_code} does not exist, skipping",
-                "Material Receipt CSV Import"
-            )
+            missing_items.append(f"Row {idx}: {item_code}")
             continue
         
         # Get item details
@@ -251,6 +262,14 @@ def create_stock_entry(csv_data):
         stock_entry.append("items", item_dict)
         valid_items_count += 1
     
+    if missing_items:
+        # Log missing items but don't fail the entire import
+        frappe.log_error(
+            message=f"The following items were not found and were skipped: {', '.join(missing_items[:50])}" +
+                   (f" and {len(missing_items)-50} more" if len(missing_items) > 50 else ""),
+            title="Missing Items During Import"
+        )
+    
     if not stock_entry.items:
         frappe.throw("No valid items found in CSV data")
     
@@ -258,7 +277,22 @@ def create_stock_entry(csv_data):
     stock_entry.set_missing_values()
     
     # Save Stock Entry
-    stock_entry.insert(ignore_permissions=True)
+    try:
+        stock_entry.insert(ignore_permissions=True)
+    except Exception as e:
+        error_msg = str(e)
+        # If it's a bin location error, provide a more helpful message
+        if "Bin Location" in error_msg:
+            # Extract the problematic bin locations from the error message
+            import re
+            bin_locations = re.findall(r'Bin Location:?\s*([A-Z0-9-]+)', error_msg)
+            if bin_locations:
+                frappe.log_error(
+                    message=f"Bin Location validation failed. Missing bin locations: {', '.join(bin_locations[:50])}" +
+                           (f" and {len(bin_locations)-50} more" if len(bin_locations) > 50 else ""),
+                    title="Bin Location Validation Error"
+                )
+        raise
     
     return stock_entry
 
@@ -268,7 +302,7 @@ _rack_cache = set()
 _bin_location_cache = set()
 
 def ensure_rack_exists(rack_name):
-    """Ensure Rack exists, create if not. Returns default 'A1' if creation fails."""
+    """Ensure Rack exists, create if not. Returns True if successful or exists."""
     if not rack_name:
         rack_name = "A1"
     
@@ -277,7 +311,7 @@ def ensure_rack_exists(rack_name):
     
     # Check cache first
     if rack_name in _rack_cache:
-        return rack_name
+        return True
     
     # Check if rack exists
     if not frappe.db.exists("Rack", rack_name):
@@ -290,30 +324,22 @@ def ensure_rack_exists(rack_name):
             # Already exists, just continue
             pass
         except Exception as e:
-            error_msg = str(e)[:10]  # Truncate error message
+            error_msg = str(e)[:100]  # Truncate error message
             frappe.log_error(
-                f"Error creating Rack {rack_name}: {error_msg}. Using default {default_rack}",
-                "Material Receipt CSV Import"
+                message=f"Error creating Rack {rack_name}: {error_msg}",
+                title="Rack Creation Error"
             )
-            # If creation fails, use default rack
-            rack_name = default_rack
-            # Ensure default rack exists
-            if not frappe.db.exists("Rack", default_rack):
-                try:
-                    default_rack_doc = frappe.new_doc("Rack")
-                    default_rack_doc.rack_name = default_rack
-                    default_rack_doc.insert(ignore_permissions=True)
-                    frappe.db.commit()
-                except:
-                    pass
+            # Add to cache anyway to avoid repeated attempts
+            _rack_cache.add(rack_name)
+            return False
     
     # Add to cache
     _rack_cache.add(rack_name)
-    return rack_name
+    return True
 
 
 def ensure_bin_location_exists(bin_location_name, rack_name):
-    """Ensure Bin Location exists, create if not. Returns default 'A1-001' if creation fails."""
+    """Ensure Bin Location exists, create if not. Returns True if successful or exists."""
     default_bin_location = "A1-001"
     default_rack = "A1"
     
@@ -324,7 +350,7 @@ def ensure_bin_location_exists(bin_location_name, rack_name):
     
     # Check cache first
     if bin_location_name in _bin_location_cache:
-        return bin_location_name
+        return True
     
     # Ensure rack exists first (use default if not provided)
     if not rack_name:
@@ -347,27 +373,18 @@ def ensure_bin_location_exists(bin_location_name, rack_name):
             # Already exists, just continue
             pass
         except Exception as e:
-            error_msg = str(e)[:10]  # Truncate error message
+            error_msg = str(e)[:100]  # Truncate error message
             frappe.log_error(
-                f"Error creating Bin Location {bin_location_name}: {error_msg}. Using default {default_bin_location}",
-                "Material Receipt CSV Import"
+                message=f"Error creating Bin Location {bin_location_name}: {error_msg}",
+                title="Bin Location Creation Error"
             )
-            # If creation fails, use default bin location
-            bin_location_name = default_bin_location
-            # Ensure default bin location exists
-            if not frappe.db.exists("Bin Location", default_bin_location):
-                try:
-                    default_bin_doc = frappe.new_doc("Bin Location")
-                    default_bin_doc.name = default_bin_location
-                    default_bin_doc.rack_name = default_rack
-                    default_bin_doc.insert(ignore_permissions=True)
-                    frappe.db.commit()
-                except:
-                    pass
+            # Add to cache anyway to avoid repeated attempts
+            _bin_location_cache.add(bin_location_name)
+            return False
     
     # Add to cache
     _bin_location_cache.add(bin_location_name)
-    return bin_location_name
+    return True
 
 
 def parse_date(date_str):

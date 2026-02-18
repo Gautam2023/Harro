@@ -31,7 +31,7 @@ def get_export_report_from_delivery_note(delivery_note):
             batches_data = get_batches_from_delivery_note_item(dn.name, item.name, item.item_code, item.qty)
             
             # For each batch, get raw material details from source document
-            # Aggregate all raw materials for this finished product into one row
+            # Create one row per raw material (not aggregated)
             all_raw_materials = []
             for batch_row in batches_data:
                 # Get source document details (Purchase Receipt or Stock Entry)
@@ -50,40 +50,20 @@ def get_export_report_from_delivery_note(delivery_note):
                 if raw_material_data:
                     all_raw_materials.extend(raw_material_data)
             
-            # If we have raw materials, aggregate them into one row per finished product
+            # Create one row per raw material
+            # First row shows finished product details, subsequent rows have blank finished product columns
             if all_raw_materials:
-                # Use the first raw material row as base (for finished product details)
-                base_row = all_raw_materials[0].copy()
-                
-                # Aggregate raw material details
-                wh_descriptions = []
-                wh_quantities = []
-                total_wh_assessable_value = 0
-                total_wh_duty_bcd = 0
-                total_wh_duty_igst = 0
-                total_wh_duty_comp_cess = 0
-                
-                for rm_row in all_raw_materials:
-                    if rm_row.get('wh_description') and rm_row.get('wh_description') != 'Nil':
-                        wh_descriptions.append(rm_row.get('wh_description'))
-                    if rm_row.get('wh_quantity') and rm_row.get('wh_quantity') != 'Nil':
-                        wh_quantities.append(rm_row.get('wh_quantity'))
+                for idx, rm_row in enumerate(all_raw_materials):
+                    # Format raw material values
+                    rm_row['wh_assessable_value'] = fmt_money(rm_row.get('wh_assessable_value', 0) or 0, currency="INR") if rm_row.get('wh_assessable_value', 0) else 'Nil'
+                    rm_row['wh_duty_bcd'] = fmt_money(rm_row.get('wh_duty_bcd', 0) or 0, currency="INR") if rm_row.get('wh_duty_bcd', 0) else 'Nil'
+                    rm_row['wh_duty_igst'] = fmt_money(rm_row.get('wh_duty_igst', 0) or 0, currency="INR") if rm_row.get('wh_duty_igst', 0) else 'Nil'
+                    rm_row['wh_duty_comp_cess'] = fmt_money(rm_row.get('wh_duty_comp_cess', 0) or 0, currency="INR") if rm_row.get('wh_duty_comp_cess', 0) else 'Nil'
                     
-                    # Sum numeric values (they are already raw numbers)
-                    total_wh_assessable_value += float(rm_row.get('wh_assessable_value', 0) or 0)
-                    total_wh_duty_bcd += float(rm_row.get('wh_duty_bcd', 0) or 0)
-                    total_wh_duty_igst += float(rm_row.get('wh_duty_igst', 0) or 0)
-                    total_wh_duty_comp_cess += float(rm_row.get('wh_duty_comp_cess', 0) or 0)
-                
-                # Update base row with aggregated raw material data
-                base_row['wh_description'] = ', '.join(wh_descriptions) if wh_descriptions else 'Nil'
-                base_row['wh_quantity'] = ', '.join(wh_quantities) if wh_quantities else 'Nil'
-                base_row['wh_assessable_value'] = fmt_money(total_wh_assessable_value, currency="INR") if total_wh_assessable_value > 0 else 'Nil'
-                base_row['wh_duty_bcd'] = fmt_money(total_wh_duty_bcd, currency="INR") if total_wh_duty_bcd > 0 else 'Nil'
-                base_row['wh_duty_igst'] = fmt_money(total_wh_duty_igst, currency="INR") if total_wh_duty_igst > 0 else 'Nil'
-                base_row['wh_duty_comp_cess'] = fmt_money(total_wh_duty_comp_cess, currency="INR") if total_wh_duty_comp_cess > 0 else 'Nil'
-                
-                export_data.append(base_row)
+                    # Mark if this is not the first row for this finished product (to blank out finished product details)
+                    rm_row['is_subsequent_row'] = (idx > 0)
+                    
+                    export_data.append(rm_row)
         
         # If no data found, create a row with Delivery Note details and Nil for raw materials
         if not export_data:
@@ -565,15 +545,21 @@ def generate_export_report_html(export_data, company, from_date, to_date):
     table_rows = ""
     if export_data:
         for row in export_data:
-            removal_date = escape_html(str(row.get('removal_date', '') or ''))
-            shipping_bill = escape_html(str(row.get('shipping_bill', '') or ''))
-            gst_invoice = escape_html(str(row.get('gst_invoice', '') or ''))
-            description = escape_html(str(row.get('description', '') or ''))
-            quantity = escape_html(str(row.get('quantity', '') or ''))
-            assessable_value = escape_html(str(row.get('assessable_value', '') or ''))
-            export_duty = escape_html(str(row.get('export_duty', 'Nil') or 'Nil'))
-            tax_igst = escape_html(str(row.get('tax_igst', 'Nil') or 'Nil'))
-            tax_comp_cess = escape_html(str(row.get('tax_comp_cess', 'Nil') or 'Nil'))
+            # Check if this is a subsequent row (should blank out finished product details)
+            is_subsequent = row.get('is_subsequent_row', False)
+            
+            # Finished product details (blank if subsequent row)
+            removal_date = '' if is_subsequent else escape_html(str(row.get('removal_date', '') or ''))
+            shipping_bill = '' if is_subsequent else escape_html(str(row.get('shipping_bill', '') or ''))
+            gst_invoice = '' if is_subsequent else escape_html(str(row.get('gst_invoice', '') or ''))
+            description = '' if is_subsequent else escape_html(str(row.get('description', '') or ''))
+            quantity = '' if is_subsequent else escape_html(str(row.get('quantity', '') or ''))
+            assessable_value = '' if is_subsequent else escape_html(str(row.get('assessable_value', '') or ''))
+            export_duty = '' if is_subsequent else escape_html(str(row.get('export_duty', 'Nil') or 'Nil'))
+            tax_igst = '' if is_subsequent else escape_html(str(row.get('tax_igst', 'Nil') or 'Nil'))
+            tax_comp_cess = '' if is_subsequent else escape_html(str(row.get('tax_comp_cess', 'Nil') or 'Nil'))
+            
+            # Raw material details (always shown)
             wh_description = escape_html(str(row.get('wh_description', 'Nil') or 'Nil'))
             wh_quantity = escape_html(str(row.get('wh_quantity', 'Nil') or 'Nil'))
             wh_assessable_value = escape_html(str(row.get('wh_assessable_value', 'Nil') or 'Nil'))

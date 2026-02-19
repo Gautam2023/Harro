@@ -222,6 +222,9 @@ doc_events = {
     },
     "Employee Advance" : {
         "before_validate" : "harro.harro.docevents.employee_advance.set_per_day_allowance"
+    },
+    "Purchase Receipt" : {
+        "after_insert" : "harro.harro.docevents.purchase_receipt.email_notification"
     }
 }
 

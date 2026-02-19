@@ -25,15 +25,26 @@ def get_columns():
         {"label": "Onward Flight Cost", "fieldname": "onward_flight_cost", "fieldtype": "Currency"},
         {"label": "Return Flight Cost", "fieldname": "return_flight_cost", "fieldtype": "Currency"},
         {"label": "Seat Charges", "fieldname": "seat_charges", "fieldtype": "Currency"},
-        {"label": "Hotel Cost", "fieldname": "hotel_cost", "fieldtype": "Currency"},
-        {"label": "Taxi Cost", "fieldname": "taxi_cost", "fieldtype": "Currency"},
+        {"label": "Hotel Cost", "fieldname": "hotel_coast", "fieldtype": "Currency"},
+        {"label": "Taxi Cost", "fieldname": "taxi_coast", "fieldtype": "Currency"},
 
         {"label": "Total Amount", "fieldname": "total_amount", "fieldtype": "Currency"},
         {"label": "Paid Amount", "fieldname": "paid_amount", "fieldtype": "Currency"},
         {"label": "Outstanding Amount", "fieldname": "outstanding_amount", "fieldtype": "Currency"},
 
         {"label": "Claimable Amount", "fieldname": "claimable_amount", "fieldtype": "Currency"},
-        {"label": "Non Claimable Amount", "fieldname": "unclaimed_amount", "fieldtype": "Currency"}
+        {"label": "Non Claimable Amount", "fieldname": "unclaimed_amount", "fieldtype": "Currency"},
+
+        {"label": "Flight Booking Status", "fieldname": "flight_booking_status", "fieldtype": "Data", "width": 160},
+        {"label": "Lodging Required", "fieldname": "lodging_required", "fieldtype": "Check", "width": 130},
+        {"label": "Hotel Booking Status", "fieldname": "hotel_booking_status", "fieldtype": "Data", "width": 160},
+        {"label": "Taxi Required", "fieldname": "taxi_required", "fieldtype": "Check", "width": 120},
+        {"label": "Extra Baggage", "fieldname": "extra_baggage", "fieldtype": "Data", "width": 130},
+
+        {"label": "Baggage Cost", "fieldname": "baggage_cost", "fieldtype": "Currency", "width": 130},
+        {"label": "Hotel Name", "fieldname": "hotel_name", "fieldtype": "Data", "width": 180},
+        {"label": "Room Night", "fieldname": "room_night", "fieldtype": "Int", "width": 110},
+
     ]
 
 
@@ -53,11 +64,11 @@ def get_data(filters):
         conditions.append("tp.name = %(travel_plan)s")
         values["travel_plan"] = filters["travel_plan"]
         
-    if filter and filters.get('from_date'):
+    if filters and filters.get('from_date'):
         conditions.append("tped.custom_onward_travel_date >= %(from_date)s")
         values["from_date"] = filters["from_date"]
         
-    if filter and filters.get('to_date'):
+    if filters and filters.get('to_date'):
         conditions.append("tped.custom_return_travel_date <= %(to_date)s")
         values["to_date"] = filters["to_date"]
         
@@ -85,10 +96,20 @@ def get_data(filters):
 			ed.paid_amount,
             ed.outstanding_amount,
             ed.claimed_amount,
-            ed.unclaimed_amount
+            ed.unclaimed_amount,
+            tri.custom_flight_booking_status AS flight_booking_status,
+            tri.lodging_required,
+            tri.custom_hotel_booking_status AS hotel_booking_status,
+            tri.custom_taxi_required AS taxi_required,
+            tri.custom_extra_baggage AS extra_baggage,
+            tped.baggage_coast AS baggage_cost,
+            tped.room_night,
+            tped.custom_hotel_name AS hotel_name
 		FROM `tabTravel Planning` tp
 		LEFT JOIN `tabTravel Planning Employee Details` tped ON tp.name = tped.parent
         LEFT JOIN `tabExpense Details` ed ON ed.parent = tp.name
+        LEFT JOIN `tabTravel Request` tr ON tr.name = tped.travel_request
+        LEFT JOIN `tabTravel Itinerary` tri ON tri.name = tped.travel_request_itinerary
 		{condition_str}
 	""", values, as_dict=True)
 

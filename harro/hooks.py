@@ -63,7 +63,8 @@ doctype_js = {
         "Production Plan" : "public/js/production_plan.js",
         "Material Request" : "public/js/material_requiest.js",
         "Request for Quotation" : "public/js/request_for_quotation.js",
-        "Travel Request" : "public/js/travel_request.js"
+        "Travel Request" : "public/js/travel_request.js",
+        "Employee Advance" : "public/js/employee_advance.js"
     }
 
 doctype_list_js = {"Task" : "public/js/task_list.js"}
@@ -218,6 +219,9 @@ doc_events = {
     },
     "Serial and Batch Bundle" : {
         "on_submit" : "harro.harro.docevents.purchase_receipt.on_submit"
+    },
+    "Employee Advance" : {
+        "before_validate" : "harro.harro.docevents.employee_advance.set_per_day_allowance"
     }
 }
 

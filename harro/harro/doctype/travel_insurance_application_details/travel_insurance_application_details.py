@@ -8,14 +8,8 @@ from frappe.utils import today
 from erpnext.stock.get_item_details import get_item_details
 
 
-class VisaRequest(Document):
+class TravelInsuranceApplicationDetails(Document):
 	pass
-
-
-@frappe.whitelist()
-def get_visa_check_list_details(chekck_list):
-	return frappe.get_doc("Country Wise visa Document Checklist", chekck_list)
-
 
 
 def add_item(source, target, source_parent):
@@ -31,9 +25,9 @@ def add_item(source, target, source_parent):
 	if not target.conversion_rate:
 		target.conversion_rate = 1
 
-	if source.custom_service_type:
+	if source.service_item:
 		args = {
-			"item_code": source.custom_service_type,
+			"item_code": source.service_item,
 			"doctype": "Purchase Invoice",
 			"company": target.company,
 			"supplier": target.supplier,
@@ -48,10 +42,10 @@ def add_item(source, target, source_parent):
 		item_details = get_item_details(args)
 
 		qty = 1
-		custom_rate = source.custom_cost or 0
+		custom_rate = source.cost or 0
 
 		target.append("items", {
-			"item_code": source.custom_service_type,
+			"item_code": source.service_item,
 			"item_name": item_details.item_name,
 			"description": item_details.description,
 			"uom": item_details.uom,
@@ -65,19 +59,18 @@ def add_item(source, target, source_parent):
 		})
 
 
-
 @frappe.whitelist()
 def create_purchase_invoice(source_name, target_doc=None):
 	doclist = get_mapped_doc(
-		"Visa Request",
+		"Travel Insurance Application Details",
 		source_name,
 		{
-			"Visa Request": {
+			"Travel Insurance Application Details": {
 				"doctype": "Purchase Invoice", 
 				"field_map" : {
-					"name" : "visa_request",
-					"custom_vendor_name": "supplier",
-					"custom_vendor_invoice": "custom_supplier_invoice"
+					"name" : "travel_insurance_application_details",
+					"vendor_name": "supplier",
+					"vendor_invoice": "custom_supplier_invoice"
 				},
 				"postprocess": add_item
 			},

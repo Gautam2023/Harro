@@ -63,7 +63,8 @@ doctype_js = {
         "Production Plan" : "public/js/production_plan.js",
         "Material Request" : "public/js/material_requiest.js",
         "Request for Quotation" : "public/js/request_for_quotation.js",
-        "Travel Request" : "public/js/travel_request.js"
+        "Travel Request" : "public/js/travel_request.js",
+        "Employee Advance" : "public/js/employee_advance.js"
     }
 
 doctype_list_js = {"Task" : "public/js/task_list.js"}
@@ -214,10 +215,16 @@ doc_events = {
         "on_update" : "harro.harro.docevents.travel_request.on_update"
     },
     "Payment Entry" : {
-        "before_insert": "harro.harro.docevents.set_company_contact_from_pi"
+        "before_insert": "harro.harro.docevents.payment_entry.set_company_contact_from_pi"
     },
     "Serial and Batch Bundle" : {
         "on_submit" : "harro.harro.docevents.purchase_receipt.on_submit"
+    },
+    "Employee Advance" : {
+        "before_validate" : "harro.harro.docevents.employee_advance.set_per_day_allowance"
+    },
+    "Purchase Receipt" : {
+        "after_insert" : "harro.harro.docevents.purchase_receipt.email_notification"
     }
 }
 

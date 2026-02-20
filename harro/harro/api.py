@@ -777,5 +777,80 @@ def send_email(expense_detail_row, travel_planning):
     return "Email sent successfully"
 
 
+@frappe.whitelist()
+def submit_stock_entry_in_background(stock_entry_name):
+    """
+    Submit Stock Entry in background using frappe.enqueue
+    """
+    if not stock_entry_name:
+        frappe.throw("Stock Entry name is required")
+    
+    # Check if document exists
+    if not frappe.db.exists("Stock Entry", stock_entry_name):
+        frappe.throw(f"Stock Entry {stock_entry_name} does not exist")
+    
+    # Get the document
+    doc = frappe.get_doc("Stock Entry", stock_entry_name)
+    
+    # Check if already submitted
+    if doc.docstatus == 1:
+        return {
+            "status": "already_submitted",
+            "message": f"Stock Entry {stock_entry_name} is already submitted"
+        }
+    
+    if doc.docstatus == 2:
+        frappe.throw(f"Stock Entry {stock_entry_name} is cancelled and cannot be submitted")
+    
+    # Enqueue the submission task
+    frappe.enqueue(
+        method=submit_stock_entry_task,
+        queue="default",
+        timeout=7200,
+        is_async=True,
+        job_name=f"submit_stock_entry_{stock_entry_name}",
+        stock_entry_name=stock_entry_name
+    )
+    
+    return {
+        "status": "queued",
+        "message": f"Stock Entry {stock_entry_name} submission has been queued and will be processed in the background"
+    }
+
+
+def submit_stock_entry_task(stock_entry_name):
+    """
+    Background task to submit Stock Entry
+    """
+    try:
+        # Get the document
+        doc = frappe.get_doc("Stock Entry", stock_entry_name)
+        
+        # Check if already submitted (race condition check)
+        if doc.docstatus == 1:
+            frappe.log_error(
+                title="Stock Entry Already Submitted",
+                message=f"Stock Entry {stock_entry_name} was already submitted before background task executed"
+            )
+            return
+        
+        # Submit the document
+        doc.submit()
+        
+        # Commit the transaction
+        frappe.db.commit()
+        
+        frappe.log_error(
+            title="Stock Entry Background Submit Success",
+            message=f"Stock Entry {stock_entry_name} submitted successfully in background"
+        )
+        
+    except Exception as e:
+        frappe.db.rollback()
+        frappe.log_error(
+            title="Stock Entry Background Submit Error",
+            message=f"Error submitting Stock Entry {stock_entry_name}: {str(e)}"
+        )
+        raise
 
 

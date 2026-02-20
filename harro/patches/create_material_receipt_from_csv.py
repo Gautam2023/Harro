@@ -51,12 +51,14 @@ def execute():
             title="Import Status"
         )
     except Exception as e:
+        error_message = str(e)
+        # Log the full error in the error log's message field, not title
         frappe.log_error(
-            f"Error creating Stock Entry: {str(e)}",
-            "Material Receipt CSV Import"
+            message=error_message,
+            title="Material Receipt CSV Import Error"
         )
         frappe.db.rollback()
-        frappe.throw(f"Error creating Stock Entry: {str(e)}")
+        frappe.throw(f"Error creating Stock Entry. Check Error Log for details.")
 
 
 def read_csv_file(file_path):
@@ -151,9 +153,12 @@ def create_stock_entry(csv_data):
     else:
         stock_entry.posting_date = today()
     
+    
     # Add all items from CSV rows
     valid_items_count = 0
-    for row in csv_data:
+    missing_items = []
+    
+    for idx, row in enumerate(csv_data, start=1):
         item_code = row.get('item_code', '').strip()
         qty = flt(row.get('qty', 0))
         
@@ -163,10 +168,7 @@ def create_stock_entry(csv_data):
         
         # Check if item exists
         if not frappe.db.exists("Item", item_code):
-            frappe.log_error(
-                f"Item {item_code} does not exist, skipping",
-                "Material Receipt CSV Import"
-            )
+            missing_items.append(f"Row {idx}: {item_code}")
             continue
         
         # Get item details
@@ -208,15 +210,17 @@ def create_stock_entry(csv_data):
         if row.get('item_name', '').strip():
             item_dict["item_name"] = row.get('item_name', '').strip()
         
-        # Add rack/bin location if provided
-        if row.get('to_rack', '').strip():
-            item_dict["to_rack"] = row.get('to_rack', '').strip() or "A1"
-        
-        if row.get('to_bin_location', '').strip():
-            item_dict["to_bin_location"] = row.get('to_bin_location', '').strip() or "A1-001"
         
         stock_entry.append("items", item_dict)
         valid_items_count += 1
+    
+    if missing_items:
+        # Log missing items but don't fail the entire import
+        frappe.log_error(
+            message=f"The following items were not found and were skipped: {', '.join(missing_items[:50])}" +
+                   (f" and {len(missing_items)-50} more" if len(missing_items) > 50 else ""),
+            title="Missing Items During Import"
+        )
     
     if not stock_entry.items:
         frappe.throw("No valid items found in CSV data")

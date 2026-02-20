@@ -124,3 +124,98 @@ def _map_rm_batches_into_fg(bundle_doc):
 
         batch_doc.save(ignore_permissions=True)
 
+
+from frappe.utils import get_url_to_form
+
+def email_notification(doc, method=None):
+    if not doc.items:
+        return
+
+    items_data = []
+
+    for row in doc.items:
+        if not row.item_code:
+            continue
+
+        item_doc = frappe.get_cached_doc("Item", row.item_code)
+
+        if item_doc.inspection_required_before_purchase:
+            items_data.append({
+                "item_code": row.item_code,
+                "item_name": row.item_name,
+                "qty": row.qty,
+                "description" : row.description
+            })
+
+    if not items_data:
+        return
+
+    users = frappe.get_all(
+        "Has Role",
+        filters={"role": "Quality Assurance Engineer"},
+        fields=["parent"]
+    )
+
+    email_list = []
+    for user in users:
+        email = frappe.db.get_value("User", user.parent, "email")
+        if email:
+            email_list.append(email)
+
+    if not email_list:
+        return
+
+    rows = ""
+    for item in items_data:
+        rows += f"""
+        <tr>
+            <td style="padding:6px;border:1px solid #ddd;">{item['item_code']}</td>
+            <td style="padding:6px;border:1px solid #ddd;">{item['item_name']}</td>
+            <td style="padding:6px;border:1px solid #ddd;">{item['description']}</td>
+            <td style="padding:6px;border:1px solid #ddd;text-align:right;">{item['qty']}</td>
+        </tr>
+        """
+
+    doc_link = get_url_to_form(doc.doctype, doc.name)
+
+    message = f"""
+    <html>
+    <body style="font-family: Arial, sans-serif; font-size: 13px;">
+        <p>Dear QC Representative</p>
+        <p>
+            Purchase Receipt 
+            <a href="{doc_link}"><b>{doc.name}</b></a> 
+            contains items that require inspection before purchase.
+        </p>
+
+        <table style="border-collapse: collapse; margin-top:10px;">
+            <tr style="background-color:#f2f2f2;">
+                <th style="padding:6px;border:1px solid #ddd;">Item Code</th>
+                <th style="padding:6px;border:1px solid #ddd;">Item Name</th>
+                <th style="padding:6px;border:1px solid #ddd;">Description</th>
+                <th style="padding:6px;border:1px solid #ddd;">Qty</th>
+            </tr>
+            {rows}
+        </table>
+
+        <p style="margin-top:15px;">
+            Please perform Quality Inspection.
+        </p>
+        <p style="margin-top:15px;">
+            <strong>
+                Regards,<br>
+                ERPNext Team
+            </strong>
+        </p>
+    </body>
+    </html>
+    """
+
+    frappe.sendmail(
+        # recipients=email_list,
+        recipients="gautam@fosserp.com",
+        subject=f"Inspection Required: Purchase Receipt {doc.name}",
+        message=message,
+        reference_doctype=doc.doctype,
+        reference_name=doc.name
+    )

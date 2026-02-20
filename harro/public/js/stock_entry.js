@@ -20,6 +20,13 @@ frappe.ui.form.on("Stock Entry", {
                 filters: { rack : d.to_rack },
             };
         })
+        
+        // Add button to submit in background
+        if (frm.doc.docstatus === 0 && !frm.is_new()) {
+            frm.add_custom_button(__("Submit in Background"), function() {
+                submit_stock_entry_in_background(frm);
+            }, __("Actions"));
+        }
 	},
     project : (frm)=>{
         if(frm.doc.project){
@@ -62,3 +69,52 @@ frappe.ui.form.on('Stock Entry Detail', {
         })
     }
 });
+
+// Function to submit Stock Entry in background via API
+function submit_stock_entry_in_background(frm) {
+    if (frm.doc.docstatus !== 0) {
+        frappe.msgprint(__("Document is already submitted or cancelled."));
+        return;
+    }
+    
+    frappe.confirm(
+        __("Are you sure you want to submit this Stock Entry in the background?"),
+        function() {
+            // Show loading indicator
+            frappe.show_alert({
+                message: __("Submitting Stock Entry in background..."),
+                indicator: "blue"
+            });
+            
+            frappe.call({
+                method: "harro.harro.api.submit_stock_entry_in_background",
+                args: {
+                    stock_entry_name: frm.doc.name
+                },
+                callback: function(r) {
+                    if (r.exc) {
+                        frappe.show_alert({
+                            message: __("Error submitting document. Please check Error Log."),
+                            indicator: "red"
+                        });
+                    } else if (r.message) {
+                        frappe.show_alert({
+                            message: __("Stock Entry submission queued successfully! It will be processed in the background."),
+                            indicator: "green"
+                        });
+                        // Reload the form after a short delay to check status
+                        setTimeout(function() {
+                            frm.reload_doc();
+                        }, 2000);
+                    }
+                },
+                error: function(r) {
+                    frappe.show_alert({
+                        message: __("Failed to submit Stock Entry. Please try again."),
+                        indicator: "red"
+                    });
+                }
+            });
+        }
+    );
+}

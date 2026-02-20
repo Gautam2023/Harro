@@ -185,7 +185,7 @@ def email_notification(doc, method=None):
         <p>
             Purchase Receipt 
             <a href="{doc_link}"><b>{doc.name}</b></a> 
-            contains items that require inspection before purchase.
+            contains list of items Require Quality Inspection.
         </p>
 
         <table style="border-collapse: collapse; margin-top:10px;">
@@ -204,7 +204,7 @@ def email_notification(doc, method=None):
         <p style="margin-top:15px;">
             <strong>
                 Regards,<br>
-                ERPNext Team
+                ERPNext
             </strong>
         </p>
     </body>
@@ -212,8 +212,7 @@ def email_notification(doc, method=None):
     """
 
     frappe.sendmail(
-        # recipients=email_list,
-        recipients="gautam@fosserp.com",
+        recipients=email_list,
         subject=f"Inspection Required: Purchase Receipt {doc.name}",
         message=message,
         reference_doctype=doc.doctype,

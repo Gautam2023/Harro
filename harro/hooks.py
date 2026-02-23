@@ -281,7 +281,8 @@ override_whitelisted_methods = {
     "erpnext.controllers.subcontracting_controller.make_rm_stock_entry" : "harro.harro.override.subcontracting_order.make_rm_stock_entry",
     "erpnext.stock.doctype.material_request.material_request.make_purchase_order": "harro.harro.override.material_request.make_purchase_order",
     "erpnext.buying.doctype.purchase_order.purchase_order.make_purchase_receipt": "harro.harro.override.purchase_order.make_purchase_receipt",
-    "erpnext.manufacturing.doctype.bom.bom.get_bom_diff" : "harro.harro.docevents.bom.get_bom_diff"
+    "erpnext.manufacturing.doctype.bom.bom.get_bom_diff" : "harro.harro.docevents.bom.get_bom_diff",
+    "hrms.hr.doctype.expense_claim.expense_claim.get_expense_claim" : "harro.harro.override.employee_advance.get_expense_claim",
 }
 #
 # each overriding function accepts a `data` argument;

@@ -6,45 +6,41 @@
  "engine": "InnoDB",
  "field_order": [
   "card_number",
-  "card_holder",
-  "issuing_bank",
-  "expiry_date",
-  "status"
+  "column_break_yawc",
+  "aano",
+  "amended_from"
  ],
  "fields": [
   {
    "fieldname": "card_number",
-   "fieldtype": "Int",
-   "label": "Card Number"
+   "fieldtype": "Data",
+   "label": "Card Card Number"
   },
   {
-   "fieldname": "card_holder",
+   "fieldname": "column_break_yawc",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "aano",
+   "fieldtype": "Data",
+   "label": "AANo"
+  },
+  {
+   "fieldname": "amended_from",
    "fieldtype": "Link",
-   "label": "Card Holder",
-   "options": "Employee"
-  },
-  {
-   "fieldname": "issuing_bank",
-   "fieldtype": "Link",
-   "label": "Issuing Bank",
-   "options": "Bank"
-  },
-  {
-   "fieldname": "expiry_date",
-   "fieldtype": "Date",
-   "label": "Expiry Date"
-  },
-  {
-   "fieldname": "status",
-   "fieldtype": "Select",
-   "label": "Status",
-   "options": "\nActive\nBlocked\nExpired"
+   "label": "Amended From",
+   "no_copy": 1,
+   "options": "Credit Card",
+   "print_hide": 1,
+   "read_only": 1,
+   "search_index": 1
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
+ "is_submittable": 1,
  "links": [],
- "modified": "2025-11-17 21:52:21.003004",
+ "modified": "2026-02-24 17:04:26.924026",
  "modified_by": "Administrator",
  "module": "Harro",
  "name": "Credit Card",

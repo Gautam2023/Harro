@@ -6,27 +6,9 @@
 </head>
 <body>
 <div class="print-format-container">
-	<div class="print-heading">
-		<h2 class="text-center" style="margin-bottom: 20px; font-size: 18px; font-weight: bold;">
-			RESULTANT PRODUCTS (CLEARANCE FOR EXPORT)
-		</h2>
-	</div>
+	
 
-	<div class="unit-details" style="margin-bottom: 30px;">
-		<div style="margin-bottom: 10px;">
-			<strong>Name and address of the Unit:</strong> {{ unit_name }}, {{ unit_address }}
-		</div>
-		<div style="margin-bottom: 10px;">
-			<strong>IEC:</strong> {{ iec }}
-		</div>
-		<div style="margin-bottom: 10px;">
-			<strong>GSTIN:</strong> {{ gstin }}
-		</div>
-		<div style="margin-bottom: 10px;">
-			<strong>Commissionerate:</strong> {{ commissionerate }}
-		</div>
-	</div>
-
+	
 	<div class="report-period" style="margin-bottom: 20px;">
 		<div><strong>Period:</strong> {{ from_date }} to {{ to_date }}</div>
 	</div>
@@ -35,29 +17,26 @@
 		<table class="table table-bordered" style="width: 100%; border-collapse: collapse; font-size: 11px;">
 			<thead>
 				<tr style="background-color: #f0f0f0;">
-					<th colspan="8" style="border: 1px solid #000; padding: 8px; text-align: center; font-weight: bold;">Resultant products exported</th>
-					<th colspan="7" style="border: 1px solid #000; padding: 8px; text-align: center; font-weight: bold;">Quantity of warehoused goods contained in so much of the resultant products exported</th>
+					<th colspan="4" style="border: 1px solid #000; padding: 8px; text-align: center; font-weight: bold;">
+						Goods issued for manufacturing or other operations
+					</th>
+					<th colspan="7" style="border: 1px solid #000; padding: 8px; text-align: center; font-weight: bold;">
+						Removal for job-work
+					</th>
 				</tr>
 				<tr style="background-color: #f0f0f0;">
-					<th rowspan="2" style="border: 1px solid #000; padding: 8px; text-align: center; font-weight: bold;">Date and time of removal</th>
-					<th rowspan="2" style="border: 1px solid #000; padding: 8px; text-align: center; font-weight: bold;">Shipping Bill No. and date</th>
-					<th rowspan="2" style="border: 1px solid #000; padding: 8px; text-align: center; font-weight: bold;">GST<br>Invoice No. and date</th>
-					<th rowspan="2" style="border: 1px solid #000; padding: 8px; text-align: center; font-weight: bold;">Description of goods</th>
-					<th rowspan="2" style="border: 1px solid #000; padding: 8px; text-align: center; font-weight: bold;">Quantity with UQC</th>
-					<th rowspan="2" style="border: 1px solid #000; padding: 8px; text-align: center; font-weight: bold;">Assessable Value</th>
-					<th rowspan="2" style="border: 1px solid #000; padding: 8px; text-align: center; font-weight: bold;">Export duty</th>
-					<th colspan="2" style="border: 1px solid #000; padding: 8px; text-align: center; font-weight: bold;">Tax paid (if applicable)</th>
-					<th rowspan="2" style="border: 1px solid #000; padding: 8px; text-align: center; font-weight: bold;">Description of goods</th>
-					<th rowspan="2" style="border: 1px solid #000; padding: 8px; text-align: center; font-weight: bold;">Quantity with UQC</th>
-					<th rowspan="2" style="border: 1px solid #000; padding: 8px; text-align: center; font-weight: bold;">Assessable Value</th>
-					<th colspan="3" style="border: 1px solid #000; padding: 8px; text-align: center; font-weight: bold;">Duty involved</th>
-				</tr>
-				<tr style="background-color: #f0f0f0;">
-					<th style="border: 1px solid #000; padding: 8px; text-align: center; font-weight: bold; font-size: 10px;">IGST</th>
-					<th style="border: 1px solid #000; padding: 8px; text-align: center; font-weight: bold; font-size: 10px;">Comp. cess</th>
-					<th style="border: 1px solid #000; padding: 8px; text-align: center; font-weight: bold; font-size: 10px;">BCD</th>
-					<th style="border: 1px solid #000; padding: 8px; text-align: center; font-weight: bold; font-size: 10px;">IGST</th>
-					<th style="border: 1px solid #000; padding: 8px; text-align: center; font-weight: bold; font-size: 10px;">Comp. cess</th>
+					<th style="border: 1px solid #000; padding: 8px; text-align: center; font-weight: bold;">Date of issue</th>
+					<th style="border: 1px solid #000; padding: 8px; text-align: center; font-weight: bold;">Description of goods</th>
+					<th style="border: 1px solid #000; padding: 8px; text-align: center; font-weight: bold;">Quantity with UQC</th>
+					<th style="border: 1px solid #000; padding: 8px; text-align: center; font-weight: bold;">Value</th>
+
+					<th style="border: 1px solid #000; padding: 8px; text-align: center; font-weight: bold;">Date and time of removal</th>
+					<th style="border: 1px solid #000; padding: 8px; text-align: center; font-weight: bold;">Description of goods</th>
+					<th style="border: 1px solid #000; padding: 8px; text-align: center; font-weight: bold;">Quantity with UQC</th>
+					<th style="border: 1px solid #000; padding: 8px; text-align: center; font-weight: bold;">Value</th>
+					<th style="border: 1px solid #000; padding: 8px; text-align: center; font-weight: bold;">Delivery Challan No.</th>
+					<th style="border: 1px solid #000; padding: 8px; text-align: center; font-weight: bold;">Details of Job worker</th>
+					<th style="border: 1px solid #000; padding: 8px; text-align: center; font-weight: bold;">GSTIN (if applicable)</th>
 				</tr>
 			</thead>
 			<tbody>

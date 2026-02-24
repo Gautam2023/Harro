@@ -471,7 +471,7 @@ def create_custom_fields_on_migrate():
                 "label": "Bill of Entry Date",
                 "fieldtype": "Date",
                 "insert_after": "bill_of_entry",
-                "reqd": 1
+                "reqd": 0
             },
             {
                 "fieldname": "bond_doc_type",
@@ -738,6 +738,15 @@ def create_custom_fields_on_migrate():
                 "fieldtype": "Data",
                 "insert_after": "transporter_gst"
             },
+            {
+                "fieldname": "delivery_challan_no",
+                "label": "Delivery Challan No.",
+                "fieldtype": "Data",
+                "insert_after": "inspection_required",
+                "depends_on": "eval:doc.stock_entry_type == 'Send to Subcontractor'",
+                "reqd": 1
+            },
+
         ]
         
     }

@@ -7,8 +7,18 @@ from frappe.utils import get_datetime, format_datetime, fmt_money
 
 
 def execute(filters=None):
-    columns = get_columns()
+    show_outward = filters.get("show_outward", False) if filters else False
+    if show_outward:
+        columns = get_outward_columns()
+    else:
+        columns = get_columns()
     data = get_data(filters)
+
+    # For outward view in the report grid, transform raw data into
+    # the 11-column layout matching the Excel / Expected sheet.
+    if show_outward and data:
+        data = transform_outward_rows_for_view(data)
+
     return columns, data
 
 
@@ -148,7 +158,7 @@ def get_print_format_html(filters=None):
         template = f.read()
     
     # Prepare template variables
-    unit_name = getattr(company, 'custom_unit_name', None) if company else None
+    unit_name = getattr(company, 'name', None) if company else None
     if not unit_name:
         unit_name = "M/s Harro Hoefliger Packaging Systems Pvt. Ltd"
     
@@ -173,6 +183,8 @@ def get_print_format_html(filters=None):
     
     # Generate table rows based on report type
     if show_outward:
+        # Transform outward data into the 11-column combined layout
+        data = transform_outward_rows_for_view(data) if data else []
         table_rows = generate_outward_table_rows(data)
     else:
         table_rows = generate_inward_table_rows(data)
@@ -198,6 +210,196 @@ def get_print_format_html(filters=None):
             html = '<meta charset="UTF-8">\n' + html
     
     return html.encode('utf-8').decode('utf-8')
+
+
+@frappe.whitelist()
+def export_outward_to_excel(filters=None):
+    """Export outward report data to Excel format"""
+    if isinstance(filters, str):
+        import json
+        filters = json.loads(filters)
+    
+    if not filters:
+        filters = {}
+    
+    # Ensure show_outward is True
+    filters['show_outward'] = True
+    
+    # Get raw outward data
+    data = get_data(filters)
+    
+    # Prepare Excel data – reuse the same 11-column transformation as the report grid
+    from frappe.utils.xlsxutils import make_xlsx
+    
+    # Headers for outward report (single header row, matching provided sheet)
+    headers = [
+        "Date of issue",
+        "Description of goods",
+        "Quantity with UQC",
+        "Value",
+        "Date and time of removal",
+        "Description of goods",
+        "Quantity with UQC",
+        "Value",
+        "Delivery Challan No.",
+        "Details of Job worker",
+        "GSTIN (if applicable)",
+    ]
+    
+    # Prepare rows
+    rows = [headers]
+    
+    view_rows = transform_outward_rows_for_view(data) if data else []
+    for view_row in view_rows:
+        rows.append([
+            view_row.get("goods_date_of_issue", ""),
+            view_row.get("goods_description", ""),
+            view_row.get("goods_quantity_with_uqc", ""),
+            view_row.get("goods_value", ""),
+            view_row.get("job_removal_datetime", ""),
+            view_row.get("job_description", ""),
+            view_row.get("job_quantity_with_uqc", ""),
+            view_row.get("job_value", ""),
+            view_row.get("delivery_challan_no", ""),
+            view_row.get("job_worker_details", ""),
+            view_row.get("job_worker_gstin", ""),
+        ])
+    
+    # Create Excel file
+    xlsx_file = make_xlsx(rows, "Outward Removals Report")
+    
+    # Return file for download
+    from frappe.desk.utils import provide_binary_file
+    provide_binary_file("Outward_Removals_Report", "xlsx", xlsx_file.getvalue())
+
+
+def get_job_worker_details(stock_entry_name):
+    """Return (delivery_challan_no, job_worker_details, job_worker_gstin) for a Send to Subcontractor Stock Entry.
+
+    GSTIN is resolved from:
+      1. Supplier master (gstin field), else
+      2. Primary Address linked to Supplier (Address.gstin)
+    """
+    delivery_challan_no = ""
+    job_worker_details = ""
+    job_worker_gstin = ""
+
+    if not stock_entry_name:
+        return delivery_challan_no, job_worker_details, job_worker_gstin
+
+    try:
+        se = frappe.get_doc("Stock Entry", stock_entry_name)
+    except frappe.DoesNotExistError:
+        return delivery_challan_no, job_worker_details, job_worker_gstin
+
+    # Delivery Challan No: custom field or fallback to Stock Entry name
+    delivery_challan_no = se.get("delivery_challan_no") or se.name
+
+    subcontracting_order = se.get("subcontracting_order")
+    if subcontracting_order:
+        try:
+            so = frappe.get_doc("Subcontracting Order", subcontracting_order)
+            supplier = so.supplier
+            supplier_name = getattr(so, "supplier_name", "") or supplier or ""
+            job_worker_details = supplier_name
+
+            # Try to get GSTIN from Supplier master
+            if supplier:
+                job_worker_gstin = frappe.db.get_value("Supplier", supplier, "gstin") or ""
+
+                # If not found on Supplier, try primary Address linked to Supplier
+                if not job_worker_gstin:
+                    supplier_address = frappe.db.get_value(
+                        "Dynamic Link",
+                        {
+                            "link_doctype": "Supplier",
+                            "link_name": supplier,
+                            "parenttype": "Address",
+                        },
+                        "parent",
+                    )
+                    if supplier_address:
+                        job_worker_gstin = frappe.db.get_value("Address", supplier_address, "gstin") or ""
+        except frappe.DoesNotExistError:
+            pass
+
+    return delivery_challan_no, job_worker_details, job_worker_gstin
+
+
+def transform_outward_rows_for_view(raw_rows):
+    """
+    Take the raw outward rows from get_data and build two independent
+    lists (goods-issued and job-work), then combine them row-wise so
+    that the left and right sections are logically separate, like the
+    Expected Excel.
+    """
+    if not raw_rows:
+        return []
+
+    goods_rows = []
+    job_rows = []
+
+    for raw in raw_rows:
+        row = frappe._dict(raw)
+
+        # Core outward values
+        removal_date_raw = str(row.get("removal_date", row.get("receipt_date_time", "")) or "")
+        description_raw = str(row.get("description", row.get("description_of_goods", "")) or "")
+        quantity_raw = str(row.get("quantity", row.get("quantity_with_uqc", "")) or "")
+        assessable_value_raw = str(row.get("assessable_value", "") or "")
+
+        stock_entry_name = row.get("stock_entry")
+        is_jobwork = False
+
+        if stock_entry_name:
+            se_type = frappe.db.get_value("Stock Entry", stock_entry_name, "stock_entry_type")
+            if se_type == "Send to Subcontractor":
+                is_jobwork = True
+
+        if is_jobwork:
+            # Build job-work side only
+            delivery_challan_no, job_worker_details, job_worker_gstin = get_job_worker_details(
+                stock_entry_name
+            )
+            job_rows.append(
+                frappe._dict(
+                    {
+                        "job_removal_datetime": removal_date_raw,
+                        "job_description": description_raw,
+                        "job_quantity_with_uqc": quantity_raw,
+                        "job_value": assessable_value_raw,
+                        "delivery_challan_no": delivery_challan_no,
+                        "job_worker_details": job_worker_details,
+                        "job_worker_gstin": job_worker_gstin,
+                    }
+                )
+            )
+        else:
+            # Build goods-issued side only
+            goods_rows.append(
+                frappe._dict(
+                    {
+                        "goods_date_of_issue": removal_date_raw,
+                        "goods_description": description_raw,
+                        "goods_quantity_with_uqc": quantity_raw,
+                        "goods_value": assessable_value_raw,
+                    }
+                )
+            )
+
+    # Combine both lists row-wise (like two independent tables side-by-side)
+    combined = []
+    max_len = max(len(goods_rows), len(job_rows))
+
+    for idx in range(max_len):
+        combined_row = frappe._dict()
+        if idx < len(goods_rows):
+            combined_row.update(goods_rows[idx])
+        if idx < len(job_rows):
+            combined_row.update(job_rows[idx])
+        combined.append(combined_row)
+
+    return combined
 
 
 def escape_html(text):
@@ -260,46 +462,40 @@ def generate_outward_table_rows(data):
     table_rows = ""
     if data:
         for row in data:
-            # Resultant products exported columns
-            removal_date = escape_html(str(row.get('receipt_date_time', '') or ''))
-            shipping_bill = escape_html(str(row.get('invoice_no_and_date', '') or ''))  # Using invoice as shipping bill
-            gst_invoice = escape_html(str(row.get('invoice_no_and_date', '') or ''))  # Same as shipping bill
-            description = escape_html(str(row.get('description_of_goods', '') or ''))
-            quantity = escape_html(str(row.get('quantity_with_uqc', '') or ''))
-            assessable_value = escape_html(fmt_money(row.get('assessable_value', 0) or 0, currency="INR")) if row.get('assessable_value') else ''
-            export_duty = "Nil"  # Export duty is typically Nil
-            tax_igst = "Nil"  # For exports, IGST is typically Nil
-            tax_comp_cess = "Nil"  # For exports, Comp cess is typically Nil
-            
-            # Warehoused goods columns (from original import data)
-            wh_description = escape_html(str(row.get('description_of_goods', '') or 'Nil'))
-            wh_quantity = escape_html(str(row.get('quantity_with_uqc', '') or 'Nil'))
-            wh_assessable_value = escape_html(fmt_money(row.get('assessable_value', 0) or 0, currency="INR")) if row.get('assessable_value') else 'Nil'
-            wh_duty_bcd = escape_html(fmt_money(row.get('duty_bcd', 0) or 0, currency="INR")) if row.get('duty_bcd') else 'Nil'
-            wh_duty_igst = escape_html(fmt_money(row.get('duty_igst', 0) or 0, currency="INR")) if row.get('duty_igst') else 'Nil'
-            wh_duty_comp_cess = escape_html(fmt_money(row.get('duty_comp_cess', 0) or 0, currency="INR")) if row.get('duty_comp_cess') else 'Nil'
-            
+            row = frappe._dict(row)
+
+            goods_date = str(row.get("goods_date_of_issue", "") or "")
+            goods_desc = str(row.get("goods_description", "") or "")
+            goods_qty = str(row.get("goods_quantity_with_uqc", "") or "")
+            goods_val = str(row.get("goods_value", "") or "")
+
+            job_date = str(row.get("job_removal_datetime", "") or "")
+            job_desc = str(row.get("job_description", "") or "")
+            job_qty = str(row.get("job_quantity_with_uqc", "") or "")
+            job_val = str(row.get("job_value", "") or "")
+
+            delivery_challan_no = str(row.get("delivery_challan_no", "") or "")
+            job_worker_details = str(row.get("job_worker_details", "") or "")
+            job_worker_gstin = str(row.get("job_worker_gstin", "") or "")
+
             table_rows += f"""
             <tr>
-                <td style="border: 1px solid #000; padding: 6px; text-align: left;">{removal_date}</td>
-                <td style="border: 1px solid #000; padding: 6px; text-align: left;">{shipping_bill}</td>
-                <td style="border: 1px solid #000; padding: 6px; text-align: left;">{gst_invoice}</td>
-                <td style="border: 1px solid #000; padding: 6px; text-align: left;">{description}</td>
-                <td style="border: 1px solid #000; padding: 6px; text-align: right;">{quantity}</td>
-                <td style="border: 1px solid #000; padding: 6px; text-align: right;">{assessable_value}</td>
-                <td style="border: 1px solid #000; padding: 6px; text-align: center;">{export_duty}</td>
-                <td style="border: 1px solid #000; padding: 6px; text-align: center;">{tax_igst}</td>
-                <td style="border: 1px solid #000; padding: 6px; text-align: center;">{tax_comp_cess}</td>
-                <td style="border: 1px solid #000; padding: 6px; text-align: left;">{wh_description}</td>
-                <td style="border: 1px solid #000; padding: 6px; text-align: right;">{wh_quantity}</td>
-                <td style="border: 1px solid #000; padding: 6px; text-align: right;">{wh_assessable_value}</td>
-                <td style="border: 1px solid #000; padding: 6px; text-align: right;">{wh_duty_bcd}</td>
-                <td style="border: 1px solid #000; padding: 6px; text-align: right;">{wh_duty_igst}</td>
-                <td style="border: 1px solid #000; padding: 6px; text-align: right;">{wh_duty_comp_cess}</td>
+                <td style="border: 1px solid #000; padding: 6px; text-align: left;">{escape_html(goods_date)}</td>
+                <td style="border: 1px solid #000; padding: 6px; text-align: left;">{escape_html(goods_desc)}</td>
+                <td style="border: 1px solid #000; padding: 6px; text-align: right;">{escape_html(goods_qty)}</td>
+                <td style="border: 1px solid #000; padding: 6px; text-align: right;">{escape_html(goods_val)}</td>
+
+                <td style="border: 1px solid #000; padding: 6px; text-align: left;">{escape_html(job_date)}</td>
+                <td style="border: 1px solid #000; padding: 6px; text-align: left;">{escape_html(job_desc)}</td>
+                <td style="border: 1px solid #000; padding: 6px; text-align: right;">{escape_html(job_qty)}</td>
+                <td style="border: 1px solid #000; padding: 6px; text-align: right;">{escape_html(job_val)}</td>
+                <td style="border: 1px solid #000; padding: 6px; text-align: left;">{escape_html(delivery_challan_no)}</td>
+                <td style="border: 1px solid #000; padding: 6px; text-align: left;">{escape_html(job_worker_details)}</td>
+                <td style="border: 1px solid #000; padding: 6px; text-align: left;">{escape_html(job_worker_gstin)}</td>
             </tr>
             """
     else:
-        table_rows = '<tr><td colspan="15" style="border: 1px solid #000; padding: 8px; text-align: center;">N/A</td></tr>'
+        table_rows = '<tr><td colspan="11" style="border: 1px solid #000; padding: 8px; text-align: center;">N/A</td></tr>'
     
     return table_rows
 
@@ -671,19 +867,33 @@ def get_data(filters):
                     
                     display_qty = qty
                 
-                if row.voucher_type == "Purchase Receipt":
-                    pr_data = get_purchase_receipt_data(row.voucher_no, display_qty, row.get('item_code'), show_outward)
-                    if pr_data:
-                        final_data.extend(pr_data)
-                        processed_vouchers.add(voucher_key)
-                
-                elif row.voucher_type == "Stock Entry":
-                    se_data = get_stock_entry_data(row, display_qty, show_outward)
-                    if se_data:
-                        # Only add first item from se_data to avoid duplicates
-                        # (get_stock_entry_data should already return deduplicated data)
-                        final_data.extend(se_data)
-                        processed_vouchers.add(voucher_key)
+                if show_outward:
+                    # For outward, handle Delivery Notes
+                    if row.voucher_type == "Delivery Note":
+                        dn_data = get_delivery_note_outward_data(row.voucher_no, display_qty, row.get('item_code'))
+                        if dn_data:
+                            final_data.extend(dn_data)
+                            processed_vouchers.add(voucher_key)
+                    elif row.voucher_type == "Stock Entry":
+                        se_data = get_stock_entry_data(row, display_qty, show_outward)
+                        if se_data:
+                            final_data.extend(se_data)
+                            processed_vouchers.add(voucher_key)
+                else:
+                    # For inward, handle Purchase Receipts and Stock Entries
+                    if row.voucher_type == "Purchase Receipt":
+                        pr_data = get_purchase_receipt_data(row.voucher_no, display_qty, row.get('item_code'), show_outward)
+                        if pr_data:
+                            final_data.extend(pr_data)
+                            processed_vouchers.add(voucher_key)
+                    
+                    elif row.voucher_type == "Stock Entry":
+                        se_data = get_stock_entry_data(row, display_qty, show_outward)
+                        if se_data:
+                            # Only add first item from se_data to avoid duplicates
+                            # (get_stock_entry_data should already return deduplicated data)
+                            final_data.extend(se_data)
+                            processed_vouchers.add(voucher_key)
                         
             except Exception as e:
                 frappe.log_error(f"Error processing row {row.get('voucher_no', 'unknown')}: {str(e)}")
@@ -692,6 +902,85 @@ def get_data(filters):
         return final_data
     except Exception as e:
         frappe.log_error(f"Error in import_receipt report: {str(e)}")
+        return []
+
+
+def get_delivery_note_outward_data(voucher_no, qty, item_code=None):
+    """Get outward/removal data from Delivery Note"""
+    try:
+        dn = frappe.get_doc("Delivery Note", voucher_no)
+        result = []
+        
+        # Get shipping bill from Delivery Note
+        shipping_bill = getattr(dn, 'custom_shipping_bill_no', None) or ""
+        shipping_bill_date = getattr(dn, 'custom_shipping_bill_date', None)
+        if shipping_bill_date:
+            shipping_bill_date = frappe.format(shipping_bill_date, {"fieldtype": "Date"})
+        shipping_bill_display = f"{shipping_bill} / {shipping_bill_date}" if shipping_bill else ""
+        
+        # GST Invoice from Delivery Note
+        gst_invoice = voucher_no
+        gst_invoice_date = frappe.format(dn.posting_date, {"fieldtype": "Date"})
+        gst_invoice_display = f"{gst_invoice} / {gst_invoice_date}"
+        
+        # Format removal date
+        removal_date = format_receipt_datetime(dn.posting_date, dn.posting_time)
+        
+        # Process each item in Delivery Note
+        for item in dn.items:
+            if item_code and item.item_code != item_code:
+                continue
+                
+            # Get batches used for this item
+            batches_data = get_batches_from_delivery_note_item(dn.name, item.name, item.item_code, item.qty)
+            
+            # For each batch, get raw material details from source document
+            all_raw_materials = []
+            for batch_row in batches_data:
+                raw_material_data = get_raw_material_from_batch(
+                    batch_row.get('batch_no'),
+                    batch_row.get('qty'),
+                    item.item_code,
+                    item.item_name,
+                    item.description,
+                    item.uom,
+                    dn.posting_date,
+                    dn.posting_time,
+                    dn.name
+                )
+                
+                if raw_material_data:
+                    all_raw_materials.extend(raw_material_data)
+            
+            # Create one row per raw material
+            if all_raw_materials:
+                for idx, rm_row in enumerate(all_raw_materials):
+                    # Mark if this is not the first row for this finished product
+                    rm_row['is_subsequent_row'] = (idx > 0)
+                    result.append(rm_row)
+            else:
+                # If no raw material data, create a row with Delivery Note details
+                result.append({
+                    "removal_date": removal_date,
+                    "shipping_bill": shipping_bill_display or gst_invoice_display,
+                    "gst_invoice": gst_invoice_display,
+                    "description": item.description or item.item_name or item.item_code,
+                    "quantity": format_quantity_with_uqc(qty, item.uom),
+                    "assessable_value": fmt_money(item.base_net_amount or 0, currency="INR"),
+                    "export_duty": "Nil",
+                    "tax_igst": "Nil",
+                    "tax_comp_cess": "Nil",
+                    "wh_description": "Nil",
+                    "wh_quantity": "Nil",
+                    "wh_assessable_value": "Nil",
+                    "wh_duty_bcd": "Nil",
+                    "wh_duty_igst": "Nil",
+                    "wh_duty_comp_cess": "Nil"
+                })
+        
+        return result
+    except Exception as e:
+        frappe.log_error(f"Error getting Delivery Note outward data: {str(e)}")
         return []
 
 
@@ -716,8 +1005,8 @@ def get_purchase_receipt_data(voucher_no, qty, item_code=None, is_outward=False)
             pr.bond_valid_till,
             pr.insurance_no,
             pr.insurance_date,
-            pr.custom_supplier_invoice_no,
-            pr.custom_supplier_invoice_date,
+            pr.supplier_invoice_no,
+            pr.supplier_invoice_date,
             pr.assessable_value_inr,
             pr.basic_custom_duty_inr,
             pr.tax_amount_inr,
@@ -757,7 +1046,7 @@ def get_purchase_receipt_data(voucher_no, qty, item_code=None, is_outward=False)
         insurance_details = format_insurance_details(row.insurance_no, row.insurance_date)
         
         # Format Invoice No. and date
-        invoice_display = format_invoice(row.custom_supplier_invoice_no, row.custom_supplier_invoice_date)
+        invoice_display = format_invoice(row.supplier_invoice_no, row.supplier_invoice_date)
         
         # Format Quantity with UQC - ALWAYS use the passed qty from stock ledger
         qty_display = format_quantity_with_uqc(qty, row.uom)
@@ -838,7 +1127,7 @@ def get_material_receipt_data(voucher_no, qty, item_code=None, is_outward=False)
             se.insurance_no,
             se.insurance_date,
             se.supplier_invoice_no,
-            se.custom_supplier_invoice_date,
+            se.supplier_invoice_date,
             se.assessable_value_inr,
             se.basic_custom_duty_inr,
             se.tax_amount_inr,
@@ -874,7 +1163,7 @@ def get_material_receipt_data(voucher_no, qty, item_code=None, is_outward=False)
                 row.bond_valid_till
             ) if any([row.bond_doc_type, row.bond_posting_date, row.bond_value_inr, row.bond_valid_till]) else "N/A"
             insurance_details = format_insurance_details(row.insurance_no, row.insurance_date) if any([row.insurance_no, row.insurance_date]) else "N/A"
-            invoice_display = format_invoice(row.supplier_invoice_no, row.custom_supplier_invoice_date) if any([row.supplier_invoice_no, row.custom_supplier_invoice_date]) else "N/A"
+            invoice_display = format_invoice(row.supplier_invoice_no, row.supplier_invoice_date) if any([row.supplier_invoice_no, row.supplier_invoice_date]) else "N/A"
         else:
             bill_of_entry_display = format_bill_of_entry(row.bill_of_entry, row.bill_of_entry_date)
             bond_details = format_bond_details(
@@ -884,7 +1173,7 @@ def get_material_receipt_data(voucher_no, qty, item_code=None, is_outward=False)
                 row.bond_valid_till
             )
             insurance_details = format_insurance_details(row.insurance_no, row.insurance_date)
-            invoice_display = format_invoice(row.supplier_invoice_no, row.custom_supplier_invoice_date)
+            invoice_display = format_invoice(row.supplier_invoice_no, row.supplier_invoice_date)
         
         # Format Quantity with UQC - ALWAYS use the passed qty from stock ledger
         qty_display = format_quantity_with_uqc(qty, row.uom)
@@ -1002,8 +1291,8 @@ def get_source_document_details(doctype, docname, qty, is_outward=False):
                 "bond_valid_till": getattr(doc, "bond_valid_till", None),
                 "insurance_no": getattr(doc, "insurance_no", None),
                 "insurance_date": getattr(doc, "insurance_date", None),
-                "custom_supplier_invoice_no": getattr(doc, "custom_supplier_invoice_no", None),
-                "custom_supplier_invoice_date": getattr(doc, "custom_supplier_invoice_date", None),
+                "supplier_invoice_no": getattr(doc, "supplier_invoice_no", None),
+                "supplier_invoice_date": getattr(doc, "supplier_invoice_date", None),
                 "assessable_value_inr": getattr(doc, "assessable_value_inr", None),
                 "basic_custom_duty_inr": getattr(doc, "basic_custom_duty_inr", None),
                 "tax_amount_inr": getattr(doc, "tax_amount_inr", None),
@@ -1027,7 +1316,7 @@ def get_source_document_details(doctype, docname, qty, is_outward=False):
                     row_data.bond_valid_till
                 )
                 insurance_details = format_insurance_details(row_data.insurance_no, row_data.insurance_date)
-                invoice_display = format_invoice(row_data.custom_supplier_invoice_no, row_data.custom_supplier_invoice_date)
+                invoice_display = format_invoice(row_data.supplier_invoice_no, row_data.supplier_invoice_date)
                 receipt_datetime = format_receipt_datetime(row_data.posting_date, row_data.posting_time)
                 
                 result.append({
@@ -1130,6 +1419,80 @@ def format_receipt_datetime(posting_date, posting_time=None):
         if posting_date:
             return frappe.format(posting_date, {'fieldtype': 'Date'})
     return ""
+
+
+def get_outward_columns():
+    """Get columns for outward/removals report"""
+    columns = [
+        {
+            "label": "Date of issue",
+            "fieldname": "goods_date_of_issue",
+            "fieldtype": "Data",
+            "width": 140,
+        },
+        {
+            "label": "Description of goods",
+            "fieldname": "goods_description",
+            "fieldtype": "Data",
+            "width": 200,
+        },
+        {
+            "label": "Quantity with UQC",
+            "fieldname": "goods_quantity_with_uqc",
+            "fieldtype": "Data",
+            "width": 140,
+        },
+        {
+            "label": "Value",
+            "fieldname": "goods_value",
+            "fieldtype": "Data",
+            "width": 120,
+        },
+        {
+            "label": "Date and time of removal",
+            "fieldname": "job_removal_datetime",
+            "fieldtype": "Data",
+            "width": 180,
+        },
+        {
+            "label": "Description of goods",
+            "fieldname": "job_description",
+            "fieldtype": "Data",
+            "width": 200,
+        },
+        {
+            "label": "Quantity with UQC",
+            "fieldname": "job_quantity_with_uqc",
+            "fieldtype": "Data",
+            "width": 140,
+        },
+        {
+            "label": "Value",
+            "fieldname": "job_value",
+            "fieldtype": "Data",
+            "width": 120,
+        },
+        {
+            "label": "Delivery Challan No.",
+            "fieldname": "delivery_challan_no",
+            "fieldtype": "Data",
+            "width": 160,
+        },
+        {
+            "label": "Details of Job worker",
+            "fieldname": "job_worker_details",
+            "fieldtype": "Data",
+            "width": 200,
+        },
+        {
+            "label": "GSTIN (if applicable)",
+            "fieldname": "job_worker_gstin",
+            "fieldtype": "Data",
+            "width": 160,
+        }
+    ]
+    
+    return columns
 
 
 def get_columns():

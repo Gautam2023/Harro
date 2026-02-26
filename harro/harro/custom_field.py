@@ -499,6 +499,12 @@ def create_custom_fields_on_migrate():
                 "insert_after": "bond_value_inr"
             },
             {
+                "fieldname": "transport_registration_no",
+                "label": "Registration No. of means of transport",
+                "fieldtype": "Data",
+                "insert_after": "bond_valid_till"
+            },
+            {
                 "fieldname": "vehicle_no",
                 "label": "Vehicle No",
                 "fieldtype": "Data",
@@ -707,6 +713,12 @@ def create_custom_fields_on_migrate():
                 "label": "Bond Valid Till",
                 "fieldtype": "Date",
                 "insert_after": "bond_value_inr"
+            },
+            {
+                "fieldname": "transport_registration_no",
+                "label": "Registration No. of means of transport",
+                "fieldtype": "Data",
+                "insert_after": "bond_valid_till"
             },
             {
                 "fieldname": "vehicle_no",

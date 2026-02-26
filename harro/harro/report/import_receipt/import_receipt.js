@@ -54,6 +54,8 @@ frappe.query_reports["Import Receipt"] = {
 				args: {
 					filters: report.get_filter_values()
 				},
+				freeze: true,
+				freeze_message: __("Generating print format..."),
 				callback: function(r) {
 					if (r.message) {
 						// Use Blob URL to avoid document.write() deprecation

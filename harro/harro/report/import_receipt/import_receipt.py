@@ -430,7 +430,6 @@ def generate_inward_table_rows(data):
             transport = escape_html(str(row.get('registration_no_transport', '') or ''))
             lock_no = escape_html(str(row.get('lock_no', '') or ''))
             receipt_dt = escape_html(str(row.get('receipt_date_time', '') or ''))
-            purchase_receipt = escape_html(str(row.get('purchase_receipt', '') or ''))
             
             table_rows += f"""
             <tr>
@@ -448,7 +447,6 @@ def generate_inward_table_rows(data):
                 <td style="border: 1px solid #000; padding: 6px; text-align: left;">{transport}</td>
                 <td style="border: 1px solid #000; padding: 6px; text-align: left;">{lock_no}</td>
                 <td style="border: 1px solid #000; padding: 6px; text-align: left;">{receipt_dt}</td>
-                <td style="border: 1px solid #000; padding: 6px; text-align: left;">{purchase_receipt}</td>
             </tr>
             """
     else:
@@ -1011,6 +1009,7 @@ def get_purchase_receipt_data(voucher_no, qty, item_code=None, is_outward=False)
             pr.basic_custom_duty_inr,
             pr.tax_amount_inr,
             pr.compensation_cess_inr,
+            pr.transport_registration_no,
             pr.vehicle_no,
             pr.lock_no,
             pr.posting_date,
@@ -1066,7 +1065,7 @@ def get_purchase_receipt_data(voucher_no, qty, item_code=None, is_outward=False)
             "duty_bcd": row.basic_custom_duty_inr or 0,
             "duty_igst": row.tax_amount_inr or 0,
             "duty_comp_cess": row.compensation_cess_inr or 0,
-            "registration_no_transport": row.vehicle_no or "",
+            "registration_no_transport": (getattr(row, "transport_registration_no", None) or row.vehicle_no or ""),
             "lock_no": row.lock_no or "",
             "receipt_date_time": receipt_datetime,
             "purchase_receipt": row.purchase_receipt,
@@ -1114,11 +1113,23 @@ def get_material_receipt_data(voucher_no, qty, item_code=None, is_outward=False)
         item_filter = "AND se_item.item_code = %s"
         params.append(item_code)
     
+    # Check if bill_of_entry exists in child table (Stock Entry Detail)
+    child_table_columns = frappe.db.get_table_columns("Stock Entry Detail")
+    has_bill_of_entry_in_child = "bill_of_entry" in child_table_columns
+    
+    # Build COALESCE for bill_of_entry if it exists in child table
+    # Handle empty strings by using NULLIF, then fall back to parent
+    bill_of_entry_select = (
+        "COALESCE(NULLIF(se_item.bill_of_entry, ''), se.bill_of_entry) as bill_of_entry"
+        if has_bill_of_entry_in_child
+        else "se.bill_of_entry"
+    )
+    
     se_data = frappe.db.sql(f"""
         SELECT
             se.name as stock_entry,
-            se.bill_of_entry,
-            se.bill_of_entry_date,
+            {bill_of_entry_select},
+            COALESCE(se_item.bill_of_entry_date, se.bill_of_entry_date) as bill_of_entry_date,
             se.port_code as customs_station,
             se.bond_doc_type,
             se.bond_posting_date,
@@ -1126,12 +1137,14 @@ def get_material_receipt_data(voucher_no, qty, item_code=None, is_outward=False)
             se.bond_valid_till,
             se.insurance_no,
             se.insurance_date,
-            se.supplier_invoice_no,
-            se.supplier_invoice_date,
+            COALESCE(NULLIF(se_item.supplier_invoice_no, ''), se.supplier_invoice_no) as supplier_invoice_no,
+            COALESCE(se_item.supplier_invoice_date, se.supplier_invoice_date) as supplier_invoice_date,
+            COALESCE(NULLIF(se_item.supplier, ''), se.supplier) as supplier,
             se.assessable_value_inr,
             se.basic_custom_duty_inr,
             se.tax_amount_inr,
             se.compensation_cess_inr,
+            se.transport_registration_no,
             se.vehicle_no,
             se.lock_no,
             se.posting_date,
@@ -1191,7 +1204,7 @@ def get_material_receipt_data(voucher_no, qty, item_code=None, is_outward=False)
             "duty_bcd": row.basic_custom_duty_inr or 0 if not is_outward else 0,
             "duty_igst": row.tax_amount_inr or 0 if not is_outward else 0,
             "duty_comp_cess": row.compensation_cess_inr or 0 if not is_outward else 0,
-            "registration_no_transport": row.vehicle_no or "",
+            "registration_no_transport": (getattr(row, "transport_registration_no", None) or row.vehicle_no or ""),
             "lock_no": row.lock_no or "",
             "receipt_date_time": receipt_datetime,
             "purchase_receipt": "",  # Stock Entry doesn't have Purchase Receipt
@@ -1297,6 +1310,7 @@ def get_source_document_details(doctype, docname, qty, is_outward=False):
                 "basic_custom_duty_inr": getattr(doc, "basic_custom_duty_inr", None),
                 "tax_amount_inr": getattr(doc, "tax_amount_inr", None),
                 "compensation_cess_inr": getattr(doc, "compensation_cess_inr", None),
+                "transport_registration_no": getattr(doc, "transport_registration_no", None),
                 "vehicle_no": getattr(doc, "vehicle_no", None),
                 "lock_no": getattr(doc, "lock_no", None),
                 "posting_date": getattr(doc, "posting_date", None),
@@ -1331,7 +1345,7 @@ def get_source_document_details(doctype, docname, qty, is_outward=False):
                     "duty_bcd": row_data.basic_custom_duty_inr or 0,
                     "duty_igst": row_data.tax_amount_inr or 0,
                     "duty_comp_cess": row_data.compensation_cess_inr or 0,
-                    "registration_no_transport": row_data.vehicle_no or "",
+                    "registration_no_transport": (row_data.transport_registration_no or row_data.vehicle_no or ""),
                     "lock_no": row_data.lock_no or "",
                     "receipt_date_time": receipt_datetime,
                     "purchase_receipt": docname if doctype == "Purchase Receipt" else ""

@@ -14,7 +14,16 @@
   {
    "fieldname": "card_number",
    "fieldtype": "Data",
-   "label": "Card Card Number"
+   "label": "Creditd Card Number"
+  },
+  {
+    "fieldname": "credit_card_account",
+    "fieldtype": "Link",
+    "options": "Account",
+    "label": "Credit Card Account",
+    "link_filters": {
+    "account_type": "Bank"
+    }
   },
   {
    "fieldname": "column_break_yawc",

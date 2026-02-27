@@ -377,6 +377,34 @@ def create_custom_fields_on_migrate():
                 "options" : "RM Batch details",
                 "read_only": 1,
                 "insert_after" : "description"
+            },
+            {
+                "fieldname": "rack",
+                "label": "Target Rack",
+                "fieldtype": "Link",
+                "options": "Rack",
+                "insert_after": "rm_batch_details"
+            },
+            {
+                "fieldname": "rejected_rack",
+                "label": "Rejected Rack",
+                "fieldtype": "Link",
+                "options": "Rack",
+                "insert_after": "rack"
+            },
+            {
+                "fieldname": "bin_location",
+                "label": "Target Bin Location",
+                "fieldtype": "Link",
+                "options": "Bin Location",
+                "insert_after": "rejected_rack"
+            },
+            {
+                "fieldname": "rejected_bin_location",
+                "label": "Rejected Bin Location",
+                "fieldtype": "Link",
+                "options": "Bin Location",
+                "insert_after": "bin_location"
             }
         ],
         "Purchase Receipt": [
@@ -756,7 +784,8 @@ def create_custom_fields_on_migrate():
                 "fieldtype": "Data",
                 "insert_after": "inspection_required",
                 "depends_on": "eval:doc.stock_entry_type == 'Send to Subcontractor'",
-                "reqd": 1
+                "mandatory_depends_on" : "eval:doc.stock_entry_type == 'Send to Subcontractor'",
+                "reqd": 0
             },
 
         ]

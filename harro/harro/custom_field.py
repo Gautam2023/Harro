@@ -408,7 +408,7 @@ def create_custom_fields_on_migrate():
                 "fieldname": "port_code",
                 "label": "Custom Station Of Import",
                 "fieldtype": "Link",
-                "options": "INNSA\nINMUM\nINDEL\nINMAA\nINKOL",
+                "options": "PORT CODE",
                 "insert_after": "iec_no"
             },
             {
@@ -630,7 +630,7 @@ def create_custom_fields_on_migrate():
                 "fieldname": "port_code",
                 "label": "Custom Station Of Import",
                 "fieldtype": "Link",
-                "options": "INNSA\nINMUM\nINDEL\nINMAA\nINKOL",
+                "options": "PORT CODE",
                 "insert_after": "iec_no"
             },
             {

@@ -1,0 +1,114 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "creation": "2026-01-16 13:23:14.110972",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "invoice_id",
+  "claimable_invoice_id",
+  "total_amount",
+  "paid_amount",
+  "vendor_name",
+  "service_type",
+  "column_break_oqud",
+  "outstanding_amount",
+  "claimed_amount",
+  "unclaimed_amount",
+  "status",
+  "profit"
+ ],
+ "fields": [
+  {
+   "columns": 1,
+   "fieldname": "invoice_id",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Invoice ID"
+  },
+  {
+   "fieldname": "claimable_invoice_id",
+   "fieldtype": "Data",
+   "label": "Claimable Invoice ID"
+  },
+  {
+   "columns": 1,
+   "fieldname": "total_amount",
+   "fieldtype": "Currency",
+   "in_list_view": 1,
+   "label": "Total Amount "
+  },
+  {
+   "columns": 1,
+   "fieldname": "paid_amount",
+   "fieldtype": "Currency",
+   "in_list_view": 1,
+   "label": "Paid Amount"
+  },
+  {
+   "fieldname": "vendor_name",
+   "fieldtype": "Link",
+   "label": "Vendor Name",
+   "options": "Supplier"
+  },
+  {
+   "fieldname": "service_type",
+   "fieldtype": "Link",
+   "label": "Service Type",
+   "link_filters": "[[\"Item\",\"is_stock_item\",\"=\",0]]",
+   "options": "Item"
+  },
+  {
+   "fieldname": "column_break_oqud",
+   "fieldtype": "Column Break"
+  },
+  {
+   "columns": 1,
+   "fieldname": "outstanding_amount",
+   "fieldtype": "Currency",
+   "in_list_view": 1,
+   "label": "Outstanding Amount"
+  },
+  {
+   "columns": 1,
+   "fieldname": "claimed_amount",
+   "fieldtype": "Currency",
+   "in_list_view": 1,
+   "label": "Claimed Amount"
+  },
+  {
+   "columns": 1,
+   "fieldname": "unclaimed_amount",
+   "fieldtype": "Currency",
+   "in_list_view": 1,
+   "label": "Unclaimed Amount"
+  },
+  {
+   "fieldname": "status",
+   "fieldtype": "Select",
+   "label": "Status",
+   "options": "\nPaid\nUnpaid"
+  },
+  {
+   "fieldname": "profit",
+   "fieldtype": "Currency",
+   "label": "Profit"
+  }
+ ],
+ "grid_page_length": 50,
+ "index_web_pages_for_search": 1,
+ "istable": 1,
+ "links": [],
+ "modified": "2026-02-26 11:07:45.869197",
+ "modified_by": "Administrator",
+ "module": "Harro",
+ "name": "Expense Details",
+ "owner": "Administrator",
+ "permissions": [],
+ "row_format": "Dynamic",
+ "rows_threshold_for_grid_search": 20,
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": []
+}

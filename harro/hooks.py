@@ -194,7 +194,8 @@ doc_events = {
         "validate" : "harro.harro.docevents.timesheet.validate",
     },
     "Project" : {
-        "validate" : "harro.harro.docevents.project.validate"
+        "validate" : "harro.harro.docevents.project.validate",
+        "before_insert" : "harro.harro.docevents.project.set_custom_title"
     },
     "Task" : {
         "validate" : "harro.harro.docevents.task.validate",

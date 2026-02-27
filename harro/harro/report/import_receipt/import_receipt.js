@@ -46,13 +46,16 @@ frappe.query_reports["Import Receipt"] = {
 		},
 	],
 	"onload": function(report) {
-		// Add print format button
+		var self = this;
+		
 		report.page.add_inner_button(__("Print Format"), function() {
 			frappe.call({
 				method: "harro.harro.report.import_receipt.import_receipt.get_print_format_html",
 				args: {
 					filters: report.get_filter_values()
 				},
+				freeze: true,
+				freeze_message: __("Generating print format..."),
 				callback: function(r) {
 					if (r.message) {
 						// Use Blob URL to avoid document.write() deprecation
@@ -88,5 +91,37 @@ frappe.query_reports["Import Receipt"] = {
 				}
 			});
 		});
+		
+		// Add Excel download button (shown when show_outward is checked)
+		var excelButton = report.page.add_inner_button(__("Download Excel"), function() {
+			frappe.call({
+				method: "harro.harro.report.import_receipt.import_receipt.export_outward_to_excel",
+				args: {
+					filters: report.get_filter_values()
+				},
+				freeze: true,
+				freeze_message: __("Preparing Excel file...")
+			});
+		});
+		
+		// Store button reference
+		self.excelButton = excelButton;
+		
+		// Initially hide the Excel button
+		if (excelButton && excelButton.length) {
+			excelButton.hide();
+		}
+	},
+	"refresh": function(report) {
+		var self = this;
+		// Show/hide Excel button based on show_outward filter value
+		var showOutward = report.get_filter_value("show_outward");
+		if (self.excelButton && self.excelButton.length) {
+			if (showOutward) {
+				self.excelButton.show();
+			} else {
+				self.excelButton.hide();
+			}
+		}
 	}
 };

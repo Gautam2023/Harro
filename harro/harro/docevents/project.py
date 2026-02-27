@@ -325,3 +325,17 @@ def get_all_project_nodes(project):
             result.append([parent_data, children_data])
     
     return result
+
+
+@frappe.whitelist()
+def set_custom_title(doc, method):
+    custom_ba_number = doc.custom_ba_number or ""
+    project_name = doc.project_name or ""
+
+    if custom_ba_number or project_name:
+        if custom_ba_number and project_name:
+            doc.custom_title = f"{custom_ba_number} - {project_name}"
+        else:
+            doc.custom_title = custom_ba_number or project_name
+    else:
+        doc.custom_title = ""

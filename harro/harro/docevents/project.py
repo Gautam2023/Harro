@@ -1,8 +1,106 @@
 import frappe
-from frappe.utils import flt
+from frappe.utils import flt, get_fullname
+
 
 def validate(self, method):
-    self.planned_manufacturing_hours = round(flt(self.planned_mechanical_assembly) + flt(self.planned_electrical_assembly), 2)
+    # Keep existing manufacturing hours calculation
+    self.planned_manufacturing_hours = round(
+        flt(self.planned_mechanical_assembly)
+        + flt(self.planned_electrical_assembly),
+        2,
+    )
+
+    # Trigger email when workflow state moves to "Approved"
+    try:
+        send_project_approval_email_if_required(self)
+    except Exception as e:
+        # Never block save if email fails; just log it
+        frappe.log_error(
+            message=frappe.get_traceback(),
+            title=f"Project approval email failed for {getattr(self, 'name', '')}: {e}",
+        )
+
+
+def send_project_approval_email_if_required(doc):
+    """Send welcome email to project stakeholders when workflow_state becomes 'Approved'."""
+    # Current state on the in-memory document
+    current_state = getattr(doc, "workflow_state", None)
+
+    # Only continue if current state is Approved
+    if current_state != "Approved":
+        return
+
+    # Get previous workflow_state from DB to ensure this is a transition
+    previous_state = None
+    if not doc.is_new():
+        previous_state = frappe.db.get_value("Project", doc.name, "workflow_state")
+
+    # If it was already Approved before, do nothing (avoid duplicate emails)
+    if previous_state == "Approved":
+        return
+
+    # Collect stakeholder emails from Project User child table (fields: user, custom_employee)
+    project_users = frappe.get_all(
+        "Project User",
+        filters={"parent": doc.name, "parenttype": "Project"},
+        fields=["user"],
+    )
+
+    user_ids = [row.user for row in project_users if row.get("user")]
+    if not user_ids:
+        return
+
+    recipient_emails = frappe.get_all(
+        "User",
+        filters={"name": ["in", user_ids], "enabled": 1},
+        pluck="email",
+    )
+    recipient_emails = [e for e in recipient_emails if e]
+
+    if not recipient_emails:
+        return
+
+    # Build dynamic values from Project
+    ba_number = getattr(doc, "custom_ba_number", None) or getattr(doc, "name", "")
+    # Try both standard and custom naming for machine type / BA type to be safe
+    machine_type = (
+        getattr(doc, "machine_type", None)
+        or getattr(doc, "custom_machine_type", None)
+        or ""
+    )
+    ba_type = (
+        getattr(doc, "ba_type", None)
+        or getattr(doc, "custom_ba_type", None)
+        or ""
+    )
+
+    # Approver (current session user)
+    approver_user = frappe.session.user
+    approver_name = get_fullname(approver_user) if approver_user else ""
+
+    subject = f"Welcome to Our New Project (BA Number: {ba_number})"
+
+    # Simple text/HTML hybrid body
+    message = f"""
+Hi All,<br><br>
+I am delighted to welcome you to our new project!<br><br>
+<b>Project Details:</b><br>
+BA Number: {ba_number}<br>
+Machine Type: {machine_type or 'N/A'}<br>
+BA Type: {ba_type or 'N/A'}<br><br>
+In the coming days, we will be holding our project stakeholder meeting, where we will discuss the timelines for each task. If you have any questions or ideas, please don’t hesitate to reach out.<br><br>
+Looking forward to a great collaboration!<br><br>
+Best regards,<br>
+{approver_name or approver_user}
+"""
+
+    frappe.sendmail(
+        recipients=recipient_emails,
+        subject=subject,
+        message=message,
+        reference_doctype="Project",
+        reference_name=doc.name,
+    )
 
 # This function is calculating a job card hours
 def calculate_productive_working_hours(project):

@@ -425,7 +425,6 @@ def get_all_project_nodes(project):
     return result
 
 
-@frappe.whitelist()
 def set_custom_title(doc, method):
     custom_ba_number = doc.custom_ba_number or ""
     project_name = doc.project_name or ""

@@ -11,8 +11,8 @@ def execute(filters=None):
 
 def get_columns():
     return [
-        {"label": "Travel Plan ID", "fieldname": "name", "fieldtype": "Link", "options": "Travel Planning", "width": 140},
         {"label": "Travel Request ID", "fieldname": "travel_request", "fieldtype": "Link", "options": "Travel Request", "width": 180},
+        {"label": "Travel Plan ID", "fieldname": "name", "fieldtype": "Link", "options": "Travel Planning", "width": 140},
         {"label": "Employee ID", "fieldname": "employee", "fieldtype": "Data", "width": 160},
         {"label": "Employee Name", "fieldname": "employee_name", "fieldtype": "Data", "width": 160},
 
@@ -24,26 +24,32 @@ def get_columns():
 
         {"label": "Onward Flight Cost", "fieldname": "onward_flight_cost", "fieldtype": "Currency"},
         {"label": "Return Flight Cost", "fieldname": "return_flight_cost", "fieldtype": "Currency"},
-        {"label": "Seat Charges", "fieldname": "seat_charges", "fieldtype": "Currency"},
-        {"label": "Hotel Cost", "fieldname": "hotel_coast", "fieldtype": "Currency"},
-        {"label": "Taxi Cost", "fieldname": "taxi_coast", "fieldtype": "Currency"},
-
-        {"label": "Total Amount", "fieldname": "total_amount", "fieldtype": "Currency"},
-        {"label": "Paid Amount", "fieldname": "paid_amount", "fieldtype": "Currency"},
-        {"label": "Outstanding Amount", "fieldname": "outstanding_amount", "fieldtype": "Currency"},
-
-        {"label": "Claimable Amount", "fieldname": "claimable_amount", "fieldtype": "Currency"},
-        {"label": "Non Claimable Amount", "fieldname": "unclaimed_amount", "fieldtype": "Currency"},
-
+        {"label": "Onward Flight cost as per Invoice", "fieldname": "custom_onward_flight_cost_as_per_invoice", "fieldtype": "Currency"},
+        {"label": "Retrun Flight cost as per Invoice", "fieldname": "custom_return_flight_cost_as_per_invoice", "fieldtype": "Currency"},
         {"label": "Flight Booking Status", "fieldname": "flight_booking_status", "fieldtype": "Data", "width": 160},
-        {"label": "Lodging Required", "fieldname": "lodging_required", "fieldtype": "Check", "width": 130},
-        {"label": "Hotel Booking Status", "fieldname": "hotel_booking_status", "fieldtype": "Data", "width": 160},
-        {"label": "Taxi Required", "fieldname": "taxi_required", "fieldtype": "Check", "width": 120},
+        {"label": "Reason for cancellation", "fieldname": "custom_reason_for_cancellation", "fieldtype": "Date", "width": 240},
+        {"label": "Reason for Reschduling", "fieldname": "custom_reason_for_rescheduling", "fieldtype": "Date", "width": 240},
+        {"label": "Flight Cancellation Charges", "fieldname": "custom_flight_cancellation_charges", "fieldtype": "Currency", "width": 210},
+        {"label": "Flight Refund Amount", "fieldname": "custom_flight_refund_amount", "fieldtype": "Currency", "width": 170},
         {"label": "Extra Baggage", "fieldname": "extra_baggage", "fieldtype": "Data", "width": 130},
+        {"label": "Baggage Cost", "fieldname": "baggage_cost", "fieldtype": "Currency", "width": 130},  
+        {"label": "Seat Charges", "fieldname": "seat_charges", "fieldtype": "Currency"},
 
-        {"label": "Baggage Cost", "fieldname": "baggage_cost", "fieldtype": "Currency", "width": 130},
+        {"label": "Stay Required", "fieldname": "lodging_required", "fieldtype": "Check", "width": 130},
+        {"label": "Hotel Cost per Day", "fieldname": "custom_hotel_cost_per_day", "fieldtype": "Currency", "width": 130},
+        {"label": "Total Hotel Charge", "fieldname": "custom_total_hotel_charge", "fieldtype": "Currency", "width": 130},
         {"label": "Hotel Name", "fieldname": "hotel_name", "fieldtype": "Data", "width": 180},
         {"label": "Room Night", "fieldname": "room_night", "fieldtype": "Int", "width": 110},
+        {"label": "Hotel Booking Status", "fieldname": "custom_hotel_booking_status", "fieldtype": "Data", "width": 110},
+        {"label": "Hotel Cancellation Charges", "fieldname": "custom_hotel_cancellation_charges", "fieldtype": "Currency", "width": 110},
+        {"label": "Hotel Refund Amount", "fieldname": "custom_hotel_refund_amount", "fieldtype": "Currency", "width": 110},
+        {"label": "Taxi Required", "fieldname": "taxi_required", "fieldtype": "Check", "width": 120},
+        {"label": "Taxi Cost", "fieldname": "taxi_coast", "fieldtype": "Currency"},
+        {"label": "Total Amount", "fieldname": "total_amount", "fieldtype": "Currency"},
+        {"label": "Paid Amount", "fieldname": "paid_amount", "fieldtype": "Currency"},
+        {"label": "Outstanding Amount", "fieldname": "outstanding_amount", "fieldtype": "Currency"},  
+        {"label": "Claimed Amount", "fieldname": "claimable_amount", "fieldtype": "Currency"},
+        {"label": "UnClaimed Amount", "fieldname": "unclaimed_amount", "fieldtype": "Currency"},   
 
     ]
 
@@ -92,6 +98,19 @@ def get_data(filters):
 			tped.custom_seat_charges AS seat_charges,
 			tped.hotel_coast,
 			tped.taxi_coast,
+            tped.custom_onward_flight_cost_as_per_invoice,
+            tped.custom_return_flight_cost_as_per_invoice,
+            tped.custom_reason_for_cancellation,
+            tped.custom_reason_for_rescheduling,
+            tped.custom_flight_cancellation_charges,
+            tped.custom_flight_refund_amount,
+            tped.extra_baggage,
+            tped.custom_hotel_cost_per_day,
+            tped.custom_total_hotel_charge,
+            tped.custom_hotel_cancellation_charges,
+            tped.custom_hotel_refund_amount,
+            tped.custom_claimable_expense as claimable_amount,
+            tped.custom_unclaimable_expense as unclaimed_amount,
             ed.total_amount,
 			ed.paid_amount,
             ed.outstanding_amount,
@@ -105,11 +124,16 @@ def get_data(filters):
             tped.baggage_coast AS baggage_cost,
             tped.room_night,
             tped.custom_hotel_name AS hotel_name
-		FROM `tabTravel Planning` tp
-		LEFT JOIN `tabTravel Planning Employee Details` tped ON tp.name = tped.parent
-        LEFT JOIN `tabExpense Details` ed ON ed.parent = tp.name
-        LEFT JOIN `tabTravel Request` tr ON tr.name = tped.travel_request
-        LEFT JOIN `tabTravel Itinerary` tri ON tri.name = tped.travel_request_itinerary
+		FROM 
+            `tabTravel Planning` tp
+		LEFT JOIN 
+            `tabTravel Planning Employee Details` tped ON tp.name = tped.parent
+        LEFT JOIN 
+            `tabExpense Details` ed ON ed.parent = tp.name
+        LEFT JOIN 
+            `tabTravel Request` tr ON tr.name = tped.travel_request
+        LEFT JOIN 
+            `tabTravel Itinerary` tri ON tri.name = tped.travel_request_itinerary
 		{condition_str}
 	""", values, as_dict=True)
 

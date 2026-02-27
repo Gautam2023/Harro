@@ -25,3 +25,4 @@ harro.patches.update_item_description_po
 harro.patches.update_extra_daysv2
 harro.patches.fix_travel_request_link
 harro.patches.add_supplier_fields_to_stock_entry_detail
+harro.patches.update_project_custom_title

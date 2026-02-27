@@ -414,6 +414,21 @@ def generate_inward_table_rows(data):
     """Generate table rows for inward/receipts report"""
     table_rows = ""
     if data:
+        # First pass: count how many rows belong to each Purchase Receipt.
+        # This is required to generate a single <td> for Assessable Value
+        # with the correct rowspan, so it visually merges across item rows.
+        pr_row_counts = {}
+        for row in data:
+            pr_name = row.get("purchase_receipt")
+            if pr_name:
+                pr_row_counts[pr_name] = pr_row_counts.get(pr_name, 0) + 1
+
+        # Track for which Purchase Receipt we've already rendered the
+        # Assessable Value <td> (with rowspan). Subsequent rows for the
+        # same PR will not render that cell at all, so the rowspan cell
+        # from the first row visually covers them.
+        rendered_assessable_for_pr = set()
+
         for row in data:
             bill_entry = escape_html(str(row.get('bill_of_entry_no_and_date', '') or ''))
             customs_station = escape_html(str(row.get('customs_station', '') or ''))
@@ -422,8 +437,39 @@ def generate_inward_table_rows(data):
             description = escape_html(str(row.get('description_of_goods', '') or ''))
             invoice = escape_html(str(row.get('invoice_no_and_date', '') or ''))
             quantity = escape_html(str(row.get('quantity_with_uqc', '') or ''))
-            # Format currency values and escape HTML
-            assessable_value = escape_html(fmt_money(row.get('assessable_value', 0) or 0, currency="INR")) if row.get('assessable_value') else ''
+            # Build Assessable Value cell with rowspan per Purchase Receipt
+            assessable_cell_html = ""
+            pr_name = row.get('purchase_receipt')
+            raw_assessable_value = row.get('assessable_value')
+
+            if raw_assessable_value:
+                if pr_name and pr_name in pr_row_counts:
+                    # Only render the cell once per Purchase Receipt, with rowspan
+                    if pr_name not in rendered_assessable_for_pr:
+                        rowspan = pr_row_counts.get(pr_name, 1)
+                        assessable_display = escape_html(
+                            fmt_money(raw_assessable_value or 0, currency="INR")
+                        )
+                        assessable_cell_html = (
+                            f'<td style="border: 1px solid #000; padding: 6px; '
+                            f'text-align: right;" rowspan="{rowspan}">{assessable_display}</td>'
+                        )
+                        rendered_assessable_for_pr.add(pr_name)
+                    else:
+                        # Subsequent rows for this PR rely on the rowspan cell,
+                        # so we do not render any <td> for this column here.
+                        assessable_cell_html = ""
+                else:
+                    # For non-Purchase-Receipt rows (e.g. Stock Entry), show normally
+                    assessable_display = escape_html(
+                        fmt_money(raw_assessable_value or 0, currency="INR")
+                    )
+                    assessable_cell_html = (
+                        f'<td style="border: 1px solid #000; padding: 6px; '
+                        f'text-align: right;">{assessable_display}</td>'
+                    )
+
+            # Format remaining duty values and escape HTML
             duty_bcd = escape_html(fmt_money(row.get('duty_bcd', 0) or 0, currency="INR")) if row.get('duty_bcd') else ''
             duty_igst = escape_html(fmt_money(row.get('duty_igst', 0) or 0, currency="INR")) if row.get('duty_igst') else ''
             duty_comp_cess = escape_html(fmt_money(row.get('duty_comp_cess', 0) or 0, currency="INR")) if row.get('duty_comp_cess') else ''
@@ -440,7 +486,7 @@ def generate_inward_table_rows(data):
                 <td style="border: 1px solid #000; padding: 6px; text-align: left;">{description}</td>
                 <td style="border: 1px solid #000; padding: 6px; text-align: left;">{invoice}</td>
                 <td style="border: 1px solid #000; padding: 6px; text-align: right;">{quantity}</td>
-                <td style="border: 1px solid #000; padding: 6px; text-align: right;">{assessable_value}</td>
+                {assessable_cell_html}
                 <td style="border: 1px solid #000; padding: 6px; text-align: right;">{duty_bcd}</td>
                 <td style="border: 1px solid #000; padding: 6px; text-align: right;">{duty_igst}</td>
                 <td style="border: 1px solid #000; padding: 6px; text-align: right;">{duty_comp_cess}</td>
@@ -829,6 +875,9 @@ def get_data(filters):
         final_data = []
         
         # Track processed vouchers to avoid duplicates
+        # NOTE: We only use this de-duplication for outward (removal) entries.
+        # For inward (imports) we must keep one row per Stock Ledger Entry item,
+        # so we do NOT skip potential duplicates there.
         processed_vouchers = set()
 
         # Check if outward goods filter is enabled
@@ -838,14 +887,14 @@ def get_data(filters):
             try:
                 row = frappe._dict(row)
                 
-                # Create a unique key for this transaction
-                voucher_key = f"{row.voucher_type}_{row.voucher_no}_{row.item_code}"
-                
-                # Skip if already processed
-                if voucher_key in processed_vouchers:
-                    continue
-                
                 if show_outward:
+                    # Create a unique key for this outward transaction
+                    voucher_key = f"{row.voucher_type}_{row.voucher_no}_{row.item_code}"
+                    
+                    # Skip if already processed for outward to avoid duplicates
+                    if voucher_key in processed_vouchers:
+                        continue
+
                     # Process outward quantities (removals from warehouse)
                     # Condition: out_qty < 1 (includes negative values and 0)
                     qty = row.out_qty
@@ -1033,13 +1082,8 @@ def get_purchase_receipt_data(voucher_no, qty, item_code=None, is_outward=False)
         # Format Bill of Entry No. and date
         bill_of_entry_display = format_bill_of_entry(row.bill_of_entry, row.bill_of_entry_date)
         
-        # Format Bond details
-        bond_details = format_bond_details(
-            row.bond_doc_type,
-            row.bond_posting_date,
-            row.bond_value_inr,
-            row.bond_valid_till
-        )
+        # Details of Bond should come directly from bond_doc_type field
+        bond_details = row.bond_doc_type or ""
         
         # Format Insurance details
         insurance_details = format_insurance_details(row.insurance_no, row.insurance_date)
@@ -1169,22 +1213,14 @@ def get_material_receipt_data(voucher_no, qty, item_code=None, is_outward=False)
             # For outward, import receipt fields should come from source document
             # But the quantity should ALWAYS come from stock ledger (qty parameter)
             bill_of_entry_display = format_bill_of_entry(row.bill_of_entry, row.bill_of_entry_date) if row.bill_of_entry else "N/A"
-            bond_details = format_bond_details(
-                row.bond_doc_type,
-                row.bond_posting_date,
-                row.bond_value_inr,
-                row.bond_valid_till
-            ) if any([row.bond_doc_type, row.bond_posting_date, row.bond_value_inr, row.bond_valid_till]) else "N/A"
+            # Details of Bond should come directly from bond_doc_type field
+            bond_details = row.bond_doc_type or ""
             insurance_details = format_insurance_details(row.insurance_no, row.insurance_date) if any([row.insurance_no, row.insurance_date]) else "N/A"
             invoice_display = format_invoice(row.supplier_invoice_no, row.supplier_invoice_date) if any([row.supplier_invoice_no, row.supplier_invoice_date]) else "N/A"
         else:
             bill_of_entry_display = format_bill_of_entry(row.bill_of_entry, row.bill_of_entry_date)
-            bond_details = format_bond_details(
-                row.bond_doc_type,
-                row.bond_posting_date,
-                row.bond_value_inr,
-                row.bond_valid_till
-            )
+            # Details of Bond should come directly from bond_doc_type field
+            bond_details = row.bond_doc_type or ""
             insurance_details = format_insurance_details(row.insurance_no, row.insurance_date)
             invoice_display = format_invoice(row.supplier_invoice_no, row.supplier_invoice_date)
         
@@ -1323,12 +1359,8 @@ def get_source_document_details(doctype, docname, qty, is_outward=False):
             # Check if any import receipt fields exist
             if any([row_data.bill_of_entry, row_data.bill_of_entry_date, row_data.assessable_value_inr]):
                 bill_of_entry_display = format_bill_of_entry(row_data.bill_of_entry, row_data.bill_of_entry_date)
-                bond_details = format_bond_details(
-                    row_data.bond_doc_type,
-                    row_data.bond_posting_date,
-                    row_data.bond_value_inr,
-                    row_data.bond_valid_till
-                )
+                # Details of Bond should come directly from bond_doc_type field
+                bond_details = row_data.bond_doc_type or ""
                 insurance_details = format_insurance_details(row_data.insurance_no, row_data.insurance_date)
                 invoice_display = format_invoice(row_data.supplier_invoice_no, row_data.supplier_invoice_date)
                 receipt_datetime = format_receipt_datetime(row_data.posting_date, row_data.posting_time)

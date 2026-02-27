@@ -406,8 +406,8 @@ def create_custom_fields_on_migrate():
             },
             {
                 "fieldname": "port_code",
-                "label": "Port Code",
-                "fieldtype": "Select",
+                "label": "Custom Station Of Import",
+                "fieldtype": "Link",
                 "options": "INNSA\nINMUM\nINDEL\nINMAA\nINKOL",
                 "insert_after": "iec_no"
             },
@@ -475,8 +475,8 @@ def create_custom_fields_on_migrate():
             },
             {
                 "fieldname": "bond_doc_type",
-                "label": "Bond Document Type",
-                "fieldtype": "Select",
+                "label": "Details of Bond",
+                "fieldtype": "Data",
                 "options": "Sea\nAir",
                 "insert_after": "bill_of_entry_date"
             },
@@ -526,7 +526,7 @@ def create_custom_fields_on_migrate():
                 "fieldname": "lock_no",
                 "label": "One-time Lock No",
                 "fieldtype": "Data",
-                "insert_after": "transporter_gst"
+                "insert_after": "transport_registration_no"
             },
         ],
         "Expense Details" :[
@@ -628,8 +628,8 @@ def create_custom_fields_on_migrate():
             },
             {
                 "fieldname": "port_code",
-                "label": "Port Code",
-                "fieldtype": "Select",
+                "label": "Custom Station Of Import",
+                "fieldtype": "Link",
                 "options": "INNSA\nINMUM\nINDEL\nINMAA\nINKOL",
                 "insert_after": "iec_no"
             },
@@ -691,8 +691,8 @@ def create_custom_fields_on_migrate():
             },
             {
                 "fieldname": "bond_doc_type",
-                "label": "Bond Document Type",
-                "fieldtype": "Select",
+                "label": "Details of Bond",
+                "fieldtype": "Data",
                 "options": "Sea\nAir",
                 "insert_after": "bill_of_entry_date"
             },
@@ -748,7 +748,7 @@ def create_custom_fields_on_migrate():
                 "fieldname": "lock_no",
                 "label": "One-time Lock No",
                 "fieldtype": "Data",
-                "insert_after": "transporter_gst"
+                "insert_after": "transport_registration_no"
             },
             {
                 "fieldname": "delivery_challan_no",

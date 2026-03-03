@@ -6,18 +6,38 @@ def on_submit(self, method):
         return
 
     # ======================================================
-    # PURCHASE RECEIPT → update invoice & BOE in Batch
+    # PURCHASE RECEIPT → update invoice, BOE & location fields in Batch
     # ======================================================
     if self.voucher_type == "Purchase Receipt":
 
-        invoice_no, bill_of_entry = frappe.db.get_value(
+        pr_item = frappe.db.get_value(
             "Purchase Receipt Item",
             self.voucher_detail_no,
-            ["invoice_no", "bill_of_entry"]
+            [
+                "invoice_no",
+                "bill_of_entry",
+                "rack",
+                "rejected_rack",
+                "bin_location",
+                "rejected_bin_location",
+            ],
+            as_dict=1,
         )
 
-        if invoice_no or bill_of_entry:
-            _update_batches(self.entries, invoice_no, bill_of_entry)
+        update_data = {}
+        if pr_item:
+            if pr_item.get("invoice_no"):
+                update_data["invoice_no"] = pr_item.get("invoice_no")
+            if pr_item.get("bill_of_entry"):
+                update_data["bill_of_entry"] = pr_item.get("bill_of_entry")
+
+            # New rack / bin fields copied from Purchase Receipt Item to Batch
+            for field in ["rack", "rejected_rack", "bin_location", "rejected_bin_location"]:
+                if pr_item.get(field):
+                    update_data[field] = pr_item.get(field)
+
+        if update_data:
+            _update_batches(self.entries, update_data)
 
         return
 
@@ -34,18 +54,37 @@ def on_submit(self, method):
         )
 
         # ------------------------------------------------------
-        # Material Receipt → update invoice & BOE
+        # Material Receipt → update invoice, BOE & location fields in Batch
         # ------------------------------------------------------
         if stock_entry_type == "Material Receipt":
 
-            invoice_no, bill_of_entry = frappe.db.get_value(
+            se_item = frappe.db.get_value(
                 "Stock Entry Detail",
                 self.voucher_detail_no,
-                ["invoice_no", "bill_of_entry"]
+                [
+                    "invoice_no",
+                    "bill_of_entry",
+                    "rack",
+                    "rejected_rack",
+                    "bin_location",
+                    "rejected_bin_location",
+                ],
+                as_dict=1,
             )
 
-            if invoice_no or bill_of_entry:
-                _update_batches(self.entries, invoice_no, bill_of_entry)
+            update_data = {}
+            if se_item:
+                if se_item.get("invoice_no"):
+                    update_data["invoice_no"] = se_item.get("invoice_no")
+                if se_item.get("bill_of_entry"):
+                    update_data["bill_of_entry"] = se_item.get("bill_of_entry")
+
+                for field in ["rack", "rejected_rack", "bin_location", "rejected_bin_location"]:
+                    if se_item.get(field):
+                        update_data[field] = se_item.get(field)
+
+            if update_data:
+                _update_batches(self.entries, update_data)
 
             return
 
@@ -66,12 +105,8 @@ def on_submit(self, method):
 # Helpers (clean & reusable)
 # =========================================================
 
-def _update_batches(entries, invoice_no, bill_of_entry):
-    update_data = {
-        "invoice_no": invoice_no,
-        "bill_of_entry": bill_of_entry
-    }
-
+def _update_batches(entries, update_data):
+    """Update Batch records linked in bundle entries with given field values."""
     for row in entries:
         if row.batch_no:
             frappe.db.set_value(

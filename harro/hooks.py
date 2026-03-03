@@ -163,6 +163,7 @@ override_doctype_class = {
     "Job Card" : "harro.harro.override.job_card.CustomJobCard",
     "Purchase Invoice" : "harro.harro.override.purchase_invoice.CustomPurchaseInvoice",
     "Purchase Receipt" : "harro.harro.override.purchase_receipt.CustomPurchaseReceipt",
+    "Payment Request" : "harro.harro.override.payment_request.CustomPaymentRequest"
 }
 
 # Document Events
@@ -215,9 +216,6 @@ doc_events = {
     "Travel Request" : {
         "on_update" : "harro.harro.docevents.travel_request.on_update"
     },
-    "Payment Entry" : {
-        "before_insert": "harro.harro.docevents.payment_entry.set_company_contact_from_pi"
-    },
     "Serial and Batch Bundle" : {
         "on_submit" : "harro.harro.docevents.purchase_receipt.on_submit"
     },
@@ -226,6 +224,9 @@ doc_events = {
     },
     "Purchase Receipt" : {
         "after_insert" : "harro.harro.docevents.purchase_receipt.email_notification"
+    },
+    "Payment Entry": {
+        "on_submit": "harro.harro.docevents.payment_entry.send_email_to_company_contact"
     }
 }
 
@@ -284,6 +285,7 @@ override_whitelisted_methods = {
     "erpnext.buying.doctype.purchase_order.purchase_order.make_purchase_receipt": "harro.harro.override.purchase_order.make_purchase_receipt",
     "erpnext.manufacturing.doctype.bom.bom.get_bom_diff" : "harro.harro.docevents.bom.get_bom_diff",
     "hrms.hr.doctype.expense_claim.expense_claim.get_expense_claim" : "harro.harro.override.employee_advance.get_expense_claim",
+    "erpnext.accounts.doctype.payment_entry.payment_entry.get_payment_entry": "harro.harro.override.payment_entry.get_payment_entry",
 }
 #
 # each overriding function accepts a `data` argument;

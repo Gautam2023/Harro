@@ -19,7 +19,6 @@ from erpnext.stock.utils import (
 
 
 def execute(filters=None):
-	frappe.throw("Harro override of Stock Ledger report is not implemented yet")
 	is_reposting_item_valuation_in_progress()
 	include_uom = filters.get("include_uom")
 	columns = get_columns(filters)

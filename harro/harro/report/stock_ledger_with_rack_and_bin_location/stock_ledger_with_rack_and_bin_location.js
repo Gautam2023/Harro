@@ -1,6 +1,5 @@
 // Copyright (c) 2026, Fosserp and contributors
 // For license information, please see license.txt
-
 frappe.query_reports["Stock Ledger With Rack and Bin location"] = {
 	filters: [
 		{
@@ -121,7 +120,7 @@ frappe.query_reports["Stock Ledger With Rack and Bin location"] = {
 			fieldname: "segregate_serial_batch_bundle",
 			label: __("Segregate Serial / Batch Bundle"),
 			fieldtype: "Check",
-			default: 0,
+			default: 1,
 		},
 	],
 	formatter: function (value, row, column, data, default_formatter) {
@@ -142,4 +141,40 @@ frappe.query_reports["Stock Ledger With Rack and Bin location"] = {
 		});
 	},
 };
-erpnext.utils.add_inventory_dimensions("Stock Ledger", 10);
+
+function add_inventory_dimensions (report_name, index) {
+	let filters = frappe.query_reports[report_name].filters;
+
+	frappe.call({
+		method: "erpnext.stock.doctype.inventory_dimension.inventory_dimension.get_inventory_dimensions",
+		callback: function (r) {
+			if (r.message && r.message.length) {
+				r.message.forEach((dimension) => {
+					let existing_filter = filters.filter((el) => el.fieldname === dimension["fieldname"]);
+
+					if (!existing_filter.length) {
+						filters.splice(index, 0, {
+							fieldname: dimension["fieldname"],
+							label: __(dimension["doctype"]),
+							fieldtype: "MultiSelectList",
+							depends_on:
+								report_name === "Stock Balance"
+									? "eval:doc.show_dimension_wise_stock === 1"
+									: "",
+							get_data: function (txt) {
+								return frappe.db.get_link_options(dimension["doctype"], txt);
+							},
+						});
+					} else {
+						existing_filter[0]["fieldtype"] = "MultiSelectList";
+						existing_filter[0]["get_data"] = function (txt) {
+							return frappe.db.get_link_options(dimension["doctype"], txt);
+						};
+					}
+				});
+			}
+		},
+	});
+}
+
+add_inventory_dimensions("Stock Ledger With Rack and Bin location", 10);

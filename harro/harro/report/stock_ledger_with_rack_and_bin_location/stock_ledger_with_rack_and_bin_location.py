@@ -1,11 +1,13 @@
 # Copyright (c) 2015, Frappe Technologies Pvt. Ltd. and Contributors
 # License: GNU General Public License v3. See license.txt
-# Harro override: Add Rack and Bin Location for outward entries when Segregate Serial/Batch Bundle is checked
+# Harro: Add Rack and Bin Location for outward entries when Segregate Serial/Batch Bundle is checked
 
 import copy
+from collections import defaultdict
 
 import frappe
 from frappe import _
+from frappe.query_builder.functions import CombineDatetime, Sum
 from frappe.utils import cint, flt, get_datetime
 
 from erpnext.stock.doctype.inventory_dimension.inventory_dimension import get_inventory_dimensions
@@ -559,6 +561,27 @@ def get_item_details(items, sl_entries, include_uom):
 		item_details.setdefault(item.name, item)
 
 	return item_details
+
+
+# TODO: THIS IS NOT USED
+def get_sle_conditions(filters):
+	conditions = []
+	if filters.get("warehouse"):
+		warehouse_condition = get_warehouse_condition(filters.get("warehouse"))
+		if warehouse_condition:
+			conditions.append(warehouse_condition)
+	if filters.get("voucher_no"):
+		conditions.append("voucher_no=%(voucher_no)s")
+	if filters.get("batch_no"):
+		conditions.append("batch_no=%(batch_no)s")
+	if filters.get("project"):
+		conditions.append("project=%(project)s")
+
+	for dimension in get_inventory_dimensions():
+		if filters.get(dimension.fieldname):
+			conditions.append(f"{dimension.fieldname} in %({dimension.fieldname})s")
+
+	return "and {}".format(" and ".join(conditions)) if conditions else ""
 
 
 def get_opening_balance_from_batch(filters, columns, sl_entries):

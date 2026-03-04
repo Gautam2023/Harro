@@ -34,8 +34,8 @@ def send_attachment_emails(docname):
     attachment_fields = [
         "custom_evisa",
         "custom_travel_insurance",
-        "custom_flight_ticket",
-        "custom_hotel_voucher"
+        "custom_flight_bill",
+        "custom_taxi_bill"
     ]
 
     for row in doc.travel_itinerary:

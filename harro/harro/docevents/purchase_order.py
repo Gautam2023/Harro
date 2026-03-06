@@ -113,9 +113,26 @@ def validate(self, method):
                 frappe.throw(
                     f"Row #{item.idx}: Quantity is {item.qty} but you entered {serial_count} serial numbers."
                 )
+    validate_material_request_qty(self, method)
 
 @frappe.whitelist()
 def get_company_contact():
 	user = frappe.session.user
 	user_id = frappe.db.exists("Contact", {"user": user})
 	return user_id
+
+
+def validate_material_request_qty(doc, method):
+    if doc.items:
+        for item in doc.items:
+            if not item.material_request or not item.material_request_item:
+                continue
+
+            mr_item = frappe.get_doc("Material Request Item", item.material_request_item)
+
+            if item.qty < mr_item.qty:
+                frappe.throw(
+                    _("Quantity mismatch for Item {0} in Material Request {1}. MR Qty: {2}, PO Qty: {3}").format(
+                        item.item_code, item.material_request, mr_item.qty, item.qty
+                    )
+                )

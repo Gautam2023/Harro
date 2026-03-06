@@ -38,6 +38,9 @@ def create_travel_plan(names):
 		# 			get_link_to_form('Travel Request', req)
 		# 		)
 		# 	)
+		if tr_doc.docstatus == 0:
+			tr_doc.workflow_state = "Trip Planned"
+			tr_doc.save(ignore_permissions=True)
 
 		if len(tr_doc.itinerary):
 			for tr in tr_doc.itinerary:

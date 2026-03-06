@@ -62,7 +62,7 @@ def send_attachment_emails(docname):
                 <b>Employee:</b> {row.employee_name}<br><br>
 
                 Regards,<br>
-                <b>HR Team</b>
+                <b>Travel Team</b>
             """,
             attachments=attachments,
             reference_doctype=doc.doctype,

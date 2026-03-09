@@ -65,8 +65,8 @@ def extract_bom_item_data(file_path, bom_c):
     for i, row in enumerate(data):
         if not row.get("Artikel") or row.get("Artikel") =="None" or row.get("Artikel") == '':
             continue
-        artikel = row.get("Artikel")
-        baugruppe = row.get("Baugruppe")
+        artikel = clean_excel(row.get("Artikel"))
+        baugruppe = clean_excel(row.get("Baugruppe"))
         menge = row.get("Menge")
         mengeneinheit = row.get("Mengeneinheit")
         StrukturklasseKopf = row.get("StrukturklasseKopf")
@@ -345,3 +345,9 @@ def update_correct_item_group_and_other_data(item, row, structureclass=None):
         description = description + "<p>" + value + "</p>"
     description += "</div>"
     frappe.db.set_value("Item", item, "description", description)
+
+
+def clean_excel(val):
+    if val is None:
+        return None
+    return str(val).strip()

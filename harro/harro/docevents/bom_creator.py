@@ -65,8 +65,8 @@ def extract_bom_item_data(file_path, bom_c):
     for i, row in enumerate(data):
         if not row.get("Artikel") or row.get("Artikel") =="None" or row.get("Artikel") == '':
             continue
-        artikel = row.get("Artikel")
-        baugruppe = row.get("Baugruppe")
+        artikel = str(row.get("Artikel")).strip()
+        baugruppe = str(row.get("Baugruppe")).strip() if row.get("Baugruppe") else ""
         menge = row.get("Menge")
         mengeneinheit = row.get("Mengeneinheit")
         StrukturklasseKopf = row.get("StrukturklasseKopf")
@@ -78,9 +78,9 @@ def extract_bom_item_data(file_path, bom_c):
                 uom = stock_uom
         
         # Create Item if it doesn't exist
-        if not frappe.db.exists("Item", artikel ):
+        if not frappe.db.exists("Item", artikel):
             create_item(artikel, row, uom, structureclass=StrukturklassePos)
-        if not frappe.db.exists("Item", baugruppe ):
+        if baugruppe and not frappe.db.exists("Item", baugruppe):
             create_item(baugruppe, row, uom=None, structureclass=StrukturklasseKopf)
 
         update_correct_item_group_and_other_data(artikel, row, structureclass=StrukturklassePos)
@@ -105,8 +105,11 @@ def extract_bom_item_data(file_path, bom_c):
     doc.save()
 
 
-def create_item(item, row, uom=None, structureclass= None):
-    Teilegruppe =  str(row.get("Commodity Group") or row.get("commodity group") or row.get("Teilegruppe") or row.get("teilegruppe"))
+def create_item(item, row, uom=None, structureclass=None):
+    item = str(item).strip() if item is not None else ""
+    if not item:
+        return
+    Teilegruppe = str(row.get("Commodity Group") or row.get("commodity group") or row.get("Teilegruppe") or row.get("teilegruppe"))
     custom_teilegruppe = Teilegruppe.replace(".0",'')
 
     if item_groups := frappe.db.sql(f"""Select name From `tabItem Group` where  custom_teilegruppe = '{custom_teilegruppe}' """, as_dict=1):

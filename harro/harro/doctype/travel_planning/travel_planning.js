@@ -27,8 +27,48 @@ frappe.ui.form.on("Travel Planning", {
                 });
             }, __("Create"));
         }
-	}
+	},
+    custom_total_income_from_customer: function(frm) {
+        calculate_profit(frm);
+    },
+    custom_total_expense: function(frm) {
+        calculate_profit(frm);
+    }
 });
+
+function calculate_profit(frm) {
+
+    let income = frm.doc.custom_total_income_from_customer || 0;
+    let expense = frm.doc.custom_total_expense || 0;
+
+    let profit = income - expense;
+
+    frm.set_value("custom_profit", profit);
+    set_profit_color(frm);
+}
+
+function set_profit_color(frm) {
+
+    let profit = frm.doc.custom_profit || 0;
+
+    if (!frm.fields_dict.custom_profit) return;
+
+    if (profit > 0) {
+        frm.fields_dict.custom_profit.$wrapper
+            .find("input")
+            .css({"color": "green", "font-weight": "bold"});
+    } 
+    else if (profit < 0) {
+        frm.fields_dict.custom_profit.$wrapper
+            .find("input")
+            .css({"color": "red", "font-weight": "bold"});
+    } 
+    else {
+        frm.fields_dict.custom_profit.$wrapper
+            .find("input")
+            .css({"color": "", "font-weight": ""});
+    }
+}
 
 frappe.ui.form.on("Travel Planning Employee Details" , {
     travel_request(frm, cdt, cdn) {

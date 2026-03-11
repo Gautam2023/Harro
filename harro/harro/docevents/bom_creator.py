@@ -348,3 +348,9 @@ def update_correct_item_group_and_other_data(item, row, structureclass=None):
         description = description + "<p>" + value + "</p>"
     description += "</div>"
     frappe.db.set_value("Item", item, "description", description)
+
+
+def clean_excel(val):
+    if val is None:
+        return None
+    return str(val).strip()

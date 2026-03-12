@@ -214,7 +214,10 @@ doc_events = {
         "validate" : "harro.harro.docevents.employee.on_employee_update"
     },
     "Travel Request" : {
-        "on_update" : "harro.harro.docevents.travel_request.on_update"
+        "on_update" : [
+            "harro.harro.docevents.travel_request.on_update",
+            "harro.harro.docevents.travel_request.sync_travel_planning_from_travel_request"
+        ],
     },
     "Serial and Batch Bundle" : {
         "on_submit" : "harro.harro.docevents.purchase_receipt.on_submit"
@@ -227,6 +230,9 @@ doc_events = {
     },
     "Payment Entry": {
         "on_submit": "harro.harro.docevents.payment_entry.send_email_to_company_contact"
+    },
+    "Travel Planning": {
+        "on_update": "harro.harro.api.sync_booking_status_to_travel_request"
     }
 }
 

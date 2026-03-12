@@ -34,8 +34,21 @@ frappe.ui.form.on("Travel Planning", {
     },
     custom_total_expense: function(frm) {
         calculate_profit(frm);
+    },
+    custom_total_unclaimable_expense: function(frm) {
+        calculate_total_expense(frm)
+    },
+    custom_total_claimable_expense: function(frm) {
+        calculate_total_expense(frm)
     }
 });
+
+function calculate_total_expense(frm) {
+    let claimable = frm.doc.custom_total_claimable_expense;
+    let unclaimable = frm.doc.custom_total_unclaimable_expense;
+    let total_expense = claimable + unclaimable
+    frm.set_value("custom_total_expense" ,total_expense)
+}
 
 function calculate_profit(frm) {
 
@@ -94,6 +107,39 @@ frappe.ui.form.on("Travel Planning Employee Details" , {
     },
     room_night: function(frm, cdt, cdn) {
         calculate_total_hotel_charge(frm, cdt, cdn)
+    },
+    custom_create_purchase_invoice_flight: function(frm, cdt, cdn) {
+        let row = locals[cdt][cdn];
+
+        frappe.call({
+            method: "harro.harro.docevents.travel_planning.get_flight_purchase_invoice_defaults",
+            args: {
+                employee_row: row,
+                travel_doc: frm.doc.name
+            },
+            callback: function(r) {
+                if (r.message) {
+                    frappe.set_route('Form', 'Purchase Invoice', r.message);
+                }
+            }
+        });
+    },
+
+    custom_create_purchase_invoice_hotel: function(frm, cdt, cdn) {
+        let row = locals[cdt][cdn];
+
+        frappe.call({
+            method: "harro.harro.docevents.travel_planning.get_hotel_purchase_invoice_defaults",
+            args: {
+                employee_row: row,
+                travel_doc: frm.doc.name
+            },
+            callback: function(r) {
+                if (r.message) {
+                    frappe.set_route('Form', 'Purchase Invoice', r.message);
+                }
+            }
+        });
     }
 });
 

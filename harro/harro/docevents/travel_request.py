@@ -129,7 +129,8 @@ def sync_travel_planning_from_travel_request(doc, method=None):
 
             update_values = {
                 "custom_flight_booking_status": tr_row.custom_flight_booking_status,
-                "custom_hotel_booking_status": tr_row.custom_hotel_booking_status
+                "custom_hotel_booking_status": tr_row.custom_hotel_booking_status,
+                "custom_status": tr_row.custom_status
             }
 
             if tr_row.custom_flight_booking_status == "Rescheduled":

@@ -93,3 +93,114 @@ def create_travel_plan(names):
 		msg += "</ul>"
 
 	frappe.msgprint(msg)
+
+
+
+@frappe.whitelist()
+def get_flight_purchase_invoice_defaults(employee_row, travel_doc):
+    import json
+
+    if isinstance(employee_row, str):
+        employee_row = json.loads(employee_row)
+
+    row = frappe._dict(employee_row)
+
+    ba_number = frappe.get_value("Travel Planning", travel_doc, "ba_number")
+
+    mandatory_fields = {
+        "Vendor Name": row.get("custom_flight_booking_vendor"),
+        "Bill No": row.get("custom_flight_invoice_id"),
+        "BA Number": ba_number,
+        "Service Type": row.get("custom_service_type"),
+        "Total Amount": row.get("custom_total_flight_cost_as_per_invoice")
+    }
+
+    missing_fields = [field for field, value in mandatory_fields.items() if not value]
+
+    if missing_fields:
+        frappe.throw(f"Mandatory field(s) missing: {', '.join(missing_fields)}")
+
+    doc = frappe.get_doc({
+        "doctype": "Purchase Invoice",
+        "supplier": row.custom_flight_booking_vendor,
+        "travel_planning": travel_doc,
+        "bill_no": row.custom_flight_invoice_id,
+        "project": ba_number
+    })
+
+    doc.append("items", {
+        "item_code": row.custom_service_type,
+        "qty": 1,
+        "rate": row.custom_total_flight_cost_as_per_invoice
+    })
+
+    doc.flags.ignore_permissions = True
+    doc.flags.ignore_mandatory = True
+
+    doc.insert()
+
+    attachments = [
+        row.get("custom_onward_flight_invoice_attachment"),
+        row.get("custom_return_flight_invoice_attachment")
+    ]
+
+    for file_url in attachments:
+        if file_url:
+            frappe.get_doc({
+                "doctype": "File",
+                "file_url": file_url,
+                "attached_to_doctype": "Purchase Invoice",
+                "attached_to_name": doc.name
+            }).insert(ignore_permissions=True)
+
+    return doc.name
+
+
+@frappe.whitelist()
+def get_hotel_purchase_invoice_defaults(employee_row, travel_doc):
+    import json
+
+    if isinstance(employee_row, str):
+        employee_row = json.loads(employee_row)
+
+    row = frappe._dict(employee_row)
+
+    ba_number = frappe.get_value("Travel Planning", travel_doc, "ba_number")
+
+    mandatory_fields = {
+        "Vendor Name": row.get("custom_hotel_booking_vendor_name"),
+        "Bill No": row.get("custom_hotel_invoice_id"),
+        "BA Number": ba_number,
+		"Service Type": row.get("custom_service_category"),
+		"Total Amount": row.get("custom_total_hotel_charge")
+    }
+
+    missing_fields = [field for field, value in mandatory_fields.items() if not value]
+
+    if missing_fields:
+        frappe.throw(f"Mandatory field(s) missing: {', '.join(missing_fields)}")
+
+    doc = frappe.get_doc({
+        "doctype": "Purchase Invoice",
+        "supplier": row.custom_hotel_booking_vendor_name,
+        "travel_planning": travel_doc,
+        "bill_no": row.custom_hotel_invoice_id,
+        "project": ba_number,
+		"custom_supplier_invoice": row.custom_taxi_bill
+    })
+
+    doc.append(
+        "items",
+        {
+            "item_code": row.custom_service_category,
+            "qty": 1,
+            "rate": row.custom_total_hotel_charge
+        }
+    )
+
+    doc.flags.ignore_permissions = True
+    doc.flags.ignore_mandatory = True
+
+    doc.save()
+
+    return doc.name

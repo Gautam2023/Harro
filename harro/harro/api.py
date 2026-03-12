@@ -564,40 +564,30 @@ def reduce_raw_material_qty(doc):
     return "success"
 
 
-@frappe.whitelist()
-def sync_booking_status_to_travel_request(tp_child):
-    if isinstance(tp_child, str):
-        tp_child = json.loads(tp_child)
+def sync_booking_status_to_travel_request(doc, method=None):
 
-    travel_request_name = tp_child.get("travel_request")
-    travel_itinerary_name = tp_child.get("travel_request_itinerary")
+    updated_requests = {}
 
-    if not travel_request_name:
-        frappe.throw("Travel Request not found")
+    for row in doc.travel_itinerary:
 
-    if not travel_itinerary_name:
-        frappe.throw("Travel Request Itinerary link not found")
+        if not row.travel_request or not row.travel_request_itinerary:
+            continue
 
-    tr_doc = frappe.get_doc("Travel Request", travel_request_name)
+        if row.travel_request not in updated_requests:
+            updated_requests[row.travel_request] = frappe.get_doc(
+                "Travel Request", row.travel_request
+            )
 
-    updated = False
-    for tr_row in tr_doc.itinerary:
-        if tr_row.name == travel_itinerary_name:
-            tr_row.custom_flight_booking_status = tp_child.get("custom_flight_booking_status")
-            tr_row.custom_hotel_booking_status = tp_child.get("custom_hotel_booking_status")
-            updated = True
-            break
+        tr_doc = updated_requests[row.travel_request]
 
-    if not updated:
-        frappe.throw("Matching Travel Request itinerary row not found")
+        for tr_row in tr_doc.itinerary:
+            if tr_row.name == row.travel_request_itinerary:
+                tr_row.custom_flight_booking_status = row.custom_flight_booking_status
+                tr_row.custom_hotel_booking_status = row.custom_hotel_booking_status
+                break
 
-    tr_doc.save(ignore_permissions=True)
-    frappe.db.commit()
-
-    return {
-        "status": "success",
-        "message": "Travel Request itinerary updated successfully"
-    }
+    for tr_doc in updated_requests.values():
+        tr_doc.save(ignore_permissions=True)
 
 @frappe.whitelist()
 def get_purchase_invoice_defaults(expense_detail_row, travel_doc):

@@ -6,6 +6,7 @@ from frappe import _
 from frappe.utils import cint, flt, getdate
 from typing import Dict, List, Optional, Tuple
 
+
 def execute(filters: Optional[Dict] = None) -> Tuple[List[Dict], List[Dict]]:
     if not filters:
         filters = {}
@@ -97,12 +98,6 @@ def get_columns() -> List[Dict]:
         {"label": _("Taxi Required"), "fieldname": "taxi_required", "fieldtype": "Check", "width": 110},
         {"label": _("Taxi Cost"), "fieldname": "taxi_cost", "fieldtype": "Currency", "width": 120},
 
-        # Financial Summary
-        # {"label": _("Total Amount"), "fieldname": "total_amount", "fieldtype": "Currency", "width": 130},
-        # {"label": _("Paid Amount"), "fieldname": "paid_amount", "fieldtype": "Currency", "width": 130},
-        # {"label": _("Outstanding Amount"), "fieldname": "outstanding_amount", "fieldtype": "Currency", "width": 140},
-        # {"label": _("Claimed Amount"), "fieldname": "claimable_amount", "fieldtype": "Currency", "width": 140},
-        # {"label": _("Unclaimed Amount"), "fieldname": "unclaimed_amount", "fieldtype": "Currency", "width": 140},
     ]
 
 def get_conditions(filters: Dict) -> Tuple[str, Dict]:

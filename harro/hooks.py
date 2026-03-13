@@ -232,7 +232,8 @@ doc_events = {
         "on_submit": "harro.harro.docevents.payment_entry.send_email_to_company_contact"
     },
     "Travel Planning": {
-        "on_update": "harro.harro.api.sync_booking_status_to_travel_request"
+        "on_update": "harro.harro.api.sync_booking_status_to_travel_request",
+        "before_save": "harro.harro.docevents.travel_planning.calculate_totals"
     }
 }
 

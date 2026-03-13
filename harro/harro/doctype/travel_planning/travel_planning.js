@@ -125,7 +125,49 @@ frappe.ui.form.on("Travel Planning Employee Details" , {
         let row = locals[cdt][cdn];
 
         frappe.call({
-            method: "harro.harro.docevents.travel_planning.get_flight_purchase_invoice_defaults",
+            method: "harro.harro.doctype.travel_planning.travel_planning.get_flight_purchase_invoice_defaults",
+            args: {
+                employee_row: row,
+                travel_doc: frm.doc.name
+            },
+            callback: function(r) {
+                if (r.message) {
+                    frappe.set_route('Form', 'Purchase Invoice', r.message);
+                }
+            }   
+        });
+    },
+    custom_send_email_flight: function(frm, cdt, cdn) {
+        let row = locals[cdt][cdn];
+
+        if (row.custom_flight_email_sent) {
+            frappe.msgprint("Email already sent for this row.");
+            return;
+        }
+
+        frappe.call({
+            method: "harro.harro.doctype.travel_planning.travel_planning.custom_flight_email_sent",
+            args: {
+                expense_detail_row: row,
+                travel_planning: frm.doc.name
+            },
+            callback: function(r) {
+                if (!r.exc) {
+                    frappe.msgprint("Email sent");
+
+                    // Mark locally and refresh grid
+                    row.email_sent = 1;
+                    frm.refresh_field("expense_details");
+                }
+            }
+        });
+    },
+
+    custom_create_purchase_invoice_hotel: function(frm, cdt, cdn) {
+        let row = locals[cdt][cdn];
+
+        frappe.call({
+            method: "harro.harro.doctype.travel_planning.travel_planning.get_hotel_purchase_invoice_defaults",
             args: {
                 employee_row: row,
                 travel_doc: frm.doc.name
@@ -137,12 +179,36 @@ frappe.ui.form.on("Travel Planning Employee Details" , {
             }
         });
     },
+    custom_send_email_hotel: function(frm, cdt, cdn) {
+        let row = locals[cdt][cdn];
 
-    custom_create_purchase_invoice_hotel: function(frm, cdt, cdn) {
+        if (row.custom_flight_email_sent) {
+            frappe.msgprint("Email already sent for this row.");
+            return;
+        }
+
+        frappe.call({
+            method: "harro.harro.doctype.travel_planning.travel_planning.custom_send_email_hotel",
+            args: {
+                expense_detail_row: row,
+                travel_planning: frm.doc.name
+            },
+            callback: function(r) {
+                if (!r.exc) {
+                    frappe.msgprint("Email sent");
+
+                    // Mark locally and refresh grid
+                    row.email_sent = 1;
+                    frm.refresh_field("expense_details");
+                }
+            }
+        });
+    },
+    custom_create_purchase_invoice: function(frm, cdt, cdn) {
         let row = locals[cdt][cdn];
 
         frappe.call({
-            method: "harro.harro.docevents.travel_planning.get_hotel_purchase_invoice_defaults",
+            method: "harro.harro.doctype.travel_planning.travel_planning.get_taxi_purchase_invoice_defaults",
             args: {
                 employee_row: row,
                 travel_doc: frm.doc.name
@@ -153,7 +219,32 @@ frappe.ui.form.on("Travel Planning Employee Details" , {
                 }
             }
         });
-    }
+    },
+    custom_send_email: function(frm, cdt, cdn) {
+        let row = locals[cdt][cdn];
+
+        if (row.custom_email_sent) {
+            frappe.msgprint("Email already sent for this row.");
+            return;
+        }
+
+        frappe.call({
+            method: "harro.harro.doctype.travel_planning.travel_planning.custom_send_email",
+            args: {
+                expense_detail_row: row,
+                travel_planning: frm.doc.name
+            },
+            callback: function(r) {
+                if (!r.exc) {
+                    frappe.msgprint("Email sent");
+
+                    // Mark locally and refresh grid
+                    row.email_sent = 1;
+                    frm.refresh_field("expense_details");
+                }
+            }
+        });
+    },
 });
 
 function calculate_total_hotel_charge(frm, cdt, cdn) {

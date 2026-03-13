@@ -246,3 +246,15 @@ def calculate_totals(doc, method=None):
 		if d.custom_not_claimable:
 			d.custom_total_unclaimable_amount = total_unclaimable
 
+	# Total Claimable Expense / Total Unclaimable Expense
+	total_claimable_expense = 0
+	total_unclaimable_expense = 0
+	for row in doc.travel_itinerary:
+		if row.custom_total_claimable_amount:
+			total_claimable_expense += row.custom_total_claimable_amount
+		if row.custom_total_unclaimable_amount:
+			total_unclaimable_expense += row.custom_total_unclaimable_amount
+	
+	doc.custom_total_claimable_expense = total_claimable_expense
+	doc.custom_total_unclaimable_expense = total_unclaimable_expense
+

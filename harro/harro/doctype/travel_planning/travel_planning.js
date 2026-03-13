@@ -36,12 +36,25 @@ frappe.ui.form.on("Travel Planning", {
         calculate_profit(frm);
     },
     custom_total_unclaimable_expense: function(frm) {
-        calculate_total_expense(frm)
+        calculate_total_expense(frm);
     },
     custom_total_claimable_expense: function(frm) {
-        calculate_total_expense(frm)
+        calculate_total_expense(frm);
+    },
+    custom_total_income_from_customer: function(frm) {
+        calculate_outstanding_claims(frm);
+    },
+    custom_total_claimable_expense: function(frm) {
+        calculate_outstanding_claims(frm);
     }
 });
+
+function calculate_outstanding_claims(frm) {
+    let total_claimable_expense = frm.doc.custom_total_claimable_expense;
+    let total_income_from_customer = frm.doc.custom_total_income_from_customer;
+    let outstanding = total_claimable_expense - total_income_from_customer
+    frm.set_value("custom_outstanding_claims", outstanding);
+}
 
 function calculate_total_expense(frm) {
     let claimable = frm.doc.custom_total_claimable_expense;

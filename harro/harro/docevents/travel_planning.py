@@ -96,116 +96,6 @@ def create_travel_plan(names):
 
 
 
-@frappe.whitelist()
-def get_flight_purchase_invoice_defaults(employee_row, travel_doc):
-    import json
-
-    if isinstance(employee_row, str):
-        employee_row = json.loads(employee_row)
-
-    row = frappe._dict(employee_row)
-
-    ba_number = frappe.get_value("Travel Planning", travel_doc, "ba_number")
-
-    mandatory_fields = {
-        "Vendor Name": row.get("custom_flight_booking_vendor"),
-        "Bill No": row.get("custom_flight_invoice_id"),
-        "BA Number": ba_number,
-        "Service Type": row.get("custom_service_type"),
-        "Total Amount": row.get("custom_total_flight_cost_as_per_invoice")
-    }
-
-    missing_fields = [field for field, value in mandatory_fields.items() if not value]
-
-    if missing_fields:
-        frappe.throw(f"Mandatory field(s) missing: {', '.join(missing_fields)}")
-
-    doc = frappe.get_doc({
-        "doctype": "Purchase Invoice",
-        "supplier": row.custom_flight_booking_vendor,
-        "travel_planning": travel_doc,
-        "bill_no": row.custom_flight_invoice_id,
-        "project": ba_number
-    })
-
-    doc.append("items", {
-        "item_code": row.custom_service_type,
-        "qty": 1,
-        "rate": row.custom_total_flight_cost_as_per_invoice
-    })
-
-    doc.flags.ignore_permissions = True
-    doc.flags.ignore_mandatory = True
-
-    doc.insert()
-
-    attachments = [
-        row.get("custom_onward_flight_invoice_attachment"),
-        row.get("custom_return_flight_invoice_attachment")
-    ]
-
-    for file_url in attachments:
-        if file_url:
-            frappe.get_doc({
-                "doctype": "File",
-                "file_url": file_url,
-                "attached_to_doctype": "Purchase Invoice",
-                "attached_to_name": doc.name
-            }).insert(ignore_permissions=True)
-
-    return doc.name
-
-
-@frappe.whitelist()
-def get_hotel_purchase_invoice_defaults(employee_row, travel_doc):
-    import json
-
-    if isinstance(employee_row, str):
-        employee_row = json.loads(employee_row)
-
-    row = frappe._dict(employee_row)
-
-    ba_number = frappe.get_value("Travel Planning", travel_doc, "ba_number")
-
-    mandatory_fields = {
-        "Vendor Name": row.get("custom_hotel_booking_vendor_name"),
-        "Bill No": row.get("custom_hotel_invoice_id"),
-        "BA Number": ba_number,
-		"Service Type": row.get("custom_service_category"),
-		"Total Amount": row.get("custom_total_hotel_charge")
-    }
-
-    missing_fields = [field for field, value in mandatory_fields.items() if not value]
-
-    if missing_fields:
-        frappe.throw(f"Mandatory field(s) missing: {', '.join(missing_fields)}")
-
-    doc = frappe.get_doc({
-        "doctype": "Purchase Invoice",
-        "supplier": row.custom_hotel_booking_vendor_name,
-        "travel_planning": travel_doc,
-        "bill_no": row.custom_hotel_invoice_id,
-        "project": ba_number,
-		"custom_supplier_invoice": row.custom_taxi_bill
-    })
-
-    doc.append(
-        "items",
-        {
-            "item_code": row.custom_service_category,
-            "qty": 1,
-            "rate": row.custom_total_hotel_charge
-        }
-    )
-
-    doc.flags.ignore_permissions = True
-    doc.flags.ignore_mandatory = True
-
-    doc.save()
-
-    return doc.name
-
-
 def calculate_totals(doc, method=None):
 	if not doc.travel_itinerary:
 		return
@@ -224,10 +114,9 @@ def calculate_totals(doc, method=None):
 	for child_field, parent_field in field_map.items():
 		doc.set(parent_field, sum((d.get(child_field) or 0) for d in doc.travel_itinerary))
 
-	# claimable / unclaimable totals
 	total_claimable = 0
 	total_unclaimable = 0
-	
+
 	for d in doc.travel_itinerary:
 		row_total = (
 			(d.baggage_coast or 0)
@@ -237,24 +126,19 @@ def calculate_totals(doc, method=None):
 			+ (d.taxi_coast or 0)
 		)
 
-		if d.custom_is_claimable:
-			total_claimable += row_total
-		elif d.custom_not_claimable:
-			total_unclaimable += row_total
-		if d.custom_is_claimable:
-			d.custom_total_claimable_amount = total_claimable
-		if d.custom_not_claimable:
-			d.custom_total_unclaimable_amount = total_unclaimable
+		# reset values to avoid leftover data
+		d.custom_total_claimable_amount = 0
+		d.custom_total_unclaimable_amount = 0
 
-	# Total Claimable Expense / Total Unclaimable Expense
-	total_claimable_expense = 0
-	total_unclaimable_expense = 0
-	for row in doc.travel_itinerary:
-		if row.custom_total_claimable_amount:
-			total_claimable_expense += row.custom_total_claimable_amount
-		if row.custom_total_unclaimable_amount:
-			total_unclaimable_expense += row.custom_total_unclaimable_amount
-	
-	doc.custom_total_claimable_expense = total_claimable_expense
-	doc.custom_total_unclaimable_expense = total_unclaimable_expense
+		if d.custom_is_claimable:
+			d.custom_total_claimable_amount = row_total
+			total_claimable += row_total
+
+		elif d.custom_not_claimable:
+			d.custom_total_unclaimable_amount = row_total
+			total_unclaimable += row_total
+
+	# Set parent totals
+	doc.custom_total_claimable_expense = total_claimable
+	doc.custom_total_unclaimable_expense = total_unclaimable
 

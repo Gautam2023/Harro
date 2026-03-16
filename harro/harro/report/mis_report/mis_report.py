@@ -175,7 +175,7 @@ def get_data(filters: Dict) -> List[Dict]:
                 tped.custom_return_flight_cost AS return_flight_cost,
                 tped.custom_seat_charges AS seat_charges,
                 tped.hotel_coast,
-                tped.taxi_coast,
+                tped.taxi_coast AS taxi_cost,
                 tped.custom_onward_flight_cost_as_per_invoice,
                 tped.custom_return_flight_cost_as_per_invoice,
                 tped.custom_total_flight_cost_as_per_invoice,

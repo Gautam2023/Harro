@@ -6,6 +6,7 @@ from frappe import _
 from frappe.utils import cint, flt, getdate
 from typing import Dict, List, Optional, Tuple
 
+
 def execute(filters: Optional[Dict] = None) -> Tuple[List[Dict], List[Dict]]:
     if not filters:
         filters = {}
@@ -82,6 +83,7 @@ def get_columns() -> List[Dict]:
         {"label": _("Flight Cancellation Charges"), "fieldname": "custom_flight_cancellation_charges", "fieldtype": "Currency", "width": 170},
         {"label": _("Flight Refund Amount"), "fieldname": "custom_flight_refund_amount", "fieldtype": "Currency", "width": 150},
         {"label": _("Flight Reschedule Reason"), "fieldname": "custom_reason_for_rescheduling", "fieldtype": "Small Text", "width": 200},
+        {"label": _("Flight Reschedule Charges"), "fieldname": "custom_flight_reschedule_charges", "fieldtype": "Currency", "width": 170},
 
         # Hotel Details
         {"label": _("Stay Required"), "fieldname": "lodging_required", "fieldtype": "Check", "width": 120},
@@ -97,12 +99,6 @@ def get_columns() -> List[Dict]:
         {"label": _("Taxi Required"), "fieldname": "taxi_required", "fieldtype": "Check", "width": 110},
         {"label": _("Taxi Cost"), "fieldname": "taxi_cost", "fieldtype": "Currency", "width": 120},
 
-        # Financial Summary
-        # {"label": _("Total Amount"), "fieldname": "total_amount", "fieldtype": "Currency", "width": 130},
-        # {"label": _("Paid Amount"), "fieldname": "paid_amount", "fieldtype": "Currency", "width": 130},
-        # {"label": _("Outstanding Amount"), "fieldname": "outstanding_amount", "fieldtype": "Currency", "width": 140},
-        # {"label": _("Claimed Amount"), "fieldname": "claimable_amount", "fieldtype": "Currency", "width": 140},
-        # {"label": _("Unclaimed Amount"), "fieldname": "unclaimed_amount", "fieldtype": "Currency", "width": 140},
     ]
 
 def get_conditions(filters: Dict) -> Tuple[str, Dict]:
@@ -181,6 +177,7 @@ def get_data(filters: Dict) -> List[Dict]:
                 tped.custom_total_flight_cost_as_per_invoice,
                 tri.custom_reason_for_cancellation,
                 tped.custom_reason_for_rescheduling,
+                tped.custom_flight_reschedule_charges,
                 tped.custom_flight_cancellation_charges,
                 tped.custom_flight_refund_amount,
                 tped.extra_baggage,
@@ -197,7 +194,7 @@ def get_data(filters: Dict) -> List[Dict]:
                 ed.unclaimed_amount,
                 tri.custom_flight_booking_status AS flight_booking_status,
                 tri.lodging_required,
-                tri.custom_hotel_booking_status AS hotel_booking_status,
+                tri.custom_hotel_booking_status,
                 tri.custom_taxi_required AS taxi_required,
                 tped.baggage_coast AS baggage_cost,
                 tped.room_night,

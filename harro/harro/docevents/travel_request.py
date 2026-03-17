@@ -1,5 +1,6 @@
 import frappe
 from frappe.utils import get_link_to_form, now
+from frappe.utils import getdate
 
 WORKFLOW_TO_TRIP_STATUS = {
     "Trip Cancelled": "Cancelled",
@@ -105,4 +106,44 @@ def on_update(doc, method=None):
                 subject=f"Travel Request {doc.name} {trip_status}",
                 message=html_message,
                 delayed=False
+            )
+
+
+def sync_travel_planning_from_travel_request(doc, method=None):
+
+    for tr_row in doc.itinerary:
+
+        if not tr_row.name:
+            continue
+
+        tp_rows = frappe.get_all(
+            "Travel Planning Employee Details",
+            filters={
+                "travel_request": doc.name,
+                "travel_request_itinerary": tr_row.name
+            },
+            fields=["name"]
+        )
+
+        for tp in tp_rows:
+
+            update_values = {
+                "custom_flight_booking_status": tr_row.custom_flight_booking_status,
+                "custom_hotel_booking_status": tr_row.custom_hotel_booking_status,
+                "custom_status": tr_row.custom_status
+            }
+
+            if tr_row.custom_flight_booking_status == "Rescheduled":
+
+                if tr_row.custom_revised_travel_date:
+                    update_values["custom_revised_travel_date"] = getdate(tr_row.custom_revised_travel_date)
+
+                if tr_row.custom_revised_return_date:
+                    update_values["custom_revised_return_date"] = getdate(tr_row.custom_revised_return_date)
+
+            frappe.db.set_value(
+                "Travel Planning Employee Details",
+                tp.name,
+                update_values,
+                update_modified=False
             )

@@ -3,6 +3,7 @@
 
 frappe.ui.form.on("Travel Planning", {
 	refresh(frm) {
+        set_profit_color(frm);
         if(!frm.is_new()){
             frm.add_custom_button(__("Purchase Invoice"), (frm)=>{
                 frappe.model.open_mapped_doc({
@@ -27,8 +28,74 @@ frappe.ui.form.on("Travel Planning", {
                 });
             }, __("Create"));
         }
-	}
+	},
+    custom_total_income_from_customer: function(frm) {
+        calculate_profit(frm);
+    },
+    custom_total_expense: function(frm) {
+        calculate_profit(frm);
+    },
+    custom_total_unclaimable_expense: function(frm) {
+        calculate_total_expense(frm);
+    },
+    custom_total_claimable_expense: function(frm) {
+        calculate_total_expense(frm);
+    },
+    custom_total_income_from_customer: function(frm) {
+        calculate_outstanding_claims(frm);
+    },
+    custom_total_claimable_expense: function(frm) {
+        calculate_outstanding_claims(frm);
+    }
 });
+
+function calculate_outstanding_claims(frm) {
+    let total_claimable_expense = frm.doc.custom_total_claimable_expense;
+    let total_income_from_customer = frm.doc.custom_total_income_from_customer;
+    let outstanding = total_claimable_expense - total_income_from_customer
+    frm.set_value("custom_outstanding_claims", outstanding);
+}
+
+function calculate_total_expense(frm) {
+    let claimable = frm.doc.custom_total_claimable_expense;
+    let unclaimable = frm.doc.custom_total_unclaimable_expense;
+    let total_expense = claimable + unclaimable
+    frm.set_value("custom_total_expense" ,total_expense)
+}
+
+function calculate_profit(frm) {
+
+    let income = frm.doc.custom_total_income_from_customer || 0;
+    let expense = frm.doc.custom_total_expense || 0;
+
+    let profit = income - expense;
+
+    frm.set_value("custom_profit", profit);
+    set_profit_color(frm);
+}
+
+function set_profit_color(frm) {
+
+    let profit = frm.doc.custom_profit || 0;
+
+    if (!frm.fields_dict.custom_profit) return;
+
+    if (profit > 0) {
+        frm.fields_dict.custom_profit.$wrapper
+            .find("input")
+            .css({"color": "green", "font-weight": "bold"});
+    } 
+    else if (profit < 0) {
+        frm.fields_dict.custom_profit.$wrapper
+            .find("input")
+            .css({"color": "red", "font-weight": "bold"});
+    } 
+    else {
+        frm.fields_dict.custom_profit.$wrapper
+            .find("input")
+            .css({"color": "", "font-weight": ""});
+    }
+}
 
 frappe.ui.form.on("Travel Planning Employee Details" , {
     travel_request(frm, cdt, cdn) {
@@ -48,46 +115,144 @@ frappe.ui.form.on("Travel Planning Employee Details" , {
             }
         });
     },
+    custom_hotel_cost_per_day: function(frm, cdt, cdn) {
+        calculate_total_hotel_charge(frm, cdt, cdn)
+    },
+    room_night: function(frm, cdt, cdn) {
+        calculate_total_hotel_charge(frm, cdt, cdn)
+    },
+    custom_create_purchase_invoice_flight: function(frm, cdt, cdn) {
+        let row = locals[cdt][cdn];
 
-    custom_flight_booking_status(frm, cdt, cdn) {
-        sync_booking_status(frm, cdt, cdn);
+        frappe.call({
+            method: "harro.harro.doctype.travel_planning.travel_planning.get_flight_purchase_invoice_defaults",
+            args: {
+                employee_row: row,
+                travel_doc: frm.doc.name
+            },
+            callback: function(r) {
+                if (r.message) {
+                    frappe.set_route('Form', 'Purchase Invoice', r.message);
+                }
+            }   
+        });
+    },
+    custom_send_email_flight: function(frm, cdt, cdn) {
+        let row = locals[cdt][cdn];
+
+        if (row.custom_flight_email_sent) {
+            frappe.msgprint("Email already sent for this row.");
+            return;
+        }
+
+        frappe.call({
+            method: "harro.harro.doctype.travel_planning.travel_planning.custom_flight_email_sent",
+            args: {
+                expense_detail_row: row,
+                travel_planning: frm.doc.name
+            },
+            callback: function(r) {
+                if (!r.exc) {
+                    frappe.msgprint("Email sent");
+
+                    // Mark locally and refresh grid
+                    row.email_sent = 1;
+                    frm.refresh_field("expense_details");
+                }
+            }
+        });
     },
 
-    custom_hotel_booking_status(frm, cdt, cdn) {
-        sync_booking_status(frm, cdt, cdn);
-    }
+    custom_create_purchase_invoice_hotel: function(frm, cdt, cdn) {
+        let row = locals[cdt][cdn];
+
+        frappe.call({
+            method: "harro.harro.doctype.travel_planning.travel_planning.get_hotel_purchase_invoice_defaults",
+            args: {
+                employee_row: row,
+                travel_doc: frm.doc.name
+            },
+            callback: function(r) {
+                if (r.message) {
+                    frappe.set_route('Form', 'Purchase Invoice', r.message);
+                }
+            }
+        });
+    },
+    custom_send_email_hotel: function(frm, cdt, cdn) {
+        let row = locals[cdt][cdn];
+
+        if (row.custom_flight_email_sent) {
+            frappe.msgprint("Email already sent for this row.");
+            return;
+        }
+
+        frappe.call({
+            method: "harro.harro.doctype.travel_planning.travel_planning.custom_send_email_hotel",
+            args: {
+                expense_detail_row: row,
+                travel_planning: frm.doc.name
+            },
+            callback: function(r) {
+                if (!r.exc) {
+                    frappe.msgprint("Email sent");
+
+                    // Mark locally and refresh grid
+                    row.email_sent = 1;
+                    frm.refresh_field("expense_details");
+                }
+            }
+        });
+    },
+    custom_create_purchase_invoice: function(frm, cdt, cdn) {
+        let row = locals[cdt][cdn];
+
+        frappe.call({
+            method: "harro.harro.doctype.travel_planning.travel_planning.get_taxi_purchase_invoice_defaults",
+            args: {
+                employee_row: row,
+                travel_doc: frm.doc.name
+            },
+            callback: function(r) {
+                if (r.message) {
+                    frappe.set_route('Form', 'Purchase Invoice', r.message);
+                }
+            }
+        });
+    },
+    custom_send_email: function(frm, cdt, cdn) {
+        let row = locals[cdt][cdn];
+
+        if (row.custom_email_sent) {
+            frappe.msgprint("Email already sent for this row.");
+            return;
+        }
+
+        frappe.call({
+            method: "harro.harro.doctype.travel_planning.travel_planning.custom_send_email",
+            args: {
+                expense_detail_row: row,
+                travel_planning: frm.doc.name
+            },
+            callback: function(r) {
+                if (!r.exc) {
+                    frappe.msgprint("Email sent");
+
+                    // Mark locally and refresh grid
+                    row.email_sent = 1;
+                    frm.refresh_field("expense_details");
+                }
+            }
+        });
+    },
 });
 
-function sync_booking_status(frm, cdt, cdn) {
-    const row = locals[cdt][cdn];
-
-    if (!row.travel_request) {
-        console.log("Skipping sync: travel_request missing");
-        return;
-    }
-
-    if (!row.travel_request_itinerary) {
-        console.log("Skipping sync: travel_request_itinerary missing");
-        return;
-    }
-
-    console.log("Syncing Travel Planning row to Travel Request:", row);
-
-    frappe.call({
-        method: "harro.harro.api.sync_booking_status_to_travel_request",
-        args: {
-            tp_child: row
-        },
-        callback: function(r) {
-            console.log("Server response:", r);
-            if (r.message && r.message.status === "success") {
-                frappe.show_alert({
-                    message: r.message.message,
-                    indicator: "green"
-                });
-            }
-        }
-    });
+function calculate_total_hotel_charge(frm, cdt, cdn) {
+    let row = locals[cdt][cdn]
+    let cost_per_day = row.custom_hotel_cost_per_day || 0;
+    let nights = row.room_night || 0;
+    let total_hotel_charge = cost_per_day * nights
+    frappe.model.set_value(cdt, cdn, "custom_total_hotel_charge", total_hotel_charge);
 }
 
 frappe.ui.form.on('Expense Details', {

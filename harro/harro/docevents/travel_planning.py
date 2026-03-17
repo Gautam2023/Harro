@@ -93,3 +93,52 @@ def create_travel_plan(names):
 		msg += "</ul>"
 
 	frappe.msgprint(msg)
+
+
+
+def calculate_totals(doc, method=None):
+	if not doc.travel_itinerary:
+		return
+
+	field_map = {
+		"custom_total_flight_cost_as_per_invoice": "total_flight_coast",
+		"custom_total_hotel_charge_as_per_invoice": "total_hotel_booking_coast",
+		"baggage_coast": "total_currency_coast",
+		"custom_seat_charges": "custom_total_seat_charges",
+		"taxi_coast": "total_taxi_coast",
+		"custom_flight_cancellation_charges": "custom_total_flight_cancellation_charges",
+		"custom_flight_refund_amount": "custom_total_flight_refund_amount",
+		"custom_flight_reschedule_charges": "custom_total_flight_reschedule_charges",
+	}
+
+	for child_field, parent_field in field_map.items():
+		doc.set(parent_field, sum((d.get(child_field) or 0) for d in doc.travel_itinerary))
+
+	total_claimable = 0
+	total_unclaimable = 0
+
+	for d in doc.travel_itinerary:
+		row_total = (
+			(d.baggage_coast or 0)
+			+ (d.custom_seat_charges or 0)
+			+ (d.custom_total_flight_cost_as_per_invoice or 0)
+			+ (d.custom_total_hotel_charge_as_per_invoice or 0)
+			+ (d.taxi_coast or 0)
+		)
+
+		# reset values to avoid leftover data
+		d.custom_total_claimable_amount = 0
+		d.custom_total_unclaimable_amount = 0
+
+		if d.custom_is_claimable:
+			d.custom_total_claimable_amount = row_total
+			total_claimable += row_total
+
+		elif d.custom_not_claimable:
+			d.custom_total_unclaimable_amount = row_total
+			total_unclaimable += row_total
+
+	# Set parent totals
+	doc.custom_total_claimable_expense = total_claimable
+	doc.custom_total_unclaimable_expense = total_unclaimable
+

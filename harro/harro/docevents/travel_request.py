@@ -110,40 +110,65 @@ def on_update(doc, method=None):
 
 
 def sync_travel_planning_from_travel_request(doc, method=None):
-
-    for tr_row in doc.itinerary:
-
-        if not tr_row.name:
-            continue
-
-        tp_rows = frappe.get_all(
+    travel_plannings = frappe.get_all(
+        "Travel Planning",
+        filters={"name": ["in", frappe.get_all(
             "Travel Planning Employee Details",
-            filters={
-                "travel_request": doc.name,
-                "travel_request_itinerary": tr_row.name
-            },
-            fields=["name"]
-        )
+            filters={"travel_request": doc.name},
+            pluck="parent"
+        )]},
+        fields=["name"]
+    )
 
-        for tp in tp_rows:
+    for tp_doc_meta in travel_plannings:
+        tp_doc = frappe.get_doc("Travel Planning", tp_doc_meta.name)
 
-            update_values = {
-                "custom_flight_booking_status": tr_row.custom_flight_booking_status,
-                "custom_hotel_booking_status": tr_row.custom_hotel_booking_status,
-                "custom_status": tr_row.custom_status
-            }
+        for tr_row in doc.itinerary:
 
-            if tr_row.custom_flight_booking_status == "Rescheduled":
+            if not tr_row.name:
+                continue
 
-                if tr_row.custom_revised_travel_date:
-                    update_values["custom_revised_travel_date"] = getdate(tr_row.custom_revised_travel_date)
+            existing_row = None
+            for row in tp_doc.travel_itinerary:
+                if (
+                    row.travel_request == doc.name
+                    and row.travel_request_itinerary == tr_row.name
+                ):
+                    existing_row = row
+                    break
 
-                if tr_row.custom_revised_return_date:
-                    update_values["custom_revised_return_date"] = getdate(tr_row.custom_revised_return_date)
+            if existing_row:
+                existing_row.custom_flight_booking_status = tr_row.custom_flight_booking_status
+                existing_row.custom_hotel_booking_status = tr_row.custom_hotel_booking_status
+                existing_row.custom_status = tr_row.custom_status
 
-            frappe.db.set_value(
-                "Travel Planning Employee Details",
-                tp.name,
-                update_values,
-                update_modified=False
-            )
+                if tr_row.custom_flight_booking_status == "Rescheduled":
+                    if tr_row.custom_revised_travel_date:
+                        existing_row.custom_revised_travel_date = getdate(tr_row.custom_revised_travel_date)
+
+                    if getattr(tr_row, "custom_revised_return_date", None):
+                        existing_row.custom_revised_return_date = getdate(tr_row.custom_revised_return_date)
+
+            else:
+                new_row = tp_doc.append("travel_itinerary", {})
+
+                new_row.travel_request = doc.name
+                new_row.travel_request_itinerary = tr_row.name
+
+                new_row.travel_from = tr_row.travel_from
+                new_row.travel_to = tr_row.travel_to
+                new_row.mode_of_travel = tr_row.mode_of_travel
+                new_row.custom_onward_travel_date = tr_row.custom_onward_travel_date
+
+                new_row.custom_flight_booking_status = tr_row.custom_flight_booking_status
+                new_row.custom_hotel_booking_status = tr_row.custom_hotel_booking_status
+                new_row.custom_status = tr_row.custom_status
+
+                if tr_row.custom_flight_booking_status == "Rescheduled":
+                    if tr_row.custom_revised_travel_date:
+                        new_row.custom_revised_travel_date = getdate(tr_row.custom_revised_travel_date)
+
+                    if getattr(tr_row, "custom_revised_return_date", None):
+                        new_row.custom_revised_return_date = getdate(tr_row.custom_revised_return_date)
+
+        tp_doc.save(ignore_permissions=True)

@@ -90,6 +90,8 @@ def get_columns() -> List[Dict]:
         {"label": _("Hotel Name"), "fieldname": "hotel_name", "fieldtype": "Data", "width": 180},
         {"label": _("Hotel Cost per Day"), "fieldname": "custom_hotel_cost_per_day", "fieldtype": "Currency", "width": 140},
         {"label": _("Total Hotel Charge"), "fieldname": "custom_total_hotel_charge", "fieldtype": "Currency", "width": 140},
+        {"label": _("Check-in Date"), "fieldname": "check_in_date", "fieldtype": "Date", "width": 120},
+        {"label": _("Check-out Date"), "fieldname": "check_out_date", "fieldtype": "Date", "width": 120},
         {"label": _("Room Nights"), "fieldname": "room_night", "fieldtype": "Int", "width": 110},
         {"label": _("Hotel Booking Status"), "fieldname": "custom_hotel_booking_status", "fieldtype": "Data", "width": 140},
         {"label": _("Hotel Cancellation Charges"), "fieldname": "custom_hotel_cancellation_charges", "fieldtype": "Currency", "width": 170},
@@ -197,6 +199,8 @@ def get_data(filters: Dict) -> List[Dict]:
                 tri.custom_hotel_booking_status,
                 tri.custom_taxi_required AS taxi_required,
                 tped.baggage_coast AS baggage_cost,
+                tped.check_in_date,
+                tped.check_out_date,
                 tped.room_night,
                 tped.custom_hotel_name AS hotel_name
             FROM 

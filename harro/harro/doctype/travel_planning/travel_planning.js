@@ -245,7 +245,30 @@ frappe.ui.form.on("Travel Planning Employee Details" , {
             }
         });
     },
+    custom_seat_charges: function(frm, cdt, cdn) {
+        calculate_total_flight_cost(frm, cdt, cdn);
+    },
+    baggage_coast: function(frm, cdt, cdn) {
+        calculate_total_flight_cost(frm, cdt, cdn);
+    },
+    custom_onward_flight_cost_as_per_invoice: function(frm, cdt, cdn) {
+        calculate_total_flight_cost(frm, cdt, cdn);
+    },
+    custom_return_flight_cost_as_per_invoice: function(frm, cdt, cdn) {
+        calculate_total_flight_cost(frm, cdt, cdn);
+    }
 });
+
+function calculate_total_flight_cost(frm, cdt, cdn) {
+    let row = locals[cdt][cdn];
+    let onward_flight_cost = row.custom_onward_flight_cost_as_per_invoice || 0;
+    let return_flight_cost = row.custom_return_flight_cost_as_per_invoice || 0;
+    let set_charge = row.custom_seat_charges || 0;
+    let baggage_cost = row.baggage_coast || 0;
+
+    let total_flight_cost = onward_flight_cost + return_flight_cost + set_charge + baggage_cost;
+    frappe.model.set_value(cdt, cdn, "custom_total_flight_cost_as_per_invoice", total_flight_cost);
+}
 
 function calculate_total_hotel_charge(frm, cdt, cdn) {
     let row = locals[cdt][cdn]

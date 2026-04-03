@@ -566,28 +566,32 @@ def reduce_raw_material_qty(doc):
 
 def sync_booking_status_to_travel_request(doc, method=None):
 
-    updated_requests = {}
-
     for row in doc.travel_itinerary:
 
         if not row.travel_request or not row.travel_request_itinerary:
             continue
 
-        if row.travel_request not in updated_requests:
-            updated_requests[row.travel_request] = frappe.get_doc(
-                "Travel Request", row.travel_request
-            )
+        tr_row_name = frappe.db.get_value(
+            "Travel Itinerary",
+            {
+                "parent": row.travel_request,
+                "name": row.travel_request_itinerary
+            },
+            "name"
+        )
 
-        tr_doc = updated_requests[row.travel_request]
+        if not tr_row_name:
+            continue
 
-        for tr_row in tr_doc.itinerary:
-            if tr_row.name == row.travel_request_itinerary:
-                tr_row.custom_flight_booking_status = row.custom_flight_booking_status
-                tr_row.custom_hotel_booking_status = row.custom_hotel_booking_status
-                break
-
-    for tr_doc in updated_requests.values():
-        tr_doc.save(ignore_permissions=True)
+        frappe.db.set_value(
+            "Travel Itinerary",
+            tr_row_name,
+            {
+                "custom_flight_booking_status": row.custom_flight_booking_status,
+                "custom_hotel_booking_status": row.custom_hotel_booking_status
+            },
+            update_modified=False
+        )
 
 @frappe.whitelist()
 def get_purchase_invoice_defaults(expense_detail_row, travel_doc):

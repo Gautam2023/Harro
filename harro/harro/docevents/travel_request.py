@@ -111,6 +111,19 @@ def on_update(doc, method=None):
 
 def sync_travel_planning_from_travel_request(doc, method=None):
 
+    travel_planning = frappe.db.get_value(
+        "Travel Planning Employee Details",
+        {"travel_request": doc.name},
+        "parent"
+    )
+
+    if not travel_planning:
+        return
+
+    tp_doc = frappe.get_doc("Travel Planning", travel_planning)
+
+    added = False
+
     for tr_row in doc.itinerary:
 
         if not tr_row.name:
@@ -125,25 +138,38 @@ def sync_travel_planning_from_travel_request(doc, method=None):
             fields=["name"]
         )
 
-        for tp in tp_rows:
+        update_values = {
+            "custom_flight_booking_status": tr_row.custom_flight_booking_status,
+            "custom_hotel_booking_status": tr_row.custom_hotel_booking_status,
+            "custom_status": tr_row.custom_status
+        }
+        if tp_rows:
+            for tp in tp_rows:
+                frappe.db.set_value(
+                    "Travel Planning Employee Details",
+                    tp.name,
+                    update_values,
+                    update_modified=False
+                )
+        else:
+            tp_doc.append("travel_itinerary", {
+                "travel_request": doc.name,
+                "travel_request_itinerary": tr_row.name,
+                "employee_name": doc.employee_name,
+                "custom_contact_email": doc.prefered_email,
+                "employee_hh_id": doc.custom_hh__employee_id,
+                "travel_from": tr_row.travel_from,
+                "travel_to": tr_row.travel_to,
+                "mode_of_travel": tr_row.mode_of_travel,
+                "extra_baggage": tr_row.custom_extra_baggage,
+                **update_values
+            })
+            added = True
 
-            update_values = {
-                "custom_flight_booking_status": tr_row.custom_flight_booking_status,
-                "custom_hotel_booking_status": tr_row.custom_hotel_booking_status,
-                "custom_status": tr_row.custom_status
-            }
+    if added:
+        tp_doc.flags.ignore_validate = True
+        tp_doc.flags.ignore_mandatory = True
+        tp_doc.flags.ignore_links = True
+        tp_doc.flags.ignore_permissions = True
 
-            if tr_row.custom_flight_booking_status == "Rescheduled":
-
-                if tr_row.custom_revised_travel_date:
-                    update_values["custom_revised_travel_date"] = getdate(tr_row.custom_revised_travel_date)
-
-                if tr_row.custom_revised_return_date:
-                    update_values["custom_revised_return_date"] = getdate(tr_row.custom_revised_return_date)
-
-            frappe.db.set_value(
-                "Travel Planning Employee Details",
-                tp.name,
-                update_values,
-                update_modified=False
-            )
+        tp_doc.save(ignore_permissions=True, ignore_version=True)

@@ -65,9 +65,9 @@ def on_submit(self, method):
                     "invoice_no",
                     "bill_of_entry",
                     "rack",
-                    "rejected_rack",
+                    # "rejected_rack",
                     "bin_location",
-                    "rejected_bin_location",
+                    # "rejected_bin_location",
                 ],
                 as_dict=1,
             )
@@ -79,7 +79,7 @@ def on_submit(self, method):
                 if se_item.get("bill_of_entry"):
                     update_data["bill_of_entry"] = se_item.get("bill_of_entry")
 
-                for field in ["rack", "rejected_rack", "bin_location", "rejected_bin_location"]:
+                for field in ["rack", "bin_location"]:
                     if se_item.get(field):
                         update_data[field] = se_item.get(field)
 

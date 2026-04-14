@@ -27,6 +27,32 @@ frappe.ui.form.on("Stock Entry", {
                 submit_stock_entry_in_background(frm);
             }, __("Actions"));
         }
+
+        // add button to cancel in background
+        if (frm.doc.docstatus == 1 && frm.perm && frm.perm[0].cancel) {
+            // avoid duplicate menu items
+            frm.page.add_menu_item(__('Cancel Doc in RQ'), () => {
+                frappe.confirm(
+                    __('Are you sure you want to cancel this Stock Enrty in RQ'),
+                    () => {
+                        frappe.call({
+                            method: 'harro.harro.stock_entry.cancel_stock_entry_in_rq',
+                            args: {
+                                stock_entry: frm.doc.name
+                            },
+                            freeze: true,
+                            freeze_message: __('Processing cancellation...'),
+                            callback: (r) => {
+                                if (r?.message) {
+                                    console.log(r.message);
+                                    frappe.msgprint(__('Cancellation process started in background. Please check status after a few minutes.'));
+                                }
+                            }
+                        });
+                    }
+                );
+            });
+        }
 	},
     project : (frm)=>{
         if(frm.doc.project){

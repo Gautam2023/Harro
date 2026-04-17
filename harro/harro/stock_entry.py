@@ -25,7 +25,6 @@ def cancel_stock_entry(stock_entry):
         return
 
     try:
-        frappe.set_user("Administrator")
 
         # Re-check docstatus inside the lock
         doc = frappe.get_doc("Stock Entry", stock_entry)
@@ -52,7 +51,3 @@ def cancel_stock_entry(stock_entry):
         frappe.db.rollback()
         frappe.log_error(frappe.get_traceback(), f"Failed to cancel Stock Entry {stock_entry}")
         raise e
-
-    finally:
-        # Always release the lock
-        frappe.cache().delete(lock_name)

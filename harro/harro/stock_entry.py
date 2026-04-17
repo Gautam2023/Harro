@@ -8,8 +8,8 @@ def cancel_stock_entry_in_rq(stock_entry):
         stock_entry=stock_entry,
         queue="long",
         timeout=7200,
-        job_name=f"cancel_stock_entry_{stock_entry}",  # ← prevents duplicate jobs
-        deduplicate=True                                # ← Frappe will skip if already queued
+        job_id=f"cancel_stock_entry_{stock_entry}",  # ← correct parameter
+        deduplicate=True
     )
     return True
 

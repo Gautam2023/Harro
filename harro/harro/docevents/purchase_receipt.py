@@ -187,7 +187,7 @@ def email_notification(doc, method=None):
 
     users = frappe.get_all(
         "Has Role",
-        filters={"role": "QM Representative"},
+        filters={"role": "Quality Assurance Engineer"},
         fields=["parent"]
     )
 

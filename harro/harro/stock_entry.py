@@ -17,7 +17,7 @@ def cancel_stock_entry(stock_entry):
     lock_name = f"cancel_stock_entry_{stock_entry}"
     
     # Acquire a Redis-level distributed lock
-    if not frappe.cache().set(lock_name, "locked", ex=300, nx=True):
+    if not frappe.cache().set(lock_name, "locked", ex=7200, nx=True):
         frappe.log_error(
             f"Stock Entry {stock_entry} cancellation already in progress. Skipping duplicate job.",
             "Cancel Stock Entry RQ"

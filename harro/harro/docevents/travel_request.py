@@ -162,6 +162,11 @@ def sync_travel_planning_from_travel_request(doc, method=None):
                 "travel_to": tr_row.travel_to,
                 "mode_of_travel": tr_row.mode_of_travel,
                 "extra_baggage": tr_row.custom_extra_baggage,
+                "lodging_required": tr_row.lodging_required,
+                "check_in_date": tr_row.check_in_date,
+                "check_out_date": tr_row.check_out_date,
+                "room_night": tr_row.room_night,
+                "custom_taxi_required": tr_row.custom_taxi_required,
                 **update_values
             })
             added = True

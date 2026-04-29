@@ -11,14 +11,14 @@ def validate(self, method):
     )
 
     # Trigger email when workflow state moves to "Approved"
-    try:
-        send_project_approval_email_if_required(self)
-    except Exception as e:
-        # Never block save if email fails; just log it
-        frappe.log_error(
-            message=frappe.get_traceback(),
-            title=f"Project approval email failed for {getattr(self, 'name', '')}: {e}",
-        )
+    # try:
+    #     send_project_approval_email_if_required(self)
+    # except Exception as e:
+    #     # Never block save if email fails; just log it
+    #     frappe.log_error(
+    #         message=frappe.get_traceback(),
+    #         title=f"Project approval email failed for {getattr(self, 'name', '')}: {e}",
+    #     )
 
 
 def send_project_approval_email_if_required(doc):

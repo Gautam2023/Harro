@@ -30,6 +30,18 @@ frappe.query_reports["Travel MIS Report"] = {
             fieldname: "to_date",
             label: "To Date",
             fieldtype: "Date"
+        },
+        {
+            fieldname: "employee",
+            label: "Employee",
+            fieldtype: "Link",
+            options: "Employee"
+        },
+        {
+            fieldname: "travel_type",
+            label: "Travel Type",
+            fieldtype: "Select",
+            options: ["","Domestic","International"]
         }
     ]
 };

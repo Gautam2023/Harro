@@ -158,6 +158,12 @@ def create_custom_fields_on_migrate():
                 "fieldname" : "job_card_cut_of_time",
                 "label" : "Job Card Cut of Time",
                 "fieldtype" : "Float",
+            },
+            {
+                "fieldname" : "timesheet_cut_of_time",
+                "label" : "Timesheet Cut Off Time",
+                "fieldtype" : "Float",
+                "insert_after" : "task_cut_of_time"
             }
         ],
         "Activity Type" : [

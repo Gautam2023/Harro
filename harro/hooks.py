@@ -99,14 +99,14 @@ after_migrate = "harro.harro.custom_field.create_custom_fields_on_migrate"
 jinja = {
 	"methods": "harro.harro.api.get_item_master_data_for_print",
 }
-fixtures = [
-    {
-        "doctype": "Custom Field",
-        "filters": [
-            ["module" , "=" , "Harro"]
-        ]
-    }
-]
+# fixtures = [
+#     {
+#         "doctype": "Custom Field",
+#         "filters": [
+#             ["module" , "=" , "Harro"]
+#         ]
+#     }
+# ]
 # Installation
 # ------------
 

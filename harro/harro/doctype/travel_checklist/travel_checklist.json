@@ -215,7 +215,7 @@
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2025-11-17 21:52:21.222386",
+ "modified": "2026-02-06 13:07:36.983865",
  "modified_by": "Administrator",
  "module": "Harro",
  "name": "Travel Checklist",
@@ -230,6 +230,7 @@
    "read": 1,
    "report": 1,
    "role": "System Manager",
+   "select": 1,
    "share": 1,
    "submit": 1,
    "write": 1

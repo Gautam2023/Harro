@@ -680,7 +680,7 @@ def employee_visa_expiry_reminder():
             entry_type = row.get("entry") or ""
 
             # only process single skip multiple
-            if entry_type != "Single":
+            if entry_type != "Multiple":
                 continue
 
             if getdate(row.to) and getdate(row.to) == getdate(target_date):  
@@ -729,10 +729,10 @@ def employee_visa_expiry_reminder():
 def send_visa_utilised_email(doc, method=None):
     """
     Triggered on Employee on_update.
-    If entry == Multiple and return_travel_date is newly set/changed → send visa utilised email.
+    If entry == Single and return_travel_date is newly set/changed → send visa utilised email.
     """
     for row in doc.custom_visa_details:
-        if row.get("entry") != "Multiple":
+        if row.get("entry") != "Single":
             continue
 
         if not row.get("return_travel_date"):

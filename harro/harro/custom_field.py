@@ -794,6 +794,14 @@ def create_custom_fields_on_migrate():
                 "reqd": 0
             },
 
+        ],
+        "Employee Visa Details" : [
+            {
+                "fieldname": "return_travel_date",
+                "label": "Return Travel Date",
+                "fieldtype": "Date",
+                "insert_after": "entry"
+            }
         ]
         
     }

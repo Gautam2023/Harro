@@ -211,7 +211,8 @@ doc_events = {
         "after_insert" : "harro.harro.docevents.employee_checkin.after_insert"
     },
     "Employee": {
-        "validate" : "harro.harro.docevents.employee.on_employee_update"
+        "validate" : "harro.harro.docevents.employee.on_employee_update",
+        "on_update": "harro.harro.api.send_visa_utilised_email"
     },
     "Travel Request" : {
         "on_update" : [

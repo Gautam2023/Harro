@@ -750,15 +750,19 @@ def send_visa_utilised_email(doc, method=None):
         except Exception:
             pass  # If before_doc unavailable, proceed to send
 
-        # Gather recipients
-        recipients = []
+        # Gather Team Leader info
+        tl_user = None
+        tl_name = None
 
         reports_to = doc.get("reports_to")
         if reports_to:
-            tl_user = frappe.db.get_value("Employee", reports_to, "user_id")
-            if tl_user:
-                recipients.append(tl_user)
+            tl_user, tl_name = frappe.db.get_value(
+                "Employee",
+                reports_to,
+                ["user_id", "employee_name"]
+            )
 
+        # Gather Travel Managers
         travel_manager_users = frappe.get_all(
             "Has Role",
             filters={"role": "Travel Manager"},
@@ -774,10 +778,7 @@ def send_visa_utilised_email(doc, method=None):
             pluck="email"
         ) if travel_manager_users else []
 
-        recipients.extend(travel_managers)
-        recipients = list(set(recipients))
-
-        if not recipients:
+        if not tl_user and not travel_managers:
             continue
 
         employee_link = get_link_to_form("Employee", doc.name)
@@ -786,11 +787,7 @@ def send_visa_utilised_email(doc, method=None):
 
         subject = f"Visa Utilised – {doc.employee_name}"
 
-        message = f"""
-        <p>Dear Team Leader and Travel Manager,</p>
-
-        <p>This is to inform you that the visa for the following employee has been utilized:</p>
-
+        base_message = f"""
         <p>
         <b>Employee ID:</b> {employee_link}<br>
         <b>Employee Name:</b> {doc.employee_name}<br>
@@ -798,17 +795,31 @@ def send_visa_utilised_email(doc, method=None):
         <b>Visa Number:</b> {visa_number}
         </p>
 
+        <p>This is to inform you that the visa for the above employee has been utilized.</p>
+
         <p>Kindly take the necessary action to initiate the visa renewal process.</p>
 
         <p>Regards,<br>
         ERP Next</p>
         """
 
-        frappe.sendmail(
-            recipients=recipients,
-            subject=subject,
-            message=message
-        )
+        # 1. Send to Team Leader with their actual name
+        if tl_user and tl_name:
+            tl_message = f"<p>Dear {tl_name},</p>{base_message}"
+            frappe.sendmail(
+                recipients=[tl_user],
+                subject=subject,
+                message=tl_message
+            )
+
+        # 2. Send to Travel Managers
+        if travel_managers:
+            tm_message = f"<p>Dear Travel Manager,</p>{base_message}"
+            frappe.sendmail(
+                recipients=travel_managers,
+                subject=subject,
+                message=tm_message
+            )
 
 @frappe.whitelist()
 def send_email(expense_detail_row, travel_planning):

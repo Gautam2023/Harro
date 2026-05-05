@@ -1,5 +1,8 @@
 import frappe
 from erpnext.stock.doctype.purchase_receipt.purchase_receipt import PurchaseReceipt
+from erpnext.stock.doctype.purchase_receipt.purchase_receipt import (
+    make_purchase_invoice as original_make_purchase_invoice
+)
 
 class CustomPurchaseReceipt(PurchaseReceipt):
     def po_required(self):
@@ -14,3 +17,20 @@ class CustomPurchaseReceipt(PurchaseReceipt):
                     continue
                 if not d.purchase_order:
                     frappe.throw(_("Purchase Order number required for Item {0}").format(d.item_code))
+
+@frappe.whitelist()
+def make_purchase_invoice(source_name, target_doc=None, args=None):
+    #original function call
+    doclist = original_make_purchase_invoice(source_name, target_doc, args)
+
+    pr = frappe.get_value(
+        "Purchase Receipt",
+        source_name,
+        ["supplier_invoice_no","supplier_invoice_date"],
+        as_dict=True
+    )
+    if pr:
+        doclist.bill_no = pr.supplier_invoice_no
+        doclist.bill_date = pr.supplier_invoice_date
+
+    return doclist

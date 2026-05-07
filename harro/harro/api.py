@@ -693,7 +693,7 @@ def employee_visa_expiry_reminder():
                 employee_link = get_link_to_form("Employee", emp.name)
                 
                 base_message = f"""
-                <p>This is to inform you that the visa of the below employee is set to expire within the next 3 months.</p>
+                <p>This is to inform you that the visa of the below employee is set to expire within the next 1 months.</p>
 
                 <p>
                 <b>Employee Name:</b> {emp.employee_name}<br>

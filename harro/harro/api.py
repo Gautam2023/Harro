@@ -698,7 +698,9 @@ def employee_visa_expiry_reminder():
                 <p>
                 <b>Employee Name:</b> {emp.employee_name}<br>
                 <b>Employee ID:</b> {employee_link}<br>
-                <b>Visa Expiry Date:</b> {formatted_date}
+                <b>Visa Expiry Date:</b> {formatted_date}<br>
+                <b>Visa Country:</b> {row.visa_country}<br>
+                <b>Visa Number:</b> {row.number}
                 </p>
 
                 <p>Kindly take the necessary action to initiate the visa renewal process.</p>

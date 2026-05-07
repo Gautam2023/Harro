@@ -790,14 +790,14 @@ def send_visa_utilised_email(doc, method=None):
         subject = f"Visa Utilised – {doc.employee_name}"
 
         base_message = f"""
+        <p>This is to inform you that the visa for the above employee has been utilized.</p>
+
         <p>
         <b>Employee ID:</b> {employee_link}<br>
         <b>Employee Name:</b> {doc.employee_name}<br>
         <b>Visa Country:</b> {visa_country}<br>
         <b>Visa Number:</b> {visa_number}
         </p>
-
-        <p>This is to inform you that the visa for the above employee has been utilized.</p>
 
         <p>Kindly take the necessary action to initiate the visa renewal process.</p>
 

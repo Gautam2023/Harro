@@ -156,14 +156,22 @@ def update_stop_task_log(arg, start_new=False):
                 } ,"name")
     if timesheet:
         timesheet_doc = frappe.get_doc("Timesheet", timesheet)
-        timesheet_doc.append("time_logs", {
-            "activity_type" : row.get("activity_type"),
-            "from_time" : row.get("from_time"),
-            "to_time" : row.get("to_time"),
-            "employee" : row.get("employee"),
-            "project" : row.get("project"),
-            "task" : args.get("task")
-        })
+        # Check if a time log for this task already exists to avoid self-overlap
+        existing_log = next(
+            (tl for tl in timesheet_doc.time_logs if tl.task == args.get("task")),
+            None
+        )
+        if existing_log:
+            existing_log.to_time = row.get("to_time")
+        else:
+            timesheet_doc.append("time_logs", {
+                "activity_type" : row.get("activity_type"),
+                "from_time" : row.get("from_time"),
+                "to_time" : row.get("to_time"),
+                "employee" : row.get("employee"),
+                "project" : row.get("project"),
+                "task" : args.get("task")
+            })
         timesheet_doc.flags.ignore_permissions=True
         timesheet_doc.save()
     else:

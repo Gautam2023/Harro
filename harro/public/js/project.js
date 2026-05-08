@@ -23,7 +23,7 @@ function prepare_chart_design(frm) {
     if (!wrapper.find(".multi-effort-wrapper").length) {
         wrapper.html(`
             <div class="multi-effort-wrapper" style="display:flex; justify-content:space-around; flex-wrap:wrap; gap:20px;">
-                ${["Effort Construction", "Effort Mechanical", "Effort Electrical"].map((title, i) => `
+                ${["Total Assembly Hours", "Effort Mechanical", "Effort Electrical"].map((title, i) => `
                     <div class="effort-chart-wrapper" 
                             style="width:300px; margin:0 auto; text-align:center; position:relative;">
                         <h5 style="font-weight:600; margin-bottom:4px;">${title}</h5>
@@ -155,7 +155,9 @@ function renderAllSpeedometers(frm) {
 }
 // Job Card Hours
 function renderSpeedometer(frm, set) {
-    const { planned, actual, index } = set;
+    const planned = Number(set.planned) || 0;
+    const actual = Number(set.actual) || 0;
+    const { index } = set;
     const percentage = planned ? Math.min((actual / planned) * 100, 200) : 0;
 
     const ctx = document.getElementById(`speed_chart_${index}_${frm.doc.name}`);
@@ -194,12 +196,6 @@ function renderSpeedometer(frm, set) {
         plugins: {
             legend: { display: false },
             tooltip: { enabled: false },
-            needle: {
-                radiusPercentage: 1.2,
-                widthPercentage: 3,
-                lengthPercentage: 80,
-                color: "#000",
-            },
         },
     };
 
@@ -209,30 +205,30 @@ function renderSpeedometer(frm, set) {
     // Custom Needle Plugin
     const gaugeNeedle = {
         id: "needle",
-        afterDatasetDraw(chart) {
-            const { ctx, chartArea: { width, height, top } } = chart;
-            const needleValue = percentage > 200 ? 200 : percentage;
-            const angle = (Math.PI * (needleValue / 200)) - Math.PI; // 0-200 mapped to 180°
-            const cx = width / 2;
-            const cy = height - 10;
+        afterDatasetDraw(chart, args) {
+            if (args.index !== chart.data.datasets.length - 1) return;
+            const { ctx: chartCtx, chartArea: { left, top, width, height } } = chart;
+            const needleValue = Math.min(percentage, 200);
+            const angle = (Math.PI * (needleValue / 200)) - Math.PI;
+            const cx = left + width / 2;
+            const cy = top + height;
 
-            const length = height * 0.65;
+            const length = height * 0.75;
             const needleX = cx + length * Math.cos(angle);
             const needleY = cy + length * Math.sin(angle);
 
-            // Draw needle
-            ctx.save();
-            ctx.beginPath();
-            ctx.moveTo(cx, cy);
-            ctx.lineTo(needleX, needleY);
-            ctx.lineWidth = 3;
-            ctx.strokeStyle = "#111";
-            ctx.stroke();
-            ctx.beginPath();
-            ctx.arc(cx, cy, 5, 0, 2 * Math.PI);
-            ctx.fillStyle = "#111";
-            ctx.fill();
-            ctx.restore();
+            chartCtx.save();
+            chartCtx.beginPath();
+            chartCtx.moveTo(cx, cy);
+            chartCtx.lineTo(needleX, needleY);
+            chartCtx.lineWidth = 4;
+            chartCtx.strokeStyle = "#000";
+            chartCtx.stroke();
+            chartCtx.beginPath();
+            chartCtx.arc(cx, cy, 5, 0, 2 * Math.PI);
+            chartCtx.fillStyle = "#000";
+            chartCtx.fill();
+            chartCtx.restore();
         },
     };
 
@@ -245,7 +241,7 @@ function renderSpeedometer(frm, set) {
 
     // Value label
     document.getElementById(`speed_value_${index}_${frm.doc.name}`).innerHTML =
-        `<b>${percentage.toFixed(1)}%</b><br>(${actual || 0} / ${planned || 0} hrs)`;
+        `<b>${percentage.toFixed(1)}%</b><br>(${actual} / ${planned} hrs)`;
 }
 
 
@@ -305,12 +301,6 @@ function renderproductiveTimesheetSpeedometer(frm, set) {
         plugins: {
             legend: { display: false },
             tooltip: { enabled: false },
-            needle: {
-                radiusPercentage: 1.2,
-                widthPercentage: 3,
-                lengthPercentage: 80,
-                color: "#000",
-            },
         },
     };
 
@@ -320,30 +310,30 @@ function renderproductiveTimesheetSpeedometer(frm, set) {
     // Custom Needle Plugin
     const gaugeNeedle = {
         id: "needle",
-        afterDatasetDraw(chart) {
-            const { ctx, chartArea: { width, height, top } } = chart;
-            const needleValue = percentage > 200 ? 200 : percentage;
-            const angle = (Math.PI * (needleValue / 200)) - Math.PI; // 0-200 mapped to 180°
-            const cx = width / 2;
-            const cy = height - 10;
+        afterDatasetDraw(chart, args) {
+            if (args.index !== chart.data.datasets.length - 1) return;
+            const { ctx: chartCtx, chartArea: { left, top, width, height } } = chart;
+            const needleValue = Math.min(percentage, 200);
+            const angle = (Math.PI * (needleValue / 200)) - Math.PI;
+            const cx = left + width / 2;
+            const cy = top + height;
 
-            const length = height * 0.65;
+            const length = height * 0.75;
             const needleX = cx + length * Math.cos(angle);
             const needleY = cy + length * Math.sin(angle);
 
-            // Draw needle
-            ctx.save();
-            ctx.beginPath();
-            ctx.moveTo(cx, cy);
-            ctx.lineTo(needleX, needleY);
-            ctx.lineWidth = 3;
-            ctx.strokeStyle = "#111";
-            ctx.stroke();
-            ctx.beginPath();
-            ctx.arc(cx, cy, 5, 0, 2 * Math.PI);
-            ctx.fillStyle = "#111";
-            ctx.fill();
-            ctx.restore();
+            chartCtx.save();
+            chartCtx.beginPath();
+            chartCtx.moveTo(cx, cy);
+            chartCtx.lineTo(needleX, needleY);
+            chartCtx.lineWidth = 4;
+            chartCtx.strokeStyle = "#000";
+            chartCtx.stroke();
+            chartCtx.beginPath();
+            chartCtx.arc(cx, cy, 5, 0, 2 * Math.PI);
+            chartCtx.fillStyle = "#000";
+            chartCtx.fill();
+            chartCtx.restore();
         },
     };
 
@@ -356,7 +346,7 @@ function renderproductiveTimesheetSpeedometer(frm, set) {
 
     // Value label
     document.getElementById(`timesheet_value_${index}_${frm.doc.name}`).innerHTML =
-        `<b>${percentage.toFixed(1)}%</b><br>(${actual || 0} / ${planned || 0} hrs)`;
+        `<b>${percentage.toFixed(1)}%</b><br>(${actual} / ${planned} hrs)`;
 }
 
 function renderAllunproductiveTimesheetSpeedometers(frm) {
@@ -377,7 +367,9 @@ function renderAllunproductiveTimesheetSpeedometers(frm) {
 
 
 function renderunproductiveTimesheetSpeedometer(frm, set) {
-    const { planned, actual, index } = set;
+    const planned = Number(set.planned) || 0;
+    const actual = Number(set.actual) || 0;
+    const { index } = set;
     const percentage = planned ? Math.min((actual / planned) * 100, 200) : 0;
 
     const ctx = document.getElementById(`unpro_timesheet_chart_${index}_${frm.doc.name}`);
@@ -416,12 +408,6 @@ function renderunproductiveTimesheetSpeedometer(frm, set) {
         plugins: {
             legend: { display: false },
             tooltip: { enabled: false },
-            needle: {
-                radiusPercentage: 1.2,
-                widthPercentage: 3,
-                lengthPercentage: 80,
-                color: "#000",
-            },
         },
     };
 
@@ -431,30 +417,30 @@ function renderunproductiveTimesheetSpeedometer(frm, set) {
     // Custom Needle Plugin
     const gaugeNeedle = {
         id: "needle",
-        afterDatasetDraw(chart) {
-            const { ctx, chartArea: { width, height, top } } = chart;
-            const needleValue = percentage > 200 ? 200 : percentage;
-            const angle = (Math.PI * (needleValue / 200)) - Math.PI; // 0-200 mapped to 180°
-            const cx = width / 2;
-            const cy = height - 10;
+        afterDatasetDraw(chart, args) {
+            if (args.index !== chart.data.datasets.length - 1) return;
+            const { ctx: chartCtx, chartArea: { left, top, width, height } } = chart;
+            const needleValue = Math.min(percentage, 200);
+            const angle = (Math.PI * (needleValue / 200)) - Math.PI;
+            const cx = left + width / 2;
+            const cy = top + height;
 
-            const length = height * 0.65;
+            const length = height * 0.75;
             const needleX = cx + length * Math.cos(angle);
             const needleY = cy + length * Math.sin(angle);
 
-            // Draw needle
-            ctx.save();
-            ctx.beginPath();
-            ctx.moveTo(cx, cy);
-            ctx.lineTo(needleX, needleY);
-            ctx.lineWidth = 3;
-            ctx.strokeStyle = "#111";
-            ctx.stroke();
-            ctx.beginPath();
-            ctx.arc(cx, cy, 5, 0, 2 * Math.PI);
-            ctx.fillStyle = "#111";
-            ctx.fill();
-            ctx.restore();
+            chartCtx.save();
+            chartCtx.beginPath();
+            chartCtx.moveTo(cx, cy);
+            chartCtx.lineTo(needleX, needleY);
+            chartCtx.lineWidth = 4;
+            chartCtx.strokeStyle = "#000";
+            chartCtx.stroke();
+            chartCtx.beginPath();
+            chartCtx.arc(cx, cy, 5, 0, 2 * Math.PI);
+            chartCtx.fillStyle = "#000";
+            chartCtx.fill();
+            chartCtx.restore();
         },
     };
 
@@ -467,6 +453,6 @@ function renderunproductiveTimesheetSpeedometer(frm, set) {
 
     // Value label
     document.getElementById(`unpro_timesheet_value_${index}_${frm.doc.name}`).innerHTML =
-        `<b>${percentage.toFixed(1)}%</b><br>(${actual || 0} / ${planned || 0} hrs)`;
+        `<b>${percentage.toFixed(1)}%</b><br>(${actual} / ${planned} hrs)`;
 }
 

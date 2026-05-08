@@ -113,7 +113,7 @@ def get_conditions(filters: Dict) -> Tuple[str, Dict]:
         'ba_number': ("tp.ba_number = %(ba_number)s", "ba_number"),
         'travel_request': ("tped.travel_request = %(travel_request)s", "travel_request"),
         'travel_plan': ("tp.name = %(travel_plan)s", "travel_plan"),
-        'employee': ("tped.employee_hh_id = %(employee)s", "employee"),
+        'employee': ("tr.employee = %(employee)s", "employee"),
         'employee_name': ("tped.employee_name = %(employee_name)s", "employee_name"),
         'travel_type': ("tr.travel_type = %(travel_type)s", "travel_type"),
         'flight_booking_status': ("tri.custom_flight_booking_status = %(flight_booking_status)s", "flight_booking_status"),

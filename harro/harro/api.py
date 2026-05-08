@@ -639,7 +639,7 @@ from frappe.utils import add_days, today, getdate, formatdate, get_link_to_form
 import frappe
 
 def employee_visa_expiry_reminder():
-    target_date = add_days(today(),90)  
+    target_date = add_days(today(),30)  
 
     travel_manager_users = frappe.get_all(
         "Has Role",
@@ -677,6 +677,12 @@ def employee_visa_expiry_reminder():
             )
 
         for row in doc.custom_visa_details: 
+            entry_type = row.get("entry") or ""
+
+            # only process single skip multiple
+            if entry_type != "Multiple":
+                continue
+
             if getdate(row.to) and getdate(row.to) == getdate(target_date):  
                 print(row.to)
                 print(target_date)
@@ -687,12 +693,14 @@ def employee_visa_expiry_reminder():
                 employee_link = get_link_to_form("Employee", emp.name)
                 
                 base_message = f"""
-                <p>This is to inform you that the visa of the below employee is set to expire within the next 3 months.</p>
+                <p>This is to inform you that the visa of the below employee is set to expire within the next 1 months.</p>
 
                 <p>
                 <b>Employee Name:</b> {emp.employee_name}<br>
                 <b>Employee ID:</b> {employee_link}<br>
-                <b>Visa Expiry Date:</b> {formatted_date}
+                <b>Visa Expiry Date:</b> {formatted_date}<br>
+                <b>Visa Country:</b> {row.visa_country}<br>
+                <b>Visa Number:</b> {row.number}
                 </p>
 
                 <p>Kindly take the necessary action to initiate the visa renewal process.</p>
@@ -720,6 +728,100 @@ def employee_visa_expiry_reminder():
                         message=message
                     )
 
+def send_visa_utilised_email(doc, method=None):
+    """
+    Triggered on Employee on_update.
+    If entry == Single and return_travel_date is newly set/changed → send visa utilised email.
+    """
+    for row in doc.custom_visa_details:
+        if row.get("entry") != "Single":
+            continue
+
+        if not row.get("return_travel_date"):
+            continue
+
+        # Check if return_travel_date was just changed
+        try:
+            before_doc = doc.get_doc_before_save()
+            if before_doc:
+                before_row = next(
+                    (r for r in before_doc.custom_visa_details if r.name == row.name), None
+                )
+                if before_row and before_row.get("return_travel_date") == row.get("return_travel_date"):
+                    continue  # Not changed, skip
+        except Exception:
+            pass  # If before_doc unavailable, proceed to send
+
+        # Gather Team Leader info
+        tl_user = None
+        tl_name = None
+
+        reports_to = doc.get("reports_to")
+        if reports_to:
+            tl_user, tl_name = frappe.db.get_value(
+                "Employee",
+                reports_to,
+                ["user_id", "employee_name"]
+            )
+
+        # Gather Travel Managers
+        travel_manager_users = frappe.get_all(
+            "Has Role",
+            filters={"role": "Travel Manager"},
+            pluck="parent"
+        )
+        travel_managers = frappe.get_all(
+            "User",
+            filters={
+                "name": ["in", travel_manager_users],
+                "enabled": 1,
+                "user_type": "System User"
+            },
+            pluck="email"
+        ) if travel_manager_users else []
+
+        if not tl_user and not travel_managers:
+            continue
+
+        employee_link = get_link_to_form("Employee", doc.name)
+        visa_country = row.get("visa_country") or ""
+        visa_number = row.get("number") or ""
+
+        subject = f"Visa Utilised – {doc.employee_name}"
+
+        base_message = f"""
+        <p>This is to inform you that the visa for the above employee has been utilized.</p>
+
+        <p>
+        <b>Employee ID:</b> {employee_link}<br>
+        <b>Employee Name:</b> {doc.employee_name}<br>
+        <b>Visa Country:</b> {visa_country}<br>
+        <b>Visa Number:</b> {visa_number}
+        </p>
+
+        <p>Kindly take the necessary action to initiate the visa renewal process.</p>
+
+        <p>Regards,<br>
+        ERP Next</p>
+        """
+
+        # 1. Send to Team Leader with their actual name
+        if tl_user and tl_name:
+            tl_message = f"<p>Dear {tl_name},</p>{base_message}"
+            frappe.sendmail(
+                recipients=[tl_user],
+                subject=subject,
+                message=tl_message
+            )
+
+        # 2. Send to Travel Managers
+        if travel_managers:
+            tm_message = f"<p>Dear Travel Manager,</p>{base_message}"
+            frappe.sendmail(
+                recipients=travel_managers,
+                subject=subject,
+                message=tm_message
+            )
 
 @frappe.whitelist()
 def send_email(expense_detail_row, travel_planning):

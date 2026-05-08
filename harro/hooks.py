@@ -211,7 +211,8 @@ doc_events = {
         "after_insert" : "harro.harro.docevents.employee_checkin.after_insert"
     },
     "Employee": {
-        "validate" : "harro.harro.docevents.employee.on_employee_update"
+        "validate" : "harro.harro.docevents.employee.on_employee_update",
+        "on_update": "harro.harro.api.send_visa_utilised_email"
     },
     "Travel Request" : {
         "on_update" : [
@@ -293,6 +294,7 @@ override_whitelisted_methods = {
     "erpnext.manufacturing.doctype.bom.bom.get_bom_diff" : "harro.harro.docevents.bom.get_bom_diff",
     "hrms.hr.doctype.expense_claim.expense_claim.get_expense_claim" : "harro.harro.override.employee_advance.get_expense_claim",
     "erpnext.accounts.doctype.payment_entry.payment_entry.get_payment_entry": "harro.harro.override.payment_entry.get_payment_entry",
+    "erpnext.stock.doctype.purchase_receipt.purchase_receipt.make_purchase_invoice": "harro.harro.override.purchase_receipt.make_purchase_invoice",
 }
 #
 # each overriding function accepts a `data` argument;

@@ -119,8 +119,8 @@ def calculate_totals(doc, method=None):
 
 	for d in doc.travel_itinerary:
 		row_total = (
-			(d.baggage_coast or 0)
-			+ (d.custom_seat_charges or 0)
+			# (d.baggage_coast or 0)
+			# + (d.custom_seat_charges or 0)
 			+ (d.custom_total_flight_cost_as_per_invoice or 0)
 			+ (d.custom_total_hotel_charge_as_per_invoice or 0)
 			+ (d.taxi_coast or 0)

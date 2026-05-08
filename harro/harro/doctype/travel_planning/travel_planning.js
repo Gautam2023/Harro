@@ -4,7 +4,20 @@
 frappe.ui.form.on("Travel Planning", {
 	refresh(frm) {
         set_profit_color(frm);
-        if(!frm.is_new()){
+
+        // Allowed Roles
+        const allowed_roles = [
+            "Travel Manager",
+            "Accounts Manager",
+            "Accounts User"
+        ];
+
+        // Check if current user has any allowed role
+        const has_permission = allowed_roles.some(role =>
+            frappe.user.has_role(role)
+        );
+
+        if(!frm.is_new() && has_permission){
             frm.add_custom_button(__("Purchase Invoice"), (frm)=>{
                 frappe.model.open_mapped_doc({
                     method: "harro.harro.doctype.travel_planning.travel_planning.create_purchase_invoice",

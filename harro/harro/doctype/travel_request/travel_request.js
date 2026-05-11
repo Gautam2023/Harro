@@ -19,6 +19,13 @@ frappe.ui.form.on("Travel Request", {
     },
     custom_checkin_date(frm) {
         calculate_nights_parent(frm);
+    },
+    onload: function(frm) {
+        set_employee_filter(frm);
+    },
+    
+    refresh: function(frm) {
+        set_employee_filter(frm);
     }
 });
 
@@ -33,4 +40,38 @@ function calculate_nights_parent(frm) {
         console.log(custom_room_night);
         frm.set_value("custom_room_night", custom_room_night);
     }
+}
+
+function set_employee_filter(frm) {
+    frappe.call({
+        method: 'frappe.client.get_value',
+        args: {
+            doctype: 'Employee',
+            filters: { user_id: frappe.session.user },
+            fieldname: 'name'
+        },
+        callback: function(response) {
+            if (response.message) {
+                const logged_in_employee = response.message.name;
+
+                frm.set_query('employee', function() {
+                    return {
+                        filters: {
+                            reports_to: logged_in_employee,
+                            status: 'Active'
+                        }
+                    };
+                });
+            } else {
+                frm.set_query('employee', function() {
+                    return {
+                        filters: {
+                            name: '' 
+                        }
+                    };
+                });
+                frappe.msgprint(__('No Employee record found for the logged-in user.'));
+            }
+        }
+    });
 }

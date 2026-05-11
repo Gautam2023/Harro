@@ -57,5 +57,47 @@ frappe.ui.form.on("Visa Request", {
                 }
             })
         }
+    },
+    onload: function(frm) {
+        set_employee_filter(frm);
+    },
+    
+    refresh: function(frm) {
+        set_employee_filter(frm);
     }
 });
+
+
+function set_employee_filter(frm) {
+    frappe.call({
+        method: 'frappe.client.get_value',
+        args: {
+            doctype: 'Employee',
+            filters: { user_id: frappe.session.user },
+            fieldname: 'name'
+        },
+        callback: function(response) {
+            if (response.message) {
+                const logged_in_employee = response.message.name;
+                
+                frm.set_query('employee_id', function() {
+                    return {
+                        filters: {
+                            reports_to: logged_in_employee,
+                            status: 'Active'
+                        }
+                    };
+                });
+            } else {
+                frm.set_query('employee_id', function() {
+                    return {
+                        filters: {
+                            name: ''  
+                        }
+                    };
+                });
+                frappe.msgprint(__('No Employee record found for the logged-in user.'));
+            }
+        }
+    });
+}

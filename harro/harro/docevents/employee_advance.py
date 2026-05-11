@@ -1,9 +1,11 @@
 import frappe
 
 def set_per_day_allowance(doc, method=None):
-    # Safety check
-    if not doc.custom_country or not doc.custom_employment_type:
+    if not doc.custom_country:
         return
+
+    if not doc.custom_employment_type:
+        frappe.throw("Employment Type is required to calculate per day allowance.")
 
     try:
         tlp = frappe.get_doc(
@@ -11,31 +13,34 @@ def set_per_day_allowance(doc, method=None):
             "Travel Allowance Applicability Details Country Wise"
         )
     except frappe.DoesNotExistError:
-        return
+        frappe.throw("Travel Allowance Policy 'Travel Allowance Applicability Details Country Wise' not found.")
+
+    per_day = 0
 
     for item in tlp.table_ntaw:
         if item.country != doc.custom_country:
             continue
-        per_day = 0
+
         if doc.custom_country == "India":
+            # Row selected by particulars, field selected by employment type
+            if item.particulars != doc.custom_particulars:
+                continue
 
-            if doc.custom_employment_type == "Full-time" and doc.custom_particulars == "Overnight Stay / Full Day":
-                per_day = item.daily_allowance
-
-            elif doc.custom_employment_type != "Full-time" and doc.custom_particulars == "Within Bangalore (without O/N)":
-                per_day = item.day_allowance
-            else:
-                return
-            
-        else:
             if doc.custom_employment_type == "Full-time":
                 per_day = item.daily_allowance
             else:
                 per_day = item.day_allowance
-                
-        doc.custom_per_day_allowance = per_day or 0
-        days = doc.custom_no_of_days or 0
-        doc.custom_total_amount = days * (per_day or 0)
-        doc.advance_amount = (days * (per_day or 0)) * 0.5
+
+        else:
+            # Non-India: single row per country, field selected by employment type
+            if doc.custom_employment_type == "Full-time":
+                per_day = item.daily_allowance
+            else:
+                per_day = item.day_allowance
 
         break
+
+    doc.custom_per_day_allowance = per_day
+    days = doc.custom_no_of_days or 0
+    doc.custom_total_amount = days * per_day
+    doc.advance_amount = doc.custom_total_amount * 0.5

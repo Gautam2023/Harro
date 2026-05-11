@@ -35,7 +35,8 @@ def send_attachment_emails(docname):
         "custom_evisa",
         "custom_travel_insurance",
         "custom_flight_bill",
-        "custom_taxi_bill"
+        "custom_taxi_bill",
+        "custom_return_flight_ticket"
     ]
 
     for row in doc.travel_itinerary:
@@ -67,6 +68,24 @@ def send_attachment_emails(docname):
             attachments=attachments,
             reference_doctype=doc.doctype,
             reference_name=doc.name
+        )
+
+        frappe.sendmail(
+            recipients=[doc.custom_requestor_contact_email],
+            subject=f"Ticket has been booked for {row.employee_name} against Travel Request {row.travel_request}",
+            message=f"""
+                Hello {frappe.db.get_value('Employee', doc.travel_requestor, 'employee_name')},<br><br>
+                
+                This is to inform you that the ticket has been issued for {row.employee_name} against the travel request {row.travel_request},
+                and the travel documents are attached for your reference.<br><br>
+
+                <b>Travel Planning:</b> {doc.name}<br>
+                <b>Employee:</b> {row.employee_name}<br><br>
+
+                Regards,<br>
+                <b>Travel Team</b>
+            """,
+            attachments=attachments,      
         )
 
 

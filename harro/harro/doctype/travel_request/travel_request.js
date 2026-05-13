@@ -13,6 +13,7 @@ frappe.ui.form.on("Travel Request", {
                 })
             },__("Create"));
         }
+        set_employee_filter(frm);
 	},
     custom_checkout_date_(frm) {
         calculate_nights_parent(frm);
@@ -21,10 +22,6 @@ frappe.ui.form.on("Travel Request", {
         calculate_nights_parent(frm);
     },
     onload: function(frm) {
-        set_employee_filter(frm);
-    },
-    
-    refresh: function(frm) {
         set_employee_filter(frm);
     }
 });

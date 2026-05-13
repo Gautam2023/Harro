@@ -163,7 +163,8 @@ override_doctype_class = {
     "Job Card" : "harro.harro.override.job_card.CustomJobCard",
     "Purchase Invoice" : "harro.harro.override.purchase_invoice.CustomPurchaseInvoice",
     "Purchase Receipt" : "harro.harro.override.purchase_receipt.CustomPurchaseReceipt",
-    "Payment Request" : "harro.harro.override.payment_request.CustomPaymentRequest"
+    "Payment Request" : "harro.harro.override.payment_request.CustomPaymentRequest",
+    "Stock Entry" : "harro.harro.override.stock_entry.CustomStockEntry"
 }
 
 # Document Events

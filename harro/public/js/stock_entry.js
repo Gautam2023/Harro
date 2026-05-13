@@ -22,11 +22,11 @@ frappe.ui.form.on("Stock Entry", {
         })
         
         // Add button to submit in background
-        if (frm.doc.docstatus === 0 && !frm.is_new()) {
-            frm.add_custom_button(__("Submit in Background"), function() {
-                submit_stock_entry_in_background(frm);
-            }, __("Actions"));
-        }
+        // if (frm.doc.docstatus === 0 && !frm.is_new()) {
+        //     frm.add_custom_button(__("Submit in Background"), function() {
+        //         submit_stock_entry_in_background(frm);
+        //     }, __("Actions"));
+        // }
 
         // add button to cancel in background
         if (frm.doc.docstatus == 1 && frm.perm && frm.perm[0].cancel) {

@@ -170,29 +170,33 @@ def send_hotel_booking_emails(docname):
 
 
 def _build_preferences_html(row):
-    """
-    Returns an HTML block listing travel preferences from the child row.
-    Adjust the field names below to match your actual Travel Itinerary child fields.
-    Returns an empty string if no preference fields exist on the row.
-    """
     preferences = []
 
-    # Map child-table field names → display labels.
-    # Replace the keys with your real Frappe field names if they differ.
     preference_field_map = {
-        "custom_laundry_facility": "Laundry Facility",
-        "custom_meal_discount":    "Discount on Meals",
-        "custom_breakfast":        "Breakfast Included",
-        "custom_wifi":             "Wi-Fi",
-        # add more fields as needed
+        "custom_laundry_facility":  ("Laundry Facility",     "custom_laundry_facility_remarks"),
+        "custom_discount_on_meal":  ("Discount on Meals",    "custom_discount_on_meal_remarks"),
+        "custom_airport_transport": ("Airport Transport",    "custom_airport_transport_remarks"),
+        "custom_break_fast":        ("Breakfast",            "custom_break_fast_remarks"),
+        "custom_wifi":              ("Wi-Fi",                "custom_wifi_remarks"),
     }
 
-    for field, label in preference_field_map.items():
+    for field, (label, remarks_field) in preference_field_map.items():
         value = row.get(field)
-        if value:
-            # If the value is a non-boolean string (e.g. "20%"), append it after the label
-            display = f"{label} – {value}" if not isinstance(value, bool) else label
-            preferences.append(f"<li>{display}</li>")
+        if not value:
+            continue
+
+        remarks = row.get(remarks_field, "")
+        if isinstance(value, str) and value.strip():
+            # String field — show value inline
+            display = f"{label} – {value}"
+        elif remarks:
+            # Checkbox with a remarks field
+            display = f"{label} – {remarks}"
+        else:
+            # Checkbox with no remarks
+            display = label
+
+        preferences.append(f"<li>{display}</li>")
 
     if not preferences:
         return ""

@@ -58,14 +58,13 @@ frappe.ui.form.on("Visa Request", {
                 }
             })
         }
-    },
-    onload: function(frm) {
-        set_employee_filter(frm);
     }
 });
 
 
 function set_employee_filter(frm) {
+    if (frm._employee_filter_set) return;
+
     frappe.call({
         method: 'frappe.client.get_value',
         args: {
@@ -74,27 +73,59 @@ function set_employee_filter(frm) {
             fieldname: 'name'
         },
         callback: function(response) {
-            if (response.message) {
-                const logged_in_employee = response.message.name;
-                
+            const logged_in_employee = response && response.message && response.message.name;
+
+            if (!logged_in_employee) {
                 frm.set_query('employee_id', function() {
-                    return {
-                        filters: {
-                            reports_to: logged_in_employee,
-                            status: 'Active'
-                        }
-                    };
+                    return { filters: { name: ['in', []] } };
                 });
-            } else {
-                frm.set_query('employee_id', function() {
-                    return {
-                        filters: {
-                            name: ''  
-                        }
-                    };
-                });
-                frappe.msgprint(__('No Employee record found for the logged-in user.'));
+                frm._employee_filter_set = true;
+                setTimeout(() => {
+                    frappe.msgprint({
+                        title: __('Warning'),
+                        message: __('No Employee record found for the logged-in user. You cannot create a Visa Request.'),
+                        indicator: 'orange'
+                    });
+                }, 500);
+                return;
             }
+
+            frappe.call({
+                method: 'frappe.client.get_list',
+                args: {
+                    doctype: 'Employee',
+                    filters: [
+                        ['reports_to', '=', logged_in_employee],
+                        ['status', '=', 'Active']
+                    ],
+                    fieldname: 'name',
+                    limit: 0
+                },
+                callback: function(r) {
+                    if (!r || r.exc) {
+                        frappe.show_alert({
+                            message: __('Failed to load employee list. Please refresh.'),
+                            indicator: 'red'
+                        });
+                        return;
+                    }
+
+                    const direct_reports = (r.message || []).map(e => e.name);
+                    const allowed = [logged_in_employee, ...direct_reports];
+
+                    frm.set_query('employee_id', function() {
+                        return {
+                            filters: [
+                                ['name', 'in', allowed],
+                                ['status', '=', 'Active']
+                            ]
+                        };
+                    });
+
+                    frm.refresh_field('employee_id');
+                    frm._employee_filter_set = true;
+                }
+            });
         }
     });
 }

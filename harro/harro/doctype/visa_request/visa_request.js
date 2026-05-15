@@ -18,6 +18,7 @@ frappe.ui.form.on("Visa Request", {
 				},
             }
         })
+        set_employee_filter(frm);
 	},
     visa_country(frm) {
         if (!frm.doc.visa_country) return;
@@ -59,10 +60,6 @@ frappe.ui.form.on("Visa Request", {
         }
     },
     onload: function(frm) {
-        set_employee_filter(frm);
-    },
-    
-    refresh: function(frm) {
         set_employee_filter(frm);
     }
 });

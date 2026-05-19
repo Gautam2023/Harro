@@ -42,6 +42,12 @@ frappe.query_reports["Travel MIS Report"] = {
             label: "Travel Type",
             fieldtype: "Select",
             options: ["","Domestic","International"]
-        }
+        },
+        {
+            fieldname: "employment_type",
+            label: "Employment Type",
+            fieldtype: "Link",
+            options: "Employment Type"
+        },
     ]
 };

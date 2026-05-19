@@ -12,7 +12,7 @@ MAX_ROWS = 10000
 # Allowlist of valid filter keys to prevent injection of unexpected keys
 VALID_FILTER_KEYS = {
     'from_date', 'to_date', 'travel_request', 'travel_plan',
-    'employee', 'employee_name', 'travel_type',
+    'employee', 'employee_name', 'travel_type', 'employment_type',
     'flight_booking_status', 'hotel_booking_status',
 }
 
@@ -119,13 +119,13 @@ def get_columns() -> List[Dict]:
         {"label": _("Total Hotel Incurred Cost"), "fieldname": "total_hotel_incurred_cost", "fieldtype": "Currency", "width": 180},
 
         {"label": _("Total Expenditure"), "fieldname": "total_expenditure", "fieldtype": "Currency", "width": 180},
-        {"label": _("Claimable Amount (Plan)"), "fieldname": "claimable_amount", "fieldtype": "Currency", "width": 170},
-        {"label": _("Unclaimable Amount (Plan)"), "fieldname": "tp_unclaimed_amount", "fieldtype": "Currency", "width": 180},
-        {"label": _("Total Amount (Expense)"), "fieldname": "total_amount", "fieldtype": "Currency", "width": 170},
-        {"label": _("Paid Amount"), "fieldname": "paid_amount", "fieldtype": "Currency", "width": 130},
-        {"label": _("Outstanding Amount"), "fieldname": "outstanding_amount", "fieldtype": "Currency", "width": 150},
-        {"label": _("Claimed Amount"), "fieldname": "claimed_amount", "fieldtype": "Currency", "width": 140},
-        {"label": _("Unclaimed Amount (Expense)"), "fieldname": "ed_unclaimed_amount", "fieldtype": "Currency", "width": 180},
+        # {"label": _("Claimable Amount (Plan)"), "fieldname": "claimable_amount", "fieldtype": "Currency", "width": 170},
+        # {"label": _("Unclaimable Amount (Plan)"), "fieldname": "tp_unclaimed_amount", "fieldtype": "Currency", "width": 180},
+        # {"label": _("Total Amount (Expense)"), "fieldname": "total_amount", "fieldtype": "Currency", "width": 170},
+        # {"label": _("Paid Amount"), "fieldname": "paid_amount", "fieldtype": "Currency", "width": 130},
+        # {"label": _("Outstanding Amount"), "fieldname": "outstanding_amount", "fieldtype": "Currency", "width": 150},
+        # {"label": _("Claimed Amount"), "fieldname": "claimed_amount", "fieldtype": "Currency", "width": 140},
+        # {"label": _("Unclaimed Amount (Expense)"), "fieldname": "ed_unclaimed_amount", "fieldtype": "Currency", "width": 180},
 
         {"label": _("Taxi Required"), "fieldname": "taxi_required", "fieldtype": "Check", "width": 110},
         {"label": _("Taxi Cost"), "fieldname": "taxi_cost", "fieldtype": "Currency", "width": 120},
@@ -145,6 +145,7 @@ def get_conditions(filters: Dict) -> Tuple[str, Dict]:
         'travel_type':          ("tr.travel_type = %(travel_type)s",                            "travel_type"),
         'flight_booking_status':("tri.custom_flight_booking_status = %(flight_booking_status)s","flight_booking_status"),
         'hotel_booking_status': ("tri.custom_hotel_booking_status = %(hotel_booking_status)s",  "hotel_booking_status"),
+        'employment_type': ("emp.employment_type = %(employment_type)s", "employment_type"),
     }
 
     if filters.get('from_date'):

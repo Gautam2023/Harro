@@ -174,7 +174,7 @@ def _build_preferences_html(row):
 
     preference_field_map = {
         "custom_laundry_facility":  ("Laundry Facility",     "custom_laundry_facility_remarks"),
-        "custom_discount_on_meal":  ("Discount on Meals",    "custom_discount_on_meal_remarks"),
+        "custom_discount_on_meal":  ("Discount on Meals",    "custom_meal_discount_remarks"),
         "custom_airport_transport": ("Airport Transport",    "custom_airport_transport_remarks"),
         "custom_break_fast":        ("Breakfast",            "custom_break_fast_remarks"),
         "custom_wifi":              ("Wi-Fi",                "custom_wifi_remarks"),

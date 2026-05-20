@@ -4,7 +4,20 @@
 frappe.ui.form.on("Travel Planning", {
 	refresh(frm) {
         set_profit_color(frm);
-        if(!frm.is_new()){
+
+        // Allowed Roles
+        const allowed_roles = [
+            "Travel Manager",
+            "Accounts Manager",
+            "Accounts User"
+        ];
+
+        // Check if current user has any allowed role
+        const has_permission = allowed_roles.some(role =>
+            frappe.user.has_role(role)
+        );
+
+        if(!frm.is_new() && has_permission){
             frm.add_custom_button(__("Purchase Invoice"), (frm)=>{
                 frappe.model.open_mapped_doc({
                     method: "harro.harro.doctype.travel_planning.travel_planning.create_purchase_invoice",
@@ -265,8 +278,9 @@ function calculate_total_flight_cost(frm, cdt, cdn) {
     let return_flight_cost = row.custom_return_flight_cost_as_per_invoice || 0;
     let set_charge = row.custom_seat_charges || 0;
     let baggage_cost = row.baggage_coast || 0;
+    let round_trip_cost = row.custom_round_trip_cost_as_per_invoice || 0;
 
-    let total_flight_cost = onward_flight_cost + return_flight_cost + set_charge + baggage_cost;
+    let total_flight_cost = onward_flight_cost + return_flight_cost + set_charge + baggage_cost + round_trip_cost;
     frappe.model.set_value(cdt, cdn, "custom_total_flight_cost_as_per_invoice", total_flight_cost);
 }
 

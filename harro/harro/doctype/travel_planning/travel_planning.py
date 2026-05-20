@@ -16,58 +16,198 @@ class TravelPlanning(Document):
         
         old_doc = self.get_doc_before_save()
 
-        if (
-            old_doc
-            and old_doc.workflow_state != self.workflow_state
-            and self.workflow_state == "Ticket Booked"
-        ):
+        if not old_doc or old_doc.workflow_state == self.workflow_state:
+            return
+        if self.workflow_state == "Flight Ticket Booked":
             frappe.enqueue(
-                method="harro.harro.doctype.travel_planning.travel_planning.send_attachment_emails",
+                method="harro.harro.doctype.travel_planning.travel_planning.send_flight_booking_emails",
+                queue="default",
+                enqueue_after_commit=True,
+                docname=self.name
+            )
+        elif self.workflow_state == "Hotel Booked":
+            frappe.enqueue(
+                method="harro.harro.doctype.travel_planning.travel_planning.send_hotel_booking_emails",
                 queue="default",
                 enqueue_after_commit=True,
                 docname=self.name
             )
 
-def send_attachment_emails(docname):
+def send_flight_booking_emails(docname):
     doc = frappe.get_doc("Travel Planning", docname)
 
-    attachment_fields = [
+    flight_attachment_fields = [
         "custom_evisa",
         "custom_travel_insurance",
         "custom_flight_bill",
-        "custom_taxi_bill"
+        "custom_return_flight_ticket",
     ]
 
-    for row in doc.travel_itinerary:
-        if not row.custom_contact_email:
-            continue
+    requestor_name = frappe.db.get_value("Employee", doc.travel_requestor, "employee_name")
 
+    for row in doc.travel_itinerary:
         attachments = [
             {"file_url": row.get(field)}
-            for field in attachment_fields  
+            for field in flight_attachment_fields
             if row.get(field)
         ]
-        if not attachments:
+
+        # ── Email to Employee ──────────────────────────────────────────────
+        if row.custom_contact_email:
+            frappe.sendmail(
+                recipients=[row.custom_contact_email],
+                subject=f"Flight Ticket has been booked for {row.employee_name} against Travel Request {row.travel_request}",
+                message=f"""
+                    Hello {row.employee_name},<br><br>
+
+                    Your flight ticket has been booked against Travel Request {row.travel_request}.
+                    Please find the ticket attachments below.<br><br>
+
+                    <b>Travel Planning:</b> {doc.name}<br>
+                    <b>Employee:</b> {row.employee_name}<br><br>
+
+                    Regards,<br>
+                    <b>Travel Team</b>
+                """,
+                attachments=attachments,
+                reference_doctype=doc.doctype,
+                reference_name=doc.name
+            )
+
+        # ── Email to Requestor ─────────────────────────────────────────────
+        if doc.custom_requestor_contact_email:
+            travel_request_link = f"""<a href="/app/travel-request/{row.travel_request}">{row.travel_request}</a>"""
+
+            frappe.sendmail(
+                recipients=[doc.custom_requestor_contact_email],
+                subject=f"Flight Ticket has been booked for {row.employee_name} against Travel Request {row.travel_request}",
+                message=f"""
+                    Hello {requestor_name},<br><br>
+
+                    This is to inform you that the Flight ticket has been issued for {row.employee_name}
+                    against the travel request {travel_request_link}, and the travel documents are
+                    attached for your reference.<br><br>
+
+                    <b>Travel Planning:</b> {doc.name}<br>
+                    <b>Employee:</b> {row.employee_name}<br><br>
+
+                    Regards,<br>
+                    <b>Travel Team</b>
+                """,
+                attachments=attachments,
+                reference_doctype=doc.doctype,
+                reference_name=doc.name
+            )
+
+
+def send_hotel_booking_emails(docname):
+    doc = frappe.get_doc("Travel Planning", docname)
+
+    hotel_attachment_fields = [
+        "custom_taxi_bill",
+    ]
+
+    requestor_name = frappe.db.get_value("Employee", doc.travel_requestor, "employee_name")
+
+    for row in doc.travel_itinerary:
+        attachments = [
+            {"file_url": row.get(field)}
+            for field in hotel_attachment_fields
+            if row.get(field)
+        ]
+
+        # Build travel preferences block (only if the field exists on the row)
+        preferences_html = _build_preferences_html(row)
+
+        # ── Email to Employee ──────────────────────────────────────────────
+        if row.custom_contact_email:
+            frappe.sendmail(
+                recipients=[row.custom_contact_email],
+                subject=f"Hotel has been booked for {row.employee_name} against Travel Request {row.travel_request}",
+                message=f"""
+                    Hello {row.employee_name},<br><br>
+
+                    Your hotel has been booked against Travel Request {row.travel_request}.
+                    Please find the hotel voucher attachments below.<br><br>
+
+                    <b>Travel Planning:</b> {doc.name}<br>
+                    <b>Employee:</b> {row.employee_name}<br><br>
+
+                    {preferences_html}
+
+                    Regards,<br>
+                    <b>Travel Team</b>
+                """,
+                attachments=attachments,
+                reference_doctype=doc.doctype,
+                reference_name=doc.name
+            )
+
+        # ── Email to Requestor ─────────────────────────────────────────────
+        if doc.custom_requestor_contact_email:
+            frappe.sendmail(
+                recipients=[doc.custom_requestor_contact_email],
+                subject=f"Hotel has been booked for {row.employee_name} against Travel Request {row.travel_request}",
+                message=f"""
+                    Hello {requestor_name},<br><br>
+
+                    This is to inform you that the hotel booking has been confirmed for {row.employee_name}
+                    against Travel Request {row.travel_request}. Please find the hotel voucher attached
+                    for your reference.<br><br>
+
+                    <b>Travel Planning:</b> {doc.name}<br>
+                    <b>Employee:</b> {row.employee_name}<br><br>
+
+                    {preferences_html}
+
+                    Regards,<br>
+                    <b>Travel Team</b>
+                """,
+                attachments=attachments,
+                reference_doctype=doc.doctype,
+                reference_name=doc.name
+            )
+
+
+def _build_preferences_html(row):
+    preferences = []
+
+    preference_field_map = {
+        "custom_laundry_facility":  ("Laundry Facility",     "custom_laundry_facility_remarks"),
+        "custom_discount_on_meal":  ("Discount on Meals",    "custom_discount_on_meal_remarks"),
+        "custom_airport_transport": ("Airport Transport",    "custom_airport_transport_remarks"),
+        "custom_break_fast":        ("Breakfast",            "custom_break_fast_remarks"),
+        "custom_wifi":              ("Wi-Fi",                "custom_wifi_remarks"),
+    }
+
+    for field, (label, remarks_field) in preference_field_map.items():
+        value = row.get(field)
+        if not value:
             continue
 
-        frappe.sendmail(
-            recipients=[row.custom_contact_email],
-            subject="Ticket Booked – Travel Documents",
-            message=f"""
-                Hello {row.employee_name},<br><br>
+        remarks = row.get(remarks_field, "")
+        if isinstance(value, str) and value.strip():
+            # String field — show value inline
+            display = f"{label} – {value}"
+        elif remarks:
+            # Checkbox with a remarks field
+            display = f"{label} – {remarks}"
+        else:
+            # Checkbox with no remarks
+            display = label
 
-                Your ticket has been booked and the following travel documents are attached.<br><br>
+        preferences.append(f"<li>{display}</li>")
 
-                <b>Travel Planning:</b> {doc.name}<br>
-                <b>Employee:</b> {row.employee_name}<br><br>
+    if not preferences:
+        return ""
 
-                Regards,<br>
-                <b>Travel Team</b>
-            """,
-            attachments=attachments,
-            reference_doctype=doc.doctype,
-            reference_name=doc.name
-        )
+    items = "\n".join(preferences)
+    return f"""
+        <b>Travel Preferences:</b><br>
+        <ul style="margin-top:4px;">
+            {items}
+        </ul><br>
+    """
 
 
 @frappe.whitelist()

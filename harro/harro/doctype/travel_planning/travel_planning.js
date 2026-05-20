@@ -269,7 +269,10 @@ frappe.ui.form.on("Travel Planning Employee Details" , {
     },
     custom_return_flight_cost_as_per_invoice: function(frm, cdt, cdn) {
         calculate_total_flight_cost(frm, cdt, cdn);
-    }
+    },
+    custom_round_trip_cost_as_per_invoice: function(frm, cdt, cdn) {
+        calculate_total_flight_cost(frm, cdt, cdn);
+}
 });
 
 function calculate_total_flight_cost(frm, cdt, cdn) {

@@ -101,12 +101,12 @@ def on_update(doc, method=None):
             <p>Regards,<br>HR Team</p>
             """
 
-            frappe.sendmail(
-                recipients=recipient_emails,
-                subject=f"Travel Request {doc.name} {trip_status}",
-                message=html_message,
-                delayed=False
-            )
+            # frappe.sendmail(
+            #     recipients=recipient_emails,
+            #     subject=f"Travel Request {doc.name} {trip_status}",
+            #     message=html_message,
+            #     delayed=False
+            # )
 
 
 def sync_travel_planning_from_travel_request(doc, method=None):

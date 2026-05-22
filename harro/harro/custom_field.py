@@ -802,6 +802,14 @@ def create_custom_fields_on_migrate():
                 "fieldtype": "Date",
                 "insert_after": "entry"
             }
+        ],
+        "Purchase Order" : [
+            {
+                "fieldname": "expected_delivery_date",
+                "label" : "Expected Delivery Date",
+                "fieldtype" : "Date",
+                "inser_after" : "custom_email_communication"
+            }
         ]
         
     }

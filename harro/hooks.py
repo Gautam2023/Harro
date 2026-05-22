@@ -183,7 +183,8 @@ doc_events = {
         "after_insert": "harro.harro.docevents.work_order.enqueue_fetch_row_material"
     },
     "Purchase Order" : {
-        "validate" : "harro.harro.docevents.purchase_order.validate"
+        "validate" : "harro.harro.docevents.purchase_order.validate",
+        "before_save": "harro.harro.docevents.purchase_order.set_expected_delivery_date"
     },
     "Job Card" : {
         "on_submit" : "harro.harro.docevents.job_card.on_submit",

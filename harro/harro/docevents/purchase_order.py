@@ -144,8 +144,8 @@ def set_expected_delivery_date(doc, method=None):
     based on custom_expected_delivery_date in Purchase Order
     """
 
-    if not doc.custom_expected_delivery_date:
+    if not doc.expected_delivery_date:
         return
 
     for item in doc.items:
-        item.expected_delivery_date = doc.custom_expected_delivery_date
+        item.expected_delivery_date = doc.expected_delivery_date

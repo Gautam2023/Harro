@@ -22,7 +22,7 @@ def get_bom_diff(bom1, bom2):
 	out.removed = []
 
 	meta = doc1.meta
-	warehouse = "All Warehouses - HH"
+	warehouse = "All Warehouses - Harro IN"
 
 	def get_available_qty(item_code):
 		filters = frappe._dict({

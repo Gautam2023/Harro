@@ -253,3 +253,31 @@ def email_notification(doc, method=None):
         reference_doctype=doc.doctype,
         reference_name=doc.name
     )
+
+def set_due_date(doc, method=None):
+    if not doc.custom_payment_schedule:
+        return
+
+    for row in reversed(doc.custom_payment_schedule):
+        if row.due_date:
+            doc.custom_due_date = row.due_date
+            break
+
+def set_payment_terms_template(doc, method=None):
+    if not doc.items:
+        return
+    
+    first_item = doc.items[0]
+
+    if not first_item.purchase_order:
+        return
+    
+    payment_terms_template = frappe.db.get_value(
+        "Purchase Order",
+        first_item.purchase_order,
+        "payment_terms_template"
+    )
+
+    if payment_terms_template:
+        doc.custom_payment_terms_template = payment_terms_template
+

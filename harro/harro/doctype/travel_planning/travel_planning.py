@@ -623,3 +623,119 @@ def custom_send_email(expense_detail_row, travel_planning):
 
     return "Email sent successfully"
 
+
+
+@frappe.whitelist()
+def send_revised_ticket_email(travel_planning_name, itinerary_row_name):
+    """
+    Triggered by 'Send Revised Ticket' button in Travel Planning Employee Details child table.
+    Sends two emails:
+      1. To employee (custom_contact_email in child row)
+      2. To requestor (custom_requestor_contact_email in parent Travel Planning)
+    """
+
+    # ── Load parent Travel Planning ───────────────────────────────────
+    tp = frappe.get_doc("Travel Planning", travel_planning_name)
+
+    # ── Find the specific child row ───────────────────────────────────
+    itinerary_row = None
+    for row in tp.travel_itinerary:
+        if row.name == itinerary_row_name:
+            itinerary_row = row
+            break
+
+    if not itinerary_row:
+        frappe.throw(f"Row {itinerary_row_name} not found in {travel_planning_name}")
+
+    # ── Validation ────────────────────────────────────────────────────
+    if not itinerary_row.custom_rescheduled_flight_ticket:
+        frappe.throw("Please attach the Rescheduled Flight Ticket before sending.")
+
+    if not itinerary_row.custom_contact_email:
+        frappe.throw("Employee Contact Email is missing in this row.")
+
+    if not tp.custom_requestor_contact_email:
+        frappe.throw("Requestor Contact Email is missing in Travel Planning.")
+
+    # ── Resolve attachment ────────────────────────────────────────────
+    file_url = itinerary_row.custom_rescheduled_flight_ticket
+    attachment = None
+
+    file_doc = frappe.get_all(
+        "File",
+        filters={"file_url": file_url},
+        fields=["file_name", "file_url"],
+        limit=1
+    )
+
+    if file_doc:
+        attachment = {
+            "fname": file_doc[0]["file_name"],
+            "fid": file_doc[0]["file_url"],
+        }
+
+    # ── Get data for email content ────────────────────────────────────
+    employee_name = itinerary_row.employee_name or ""
+    travel_request_id = itinerary_row.travel_request or ""
+
+    # Requestor name from travel_requestor (Link → Employee)
+    requestor_name = ""
+    if tp.travel_requestor:
+        requestor_name = frappe.db.get_value(
+            "Employee", tp.travel_requestor, "employee_name"
+        ) or tp.custom_requestor_contact_email
+
+    # ════════════════════════════════════════════════════════════════
+    # EMAIL 1 — To Employee
+    # ════════════════════════════════════════════════════════════════
+    employee_message = f"""
+    <p>Hello {employee_name},</p>
+
+    <p>This is to inform you that your ticket against
+    <b>Travel Request ID {travel_request_id}</b> has been rescheduled.</p>
+
+    <p>Please find the rescheduled ticket attached below for your reference.</p>
+
+    <p>For any queries regarding the change, please contact the Travel Team.</p>
+
+    <p>Thank you!</p>
+
+    <p>Regards,<br>Travel Team</p>
+    """
+
+    frappe.sendmail(
+        recipients=[itinerary_row.custom_contact_email],
+        subject="Ticket Has Been Rescheduled",
+        message=employee_message,
+        attachments=[attachment] if attachment else [],
+        reference_doctype="Travel Planning",
+        reference_name=travel_planning_name,
+    )
+
+    # ════════════════════════════════════════════════════════════════
+    # EMAIL 2 — To Requestor
+    # ════════════════════════════════════════════════════════════════
+    requestor_message = f"""
+    <p>Hello {requestor_name},</p>
+
+    <p>This is to inform you that the ticket has been rescheduled for
+    <b>{employee_name}</b> against Travel Request <b>{travel_request_id}</b>.</p>
+
+    <p>Please find the documents attached for your reference.</p>
+
+    <p><b>Travel Planning:</b> {travel_planning_name}<br>
+    <b>Employee:</b> {employee_name}</p>
+
+    <p>Regards,<br>Travel Team</p>
+    """
+
+    frappe.sendmail(
+        recipients=[tp.custom_requestor_contact_email],
+        subject="Ticket Has Been Rescheduled",
+        message=requestor_message,
+        attachments=[attachment] if attachment else [],
+        reference_doctype="Travel Planning",
+        reference_name=travel_planning_name,
+    )
+
+    return "Emails sent successfully."

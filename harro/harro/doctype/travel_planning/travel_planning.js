@@ -272,7 +272,55 @@ frappe.ui.form.on("Travel Planning Employee Details" , {
     },
     custom_round_trip_cost_as_per_invoice: function(frm, cdt, cdn) {
         calculate_total_flight_cost(frm, cdt, cdn);
-}
+    },
+    custom_send_revised_ticket: function(frm, cdt, cdn) {
+
+        let row = locals[cdt][cdn];
+
+        // ── Validate ─────────────────────────────────────────────
+        if (!row.custom_rescheduled_flight_ticket) {
+            frappe.msgprint({
+                title: "Attachment Missing",
+                message: "Please attach the Rescheduled Flight Ticket before sending.",
+                indicator: "red"
+            });
+            return;
+        }
+
+        if (!row.custom_contact_email) {
+            frappe.msgprint({
+                title: "Email Missing",
+                message: "Employee Contact Email is missing in this row.",
+                indicator: "red"
+            });
+            return;
+        }
+
+        // ── Confirm ───────────────────────────────────────────────
+        frappe.confirm(
+            `Send rescheduled ticket emails for <b>${row.employee_name || "this employee"}</b>?`,
+            () => {
+                frappe.call({
+                    method: "harro.harro.doctype.travel_planning.travel_planning.send_revised_ticket_email",
+                    // ↑ Replace with your actual Python file dotted path
+                    args: {
+                        travel_planning_name: frm.doc.name,
+                        itinerary_row_name: cdn,
+                    },
+                    freeze: true,
+                    freeze_message: "Sending emails...",
+                    callback: function(r) {
+                        if (!r.exc) {
+                            frappe.show_alert({
+                                message: "Emails sent to employee and requestor successfully.",
+                                indicator: "green"
+                            }, 5);
+                        }
+                    }
+                });
+            }
+        );
+    }
 });
 
 function calculate_total_flight_cost(frm, cdt, cdn) {

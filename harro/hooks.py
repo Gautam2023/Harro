@@ -183,7 +183,8 @@ doc_events = {
         "after_insert": "harro.harro.docevents.work_order.enqueue_fetch_row_material"
     },
     "Purchase Order" : {
-        "validate" : "harro.harro.docevents.purchase_order.validate"
+        "validate" : "harro.harro.docevents.purchase_order.validate",
+        "before_save": "harro.harro.docevents.purchase_order.set_expected_delivery_date"
     },
     "Job Card" : {
         "on_submit" : "harro.harro.docevents.job_card.on_submit",
@@ -228,7 +229,9 @@ doc_events = {
         "before_validate" : "harro.harro.docevents.employee_advance.set_per_day_allowance"
     },
     "Purchase Receipt" : {
-        "after_insert" : "harro.harro.docevents.purchase_receipt.email_notification"
+        "after_insert" : "harro.harro.docevents.purchase_receipt.email_notification",
+        "before_save" : "harro.harro.docevents.purchase_receipt.set_due_date",
+        "before_insert" : "harro.harro.docevents.purchase_receipt.set_payment_terms_template"
     },
     "Payment Entry": {
         "on_submit": "harro.harro.docevents.payment_entry.send_email_to_company_contact"
@@ -236,6 +239,9 @@ doc_events = {
     "Travel Planning": {
         "on_update": "harro.harro.api.sync_booking_status_to_travel_request",
         "before_save": "harro.harro.docevents.travel_planning.calculate_totals"
+    },
+    "Purchase Invoice": {
+        "before_save": "harro.harro.docevents.purchase_invoice.set_due_date"
     }
 }
 

@@ -14,4 +14,24 @@ frappe.ui.form.on("Taxi", {
             }
         }
 	},
+    custom_package(frm) {
+        calculate_cost(frm);
+    },
+
+    custom_extra_hour_amount(frm) {
+        calculate_cost(frm);
+    },
+    custom_toll_tax(frm) {
+        calculate_cost(frm);
+    }
 });
+
+
+function calculate_cost(frm) {
+    let package_amount = frm.doc.custom_package || 0;
+    let extra_hour_amount = frm.doc.custom_extra_hour_amount || 0;
+    let toll_tax = frm.doc.custom_toll_tax || 0;
+
+    let cost = package_amount + extra_hour_amount + toll_tax;
+    frm.set_value("cost", cost);
+}

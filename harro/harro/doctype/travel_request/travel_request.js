@@ -1,6 +1,8 @@
 // Copyright (c) 2025, Fosserp and contributors
 // For license information, please see license.txt
 
+let employeeVisaCache = {};
+
 frappe.ui.form.on("Travel Request", {
 	refresh(frm) {
         if (["Draft", "Trip Planned"].includes(frm.doc.workflow_state)) {
@@ -13,6 +15,11 @@ frappe.ui.form.on("Travel Request", {
                 })
             },__("Create"));
         }
+        frm.fields_dict.itinerary.grid.toggle_reqd(
+            'custom_return_travel_date',
+            frm.doc.travel_type == "International"
+        );
+        
         set_employee_filter(frm);
 	},
     custom_checkout_date_(frm) {
@@ -20,6 +27,33 @@ frappe.ui.form.on("Travel Request", {
     },
     custom_checkin_date(frm) {
         calculate_nights_parent(frm);
+    },
+    travel_type(frm){
+        frm.fields_dict.itinerary.grid.toggle_reqd('custom_return_travel_date', frm.doc.travel_type == "International");
+    },
+    employee(frm) {
+        employeeVisaCache = {};
+
+        if (!frm.doc.employee) return;
+
+        frappe.call({
+            method: "frappe.client.get",
+            args: {
+                doctype: "Employee",
+                name: frm.doc.employee
+            },
+            callback(r) {
+
+                let visa_list = (r.message && r.message.custom_visa_details) || [];
+
+                visa_list.forEach(d => {
+                    employeeVisaCache[d.visa_country] = {
+                        visa_id: d.number,
+                        valid_upto: d.to
+                    };
+                });
+            }
+        });
     }
 });
 
@@ -103,3 +137,35 @@ function set_employee_filter(frm) {
         }
     });
 }
+
+
+frappe.ui.form.on('Visa Country Doctype', {
+    visa_country(frm, cdt, cdn) {
+        let row = locals[cdt][cdn];
+        if (!row.visa_country) return;
+        let visa = employeeVisaCache[row.visa_country];
+        if (visa) {
+            // missing field check
+            if (!visa.visa_id || visa.visa_id === "" && !visa.valid_upto || visa.valid_upto === "") {
+                frappe.model.set_value(cdt, cdn, "visa_status", "Need to Apply");
+                frappe.model.set_value(cdt, cdn, "visa_id", visa.visa_id || "");
+                frappe.model.set_value(cdt, cdn, "valid_upto", visa.valid_upto || "");
+            } else {
+                let today = frappe.datetime.nowdate(); // YYYY-MM-DD
+                frappe.model.set_value(cdt, cdn, "visa_id", visa.visa_id);
+                frappe.model.set_value(cdt, cdn, "valid_upto", visa.valid_upto);
+
+                if (visa.valid_upto < today) {
+                    frappe.model.set_value(cdt, cdn, "visa_status", "Expired");
+                } else {
+                    // valid_upto is today or in the future
+                    frappe.model.set_value(cdt, cdn, "visa_status", "Valid");
+                }
+            }
+        } else {
+            frappe.model.set_value(cdt, cdn, "visa_id", "");
+            frappe.model.set_value(cdt, cdn, "valid_upto", "");
+            frappe.model.set_value(cdt, cdn, "visa_status", "");
+        }
+    }
+});

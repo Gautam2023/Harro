@@ -136,3 +136,16 @@ def validate_material_request_qty(doc, method):
                         item.item_code, item.material_request, mr_item.qty, item.qty
                     )
                 )
+
+
+def set_expected_delivery_date(doc, method=None):
+    """
+    Set expected_delivery_date on each item
+    based on custom_expected_delivery_date in Purchase Order
+    """
+
+    if not doc.expected_delivery_date:
+        return
+
+    for item in doc.items:
+        item.expected_delivery_date = doc.expected_delivery_date

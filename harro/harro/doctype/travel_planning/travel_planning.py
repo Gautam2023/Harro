@@ -627,17 +627,11 @@ def custom_send_email(expense_detail_row, travel_planning):
 
 @frappe.whitelist()
 def send_revised_ticket_email(travel_planning_name, itinerary_row_name):
-    """
-    Triggered by 'Send Revised Ticket' button in Travel Planning Employee Details child table.
-    Sends two emails:
-      1. To employee (custom_contact_email in child row)
-      2. To requestor (custom_requestor_contact_email in parent Travel Planning)
-    """
 
-    # ── Load parent Travel Planning ───────────────────────────────────
+    # ── Load parent Travel Planning 
     tp = frappe.get_doc("Travel Planning", travel_planning_name)
 
-    # ── Find the specific child row ───────────────────────────────────
+    # ── Find the specific child row
     itinerary_row = None
     for row in tp.travel_itinerary:
         if row.name == itinerary_row_name:
@@ -647,7 +641,7 @@ def send_revised_ticket_email(travel_planning_name, itinerary_row_name):
     if not itinerary_row:
         frappe.throw(f"Row {itinerary_row_name} not found in {travel_planning_name}")
 
-    # ── Validation ────────────────────────────────────────────────────
+    # Validation
     if not itinerary_row.custom_rescheduled_flight_ticket:
         frappe.throw("Please attach the Rescheduled Flight Ticket before sending.")
 
@@ -657,37 +651,54 @@ def send_revised_ticket_email(travel_planning_name, itinerary_row_name):
     if not tp.custom_requestor_contact_email:
         frappe.throw("Requestor Contact Email is missing in Travel Planning.")
 
-    # ── Resolve attachment ────────────────────────────────────────────
-    file_url = itinerary_row.custom_rescheduled_flight_ticket
-    attachment = None
+    # Helper: resolve a file URL → attachment dict
+    def resolve_attachment(file_url):
+        if not file_url:
+            return None
+        file_doc = frappe.get_all(
+            "File",
+            filters={"file_url": file_url},
+            fields=["name", "file_name"],
+            limit=1
+        )
+        if file_doc:
+            return {
+                "fname": file_doc[0]["file_name"],
+                "fid": file_doc[0]["name"],
+            }
+        else:
+            try:
+                file_content = frappe.get_file(file_url)
+                return {
+                    "fname": file_url.split("/")[-1],
+                    "fcontent": file_content,
+                }
+            except Exception:
+                frappe.log_error(f"Could not read file: {file_url}", "Send Revised Ticket")
+                return None
 
-    file_doc = frappe.get_all(
-        "File",
-        filters={"file_url": file_url},
-        fields=["file_name", "file_url"],
-        limit=1
-    )
+    # Resolve both attachments
+    attachments = []
 
-    if file_doc:
-        attachment = {
-            "fname": file_doc[0]["file_name"],
-            "fid": file_doc[0]["file_url"],
-        }
+    flight_attachment = resolve_attachment(itinerary_row.custom_rescheduled_flight_ticket)
+    if flight_attachment:
+        attachments.append(flight_attachment)
 
-    # ── Get data for email content ────────────────────────────────────
+    hotel_attachment = resolve_attachment(itinerary_row.custom_rescheduled_hotel_ticket_)
+    if hotel_attachment:
+        attachments.append(hotel_attachment)
+
+    # Get data for email content
     employee_name = itinerary_row.employee_name or ""
     travel_request_id = itinerary_row.travel_request or ""
 
-    # Requestor name from travel_requestor (Link → Employee)
     requestor_name = ""
     if tp.travel_requestor:
         requestor_name = frappe.db.get_value(
             "Employee", tp.travel_requestor, "employee_name"
         ) or tp.custom_requestor_contact_email
 
-    # ════════════════════════════════════════════════════════════════
     # EMAIL 1 — To Employee
-    # ════════════════════════════════════════════════════════════════
     employee_message = f"""
     <p>Hello {employee_name},</p>
 
@@ -707,14 +718,12 @@ def send_revised_ticket_email(travel_planning_name, itinerary_row_name):
         recipients=[itinerary_row.custom_contact_email],
         subject="Ticket Has Been Rescheduled",
         message=employee_message,
-        attachments=[attachment] if attachment else [],
+        attachments=attachments,
         reference_doctype="Travel Planning",
         reference_name=travel_planning_name,
     )
 
-    # ════════════════════════════════════════════════════════════════
     # EMAIL 2 — To Requestor
-    # ════════════════════════════════════════════════════════════════
     requestor_message = f"""
     <p>Hello {requestor_name},</p>
 
@@ -733,7 +742,7 @@ def send_revised_ticket_email(travel_planning_name, itinerary_row_name):
         recipients=[tp.custom_requestor_contact_email],
         subject="Ticket Has Been Rescheduled",
         message=requestor_message,
-        attachments=[attachment] if attachment else [],
+        attachments=attachments,
         reference_doctype="Travel Planning",
         reference_name=travel_planning_name,
     )

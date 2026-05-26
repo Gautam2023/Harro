@@ -12,7 +12,7 @@ MAX_ROWS = 10000
 # Allowlist of valid filter keys to prevent injection of unexpected keys
 VALID_FILTER_KEYS = {
     'from_date', 'to_date', 'travel_request', 'travel_plan',
-    'employee', 'employee_name', 'travel_type', 'employment_type',
+    'employee', 'travel_type', 'employment_type',
     'flight_booking_status', 'hotel_booking_status',
 }
 
@@ -136,16 +136,14 @@ def get_conditions(filters: Dict) -> Tuple[str, Dict]:
     conditions = []
     values = {}
 
-    # Filter → (SQL condition, value key)
     filter_mappings = {
-        'travel_request':       ("tped.travel_request = %(travel_request)s",                    "travel_request"),
-        'travel_plan':          ("tp.name = %(travel_plan)s",                                   "travel_plan"),
-        'employee':             ("tped.custom_employee = %(employee)s",                         "employee"),
-        'employee_name':        ("tped.employee_name LIKE %(employee_name)s",                   "employee_name"),
-        'travel_type':          ("tr.travel_type = %(travel_type)s",                            "travel_type"),
-        'flight_booking_status':("tri.custom_flight_booking_status = %(flight_booking_status)s","flight_booking_status"),
-        'hotel_booking_status': ("tri.custom_hotel_booking_status = %(hotel_booking_status)s",  "hotel_booking_status"),
-        'employment_type': ("emp.employment_type = %(employment_type)s", "employment_type"),
+        'travel_request':        ("tped.travel_request = %(travel_request)s",                     "travel_request"),
+        'travel_plan':           ("tp.name = %(travel_plan)s",                                    "travel_plan"),
+        'employee':              ("tped.custom_employee = %(employee)s",                          "employee"),
+        'travel_type':           ("tr.travel_type = %(travel_type)s",                             "travel_type"),
+        'flight_booking_status': ("tri.custom_flight_booking_status = %(flight_booking_status)s", "flight_booking_status"),
+        'hotel_booking_status':  ("tri.custom_hotel_booking_status = %(hotel_booking_status)s",   "hotel_booking_status"),
+        'employment_type':       ("emp.employment_type = %(employment_type)s",                    "employment_type"),
     }
 
     if filters.get('from_date'):
@@ -153,7 +151,7 @@ def get_conditions(filters: Dict) -> Tuple[str, Dict]:
         values["from_date"] = filters["from_date"]
 
     if filters.get('to_date'):
-        conditions.append("tped.custom_return_travel_date <= %(to_date)s")
+        conditions.append("tped.custom_onward_travel_date <= %(to_date)s")
         values["to_date"] = filters["to_date"]
 
     for key, (condition, value_key) in filter_mappings.items():
@@ -296,9 +294,9 @@ def format_data(data: List[Dict]) -> List[Dict]:
         'return_flight_cost',
         'custom_onward_flight_cost_as_per_invoice',
         'custom_return_flight_cost_as_per_invoice',
-        'custom_total_flight_cost_as_per_invoice',      # FIX: was missing
+        'custom_total_flight_cost_as_per_invoice',     
         'custom_flight_cancellation_charges',
-        'custom_flight_reschedule_charges',              # FIX: was missing
+        'custom_flight_reschedule_charges',             
         'custom_flight_refund_amount',
         'baggage_cost',
         'seat_charges',
@@ -307,21 +305,21 @@ def format_data(data: List[Dict]) -> List[Dict]:
         # Hotel
         'custom_hotel_cost_per_day',
         'custom_total_hotel_charge',
-        'custom_total_hotel_charge_as_per_invoice',     # FIX: was missing
+        'custom_total_hotel_charge_as_per_invoice',   
         'custom_hotel_cancellation_charges',
-        'custom_hotel_reschedule_charges',               # FIX: was missing
+        'custom_hotel_reschedule_charges',              
         'custom_hotel_refund_amount',
-        'total_hotel_incurred_cost',                    # FIX: was missing
+        'total_hotel_incurred_cost',                    
 
         # Summary
-        'total_expenditure',                            # FIX: was missing
+        'total_expenditure',                            
         'claimable_amount',
-        'tp_unclaimed_amount',                          # FIX: renamed
+        'tp_unclaimed_amount',                         
         'total_amount',
         'paid_amount',
         'outstanding_amount',
         'claimed_amount',
-        'ed_unclaimed_amount',                          # FIX: renamed
+        'ed_unclaimed_amount',                         
 
         # Taxi
         'taxi_cost',

@@ -2,13 +2,7 @@
 // For license information, please see license.txt
 
 frappe.query_reports["Travel MIS Report"] = {
-	filters: [
-        {
-            fieldname: "ba_number",
-            label: "BA Number",
-            fieldtype: "Link",
-            options: "Project"
-        },
+    filters: [
         {
             fieldname: "travel_request",
             label: "Travel Request",
@@ -38,16 +32,28 @@ frappe.query_reports["Travel MIS Report"] = {
             options: "Employee"
         },
         {
-            fieldname: "travel_type",
-            label: "Travel Type",
-            fieldtype: "Select",
-            options: ["","Domestic","International"]
-        },
-        {
             fieldname: "employment_type",
             label: "Employment Type",
             fieldtype: "Link",
             options: "Employment Type"
+        },
+        {
+            fieldname: "travel_type",
+            label: "Travel Type",
+            fieldtype: "Select",
+            options: "\nDomestic\nInternational" 
+        },
+        {
+            fieldname: "flight_booking_status",  
+            label: "Flight Booking Status",
+            fieldtype: "Select",
+            options: "\nPending\nBooked\nCancelled\nRescheduled"
+        },
+        {
+            fieldname: "hotel_booking_status",   
+            label: "Hotel Booking Status",
+            fieldtype: "Select",
+            options: "\nPending\nBooked\nCancelled\nRescheduled"
         },
     ]
 };

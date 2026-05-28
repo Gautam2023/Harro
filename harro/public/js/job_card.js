@@ -1,6 +1,19 @@
 frappe.ui.form.on("Job Card", {
     setup:(frm)=>{
         frm.set_df_property("custom_unproductive_work_timelogs", "cannot_add_rows", true);
+
+        frm.fields_dict.time_logs.grid
+        .get_field("activity_type")
+        .get_query = function(doc, cdt, cdn) {
+
+            return {
+                query: "harro.harro.docevents.job_card.get_operation_wise_activity",
+                filters: {
+                    operation: doc.operation,
+                    custom_unproductive_work: false
+                }
+            };
+        };
     },
     refresh:(frm)=>{
         frm.set_df_property("custom_unproductive_work_timelogs", "cannot_add_rows", true);

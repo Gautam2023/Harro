@@ -240,9 +240,9 @@ doc_events = {
         "on_update": "harro.harro.api.sync_booking_status_to_travel_request",
         "before_save": "harro.harro.docevents.travel_planning.calculate_totals"
     },
-    "Purchase Invoice": {
-        "before_save": "harro.harro.docevents.purchase_invoice.set_due_date"
-    }
+    # "Purchase Invoice": {
+    #     "before_save": "harro.harro.docevents.purchase_invoice.set_due_date"
+    # }
 }
 
 # Scheduled Tasks

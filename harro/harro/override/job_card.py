@@ -47,7 +47,9 @@ class CustomJobCard(JobCard):
         if not self.employee and employees:
             self.set_employees(employees)
 
-        if self.status == "On Hold":
+        if self.status == "On Hold" and last_row and last_row.to_time and last_row.from_time:
             self.current_time = time_diff_in_seconds(last_row.to_time, last_row.from_time)
 
+        self.flags.ignore_mandatory = True
+        self.flags.ignore_validate = True
         self.save()

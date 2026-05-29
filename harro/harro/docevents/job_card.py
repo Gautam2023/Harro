@@ -46,6 +46,7 @@ def update_unproductive_log(arg, job_card):
         })
 
     doc.flags.ignore_permissions = True
+    doc.flags.ignore_mandatory = True
     doc.save()
 
     return {"status": "success"}

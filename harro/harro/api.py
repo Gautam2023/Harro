@@ -419,14 +419,39 @@ def stop_timer_for_jobcard_every_two_hours():
             }
             update_unproductive_log(args, row.name)
 
+            # Remove corrupt time log rows (no from_time and no to_time) before
+            # stopping — ERPNext's add_time_log uses time_logs[-1] as last_row and
+            # crashes on time_diff_in_seconds if that row has a null from_time.
+            frappe.db.delete(
+                "Job Card Time Log",
+                {
+                    "parent": row.name,
+                    "from_time": ("is", "not set"),
+                    "to_time": ("is", "not set"),
+                }
+            )
+
             # stop time log
+            stop_time = get_datetime()
             args = {
                 'job_card_id': row.name,
-                "complete_time": get_datetime(),
+                "complete_time": stop_time,
                 "status": "On Hold",
                 "completed_qty": 0,
             }
-            make_time_log(args)
+            try:
+                make_time_log(args)
+            except Exception:
+                # Fallback for job cards that fail doc.save() validation (e.g. missing
+                # mandatory fields like project) — update the DB rows directly.
+                frappe.db.sql(
+                    """UPDATE `tabJob Card Time Log`
+                       SET to_time = %s
+                       WHERE parent = %s AND (to_time IS NULL OR to_time = '')""",
+                    (stop_time, row.name)
+                )
+                frappe.db.set_value("Job Card", row.name, "status", "On Hold")
+                frappe.db.commit()
 
             # ============== EMAIL NOTIFICATION =================
             try:

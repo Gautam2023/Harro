@@ -264,7 +264,7 @@ def update_the_job_card_timer_based_on_shift_end():
             current_dt = now_datetime()
             diff_minutes = time_diff_in_seconds(shift_end_dt, current_dt) / 60
 
-            if not (-5 <= diff_minutes <= 0):
+            if not (-15 <= diff_minutes <= 0):
                 continue
 
             job_card_list = frappe.db.sql(
@@ -385,11 +385,20 @@ def stop_timer_for_jobcard_every_two_hours():
         if not doc.time_logs:
             continue
 
-        from_time = doc.time_logs[-1].from_time
+        # Find the active time log: to_time is empty AND from_time is set
+        active_log = None
+        for tl in doc.time_logs:
+            if not tl.to_time and tl.from_time:
+                active_log = tl
+
+        if not active_log:
+            continue
+
+        from_time = active_log.from_time
         current_time = get_datetime()
         diff_hours = (current_time - from_time).total_seconds() / 3600
-        employee = doc.time_logs[-1].employee
-        to_time = doc.time_logs[-1].to_time
+        employee = active_log.employee
+        to_time = active_log.to_time
 
         if to_time:
             continue

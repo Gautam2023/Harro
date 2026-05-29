@@ -109,8 +109,8 @@ def update_the_task_timer_based_on_shift_end():
             current_dt = now_datetime()
             diff_minutes = time_diff_in_seconds(shift_end_dt, current_dt) / 60
 
-            # Only process tasks within -5 to 0 min of shift end
-            if not (-5 <= diff_minutes <= 0):
+            # Only process tasks within -15 to 0 min of shift end (cron runs every 15 min)
+            if not (-15 <= diff_minutes <= 0):
                 continue
 
             task_list = frappe.db.sql(

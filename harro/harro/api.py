@@ -376,7 +376,7 @@ def update_the_job_card_timer_based_on_shift_end():
 
 
 def stop_timer_for_jobcard_every_two_hours():
-    jobcard_list = frappe.db.get_all("Job Card", filters={"status" : 'Work In Progress'}, fields=["name", "project"])
+    jobcard_list = frappe.db.get_all("Job Card", fields=["name", "project"])
 
     for row in jobcard_list:
         doc = frappe.get_doc("Job Card", row.name)

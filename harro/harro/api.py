@@ -115,18 +115,19 @@ def update_the_task_timer_based_on_shift_end():
 
             task_list = frappe.db.sql(
                 """
-                SELECT 
+                SELECT
                     t.name AS task_name,
                     td.name AS timesheet_detail
                 FROM `tabTask` t
-                LEFT JOIN `tabTimesheet Detail` td 
-                    ON td.parent = t.name
-                WHERE 
-                    t.status != 'Cancelled' AND
-                    t.working_status = 'Work In Progress'
+                LEFT JOIN `tabTimesheet Detail` td
+                    ON td.task = t.name
+                WHERE
+                    t.status != 'Cancelled'
+                    AND t.working_status = 'Work In Progress'
                     AND t.custom_employee__assign_to_employee_ = %(employee)s
                     AND (td.to_time IS NULL OR td.to_time = '')
-                    AND td.creation < %(now)s
+                    AND td.from_time IS NOT NULL
+                    AND td.from_time < %(now)s
                 """,
                 {
                     "employee": employee.name,
@@ -269,18 +270,19 @@ def update_the_job_card_timer_based_on_shift_end():
 
             job_card_list = frappe.db.sql(
                 """
-                SELECT 
+                SELECT
                     jc.name AS job_card,
                     jc.project,
                     jct.name AS timesheet_detail
                 FROM `tabJob Card` jc
                 LEFT JOIN `tabJob Card Time Log` jct
                     ON jct.parent = jc.name
-                WHERE 
+                WHERE
                     jc.status = 'Work In Progress'
                     AND jct.employee = %(employee)s
                     AND (jct.to_time IS NULL OR jct.to_time = '')
-                    AND jct.creation < %(now)s
+                    AND jct.from_time IS NOT NULL
+                    AND jct.from_time < %(now)s
                 """,
                 {
                     "employee": emp.name,

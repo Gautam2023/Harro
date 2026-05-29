@@ -1,3 +1,4 @@
+from annotated_types import doc
 import frappe
 from frappe.utils import today, get_datetime, now_datetime, time_diff_in_seconds, now
 from harro.harro.docevents.task import update_stop_task_log
@@ -388,7 +389,11 @@ def stop_timer_for_jobcard_every_two_hours():
         current_time = get_datetime()
         diff_hours = (current_time - from_time).total_seconds() / 3600
         employee = doc.time_logs[-1].employee
+        to_time = doc.time_logs[-1].to_time
 
+        if to_time:
+            continue
+        
         permissable_hours = frappe.db.get_single_value(
             "Projects Settings",
             "job_card_cut_of_time"

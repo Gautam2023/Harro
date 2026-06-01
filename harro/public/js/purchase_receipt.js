@@ -108,8 +108,7 @@ function generate_payment_schedule(frm) {
             terms_template: frm.doc.custom_payment_terms_template,
             posting_date: frm.doc.posting_date || frappe.datetime.get_today(),
             grand_total: frm.doc.grand_total || 0,
-            // bill_date: frm.doc.bill_date || null
-            bill_date: null
+            bill_date: frm.doc.bill_date || null
         },
 
         callback: function(r) {

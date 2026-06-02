@@ -50,6 +50,7 @@ def sync_travel_planning_from_travel_request(doc, method=None):
 
     linked_tp_names = []
 
+    # Build a map of TR itinerary rows: name → row
     tr_map = {row.name: row for row in doc.itinerary}
 
     for tp_name in tp_parents:
@@ -57,6 +58,15 @@ def sync_travel_planning_from_travel_request(doc, method=None):
         tp = frappe.get_doc("Travel Planning", tp_name)
         updated = False
 
+        # STEP 1: Build set of TR itinerary names already
+        #         present in this Travel Planning doc
+        existing_tr_itinerary_names = {
+            row.travel_request_itinerary
+            for row in tp.travel_itinerary
+            if row.travel_request == doc.name
+        }
+
+        # STEP 2: Sync existing rows (field-by-field)
         for row in tp.travel_itinerary:
 
             if row.travel_request != doc.name:
@@ -66,10 +76,6 @@ def sync_travel_planning_from_travel_request(doc, method=None):
 
             if not tr_row:
                 continue
-
-            # -----------------------------
-            # ALWAYS SYNC FIELD BY FIELD
-            # -----------------------------
 
             if row.custom_taxi_required != tr_row.custom_taxi_required:
                 row.custom_taxi_required = tr_row.custom_taxi_required
@@ -103,14 +109,92 @@ def sync_travel_planning_from_travel_request(doc, method=None):
                 row.custom_status = tr_row.custom_status
                 updated = True
 
+        # STEP 3: Add NEW rows that don't exist in TP yet
+        #
+        # A row is "new" when:
+        #   - It has a saved name (not __islocal)
+        #   - Its name is NOT already in existing_tr_itinerary_names
+        #   - It belongs to this Travel Request
+        for tr_row in doc.itinerary:
+            # Skip unsaved/local rows — they have no stable DB name yet
+            if getattr(tr_row, "__islocal", False):
+                continue
+
+            # Skip rows already synced into this TP
+            if tr_row.name in existing_tr_itinerary_names:
+                continue
+
+            # Get the employee details from the first existing TP row for this TR
+            # so we can carry over employee-level fields
+            reference_tp_row = next(
+                (r for r in tp.travel_itinerary if r.travel_request == doc.name),
+                None
+            )
+
+            new_tp_row = tp.append("travel_itinerary", {
+                # link back to source
+                "travel_request": doc.name,
+                "travel_request_itinerary": tr_row.name,
+
+                # employee identity (copied from sibling row or TR doc)
+                "custom_employee": (
+                    reference_tp_row.custom_employee
+                    if reference_tp_row
+                    else doc.employee
+                ),
+                "employee_name": (
+                    reference_tp_row.employee_name
+                    if reference_tp_row
+                    else doc.employee_name
+                ),
+                "employee_hh_id": (
+                    reference_tp_row.employee_hh_id
+                    if reference_tp_row
+                    else getattr(doc, "custom_hh__employee_id", "")
+                ),
+                "custom_contact_email": (
+                    reference_tp_row.custom_contact_email
+                    if reference_tp_row
+                    else doc.prefered_email
+                ),
+                "custom_is_claimable": (
+                    reference_tp_row.custom_is_claimable
+                    if reference_tp_row
+                    else getattr(doc, "custom_is_claimable", 0)
+                ),
+                "custom_not_claimable": (
+                    reference_tp_row.custom_not_claimable
+                    if reference_tp_row
+                    else getattr(doc, "custom_not_claimable", 0)
+                ),
+
+                # itinerary fields from TR row
+                "travel_from": tr_row.travel_from,
+                "travel_to": tr_row.travel_to,
+                "mode_of_travel": tr_row.mode_of_travel,
+                "lodging_required": tr_row.lodging_required,
+                "room_night": tr_row.room_night,
+                "extra_baggage": tr_row.custom_extra_baggage,
+
+                # --- status / booking fields ---
+                "custom_status": tr_row.custom_status or "Active",
+                "custom_flight_booking_status": tr_row.custom_flight_booking_status,
+                "custom_hotel_booking_status": tr_row.custom_hotel_booking_status,
+                "custom_taxi_required": tr_row.custom_taxi_required,
+                "custom_reason_for_cancellation": tr_row.custom_reason_for_cancellation,
+                "custom_reason_for_rescheduling": tr_row.custom_reason_for_rescheduling,
+                "custom_revised_travel_date": tr_row.custom_revised_travel_date,
+                "custom_revised_return_date": tr_row.custom_revised_return_date,
+            })
+
+            updated = True
+
         if updated:
             tp.flags.ignore_permissions = True
             tp.save()
             linked_tp_names.append(tp.name)
 
-    # -----------------------------
     # OPTIONAL EMAIL NOTIFICATION
-    # -----------------------------
     if linked_tp_names:
 
         travel_manager_users = frappe.get_all(

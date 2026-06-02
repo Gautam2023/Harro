@@ -8,30 +8,33 @@ WORKFLOW_TO_TRIP_STATUS = {
 
 
 def on_update(doc, method=None):
-    """
-    Single entry point: ALWAYS sync everything from Travel Request → Travel Planning
-    """
-
-    sync_travel_planning_from_travel_request(doc)
 
     trip_status = WORKFLOW_TO_TRIP_STATUS.get(doc.workflow_state)
 
-    if not trip_status:
-        return
+    if trip_status:
+        for row in doc.itinerary:
+            if row.custom_flight_booking_status != trip_status:  # guard preserved
+                # Update in-memory first so sync picks it up
+                row.custom_flight_booking_status = trip_status
+                row.custom_hotel_booking_status = trip_status
+                row.custom_status = trip_status
 
-    for row in doc.itinerary:
-        if row.custom_flight_booking_status != trip_status:
-            frappe.db.set_value(
-                "Travel Itinerary",
-                row.name,
-                {
-                    "custom_flight_booking_status": trip_status,
-                    "custom_hotel_booking_status": trip_status,
-                },
-                update_modified=False
-            )
+                # Persist to DB
+                frappe.db.set_value(
+                    "Travel Itinerary",
+                    row.name,
+                    {
+                        "custom_flight_booking_status": trip_status,
+                        "custom_hotel_booking_status": trip_status,
+                        "custom_status": trip_status,
+                    },
+                    update_modified=False
+                )
 
-    frappe.db.commit()
+        frappe.db.commit()
+
+    # Sync AFTER in-memory doc is updated
+    sync_travel_planning_from_travel_request(doc)
 
 
 def sync_travel_planning_from_travel_request(doc, method=None):

@@ -808,7 +808,22 @@ def create_custom_fields_on_migrate():
                 "fieldname": "expected_delivery_date",
                 "label" : "Expected Delivery Date",
                 "fieldtype" : "Date",
-                "inser_after" : "custom_email_communication"
+                "insert_after" : "custom_email_communication"
+            }
+        ],
+        "Accounts Settings" : [
+            {
+                "fieldname": "due_date_calculation_section",
+                "label": "Due Date Calculation",
+                "fieldtype": "Section Break",
+                "insert_after": "show_party_balance"
+            },
+            {
+                "fieldname": "due_date_calculation_not_based_on_supplier_invoice_no",
+                "label": "Due date calculation not based on supplier invoice no",
+                "fieldtype": "Check",
+                "insert_after": "due_date_calculation_section",
+                "default": "0"
             }
         ]
         

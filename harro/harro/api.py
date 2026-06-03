@@ -1,3 +1,4 @@
+from annotated_types import doc
 import frappe
 from frappe.utils import today, get_datetime, now_datetime, time_diff_in_seconds, now
 from harro.harro.docevents.task import update_stop_task_log
@@ -108,24 +109,25 @@ def update_the_task_timer_based_on_shift_end():
             current_dt = now_datetime()
             diff_minutes = time_diff_in_seconds(shift_end_dt, current_dt) / 60
 
-            # Only process tasks within -5 to 0 min of shift end
-            if not (-5 <= diff_minutes <= 0):
+            # Only process tasks within -15 to 0 min of shift end (cron runs every 15 min)
+            if not (-15 <= diff_minutes <= 0):
                 continue
 
             task_list = frappe.db.sql(
                 """
-                SELECT 
+                SELECT
                     t.name AS task_name,
                     td.name AS timesheet_detail
                 FROM `tabTask` t
-                LEFT JOIN `tabTimesheet Detail` td 
-                    ON td.parent = t.name
-                WHERE 
-                    t.status != 'Cancelled' AND
-                    t.working_status = 'Work In Progress'
+                LEFT JOIN `tabTimesheet Detail` td
+                    ON td.task = t.name
+                WHERE
+                    t.status != 'Cancelled'
+                    AND t.working_status = 'Work In Progress'
                     AND t.custom_employee__assign_to_employee_ = %(employee)s
                     AND (td.to_time IS NULL OR td.to_time = '')
-                    AND td.creation < %(now)s
+                    AND td.from_time IS NOT NULL
+                    AND td.from_time < %(now)s
                 """,
                 {
                     "employee": employee.name,
@@ -263,23 +265,24 @@ def update_the_job_card_timer_based_on_shift_end():
             current_dt = now_datetime()
             diff_minutes = time_diff_in_seconds(shift_end_dt, current_dt) / 60
 
-            if not (-5 <= diff_minutes <= 0):
+            if not (-15 <= diff_minutes <= 0):
                 continue
 
             job_card_list = frappe.db.sql(
                 """
-                SELECT 
+                SELECT
                     jc.name AS job_card,
                     jc.project,
                     jct.name AS timesheet_detail
                 FROM `tabJob Card` jc
                 LEFT JOIN `tabJob Card Time Log` jct
                     ON jct.parent = jc.name
-                WHERE 
+                WHERE
                     jc.status = 'Work In Progress'
                     AND jct.employee = %(employee)s
                     AND (jct.to_time IS NULL OR jct.to_time = '')
-                    AND jct.creation < %(now)s
+                    AND jct.from_time IS NOT NULL
+                    AND jct.from_time < %(now)s
                 """,
                 {
                     "employee": emp.name,
@@ -376,7 +379,7 @@ def update_the_job_card_timer_based_on_shift_end():
 
 
 def stop_timer_for_jobcard_every_two_hours():
-    jobcard_list = frappe.db.get_all("Job Card", filters={"status" : 'Work In Progress'}, fields=["name", "project"])
+    jobcard_list = frappe.db.get_all("Job Card", fields=["name", "project"])
 
     for row in jobcard_list:
         doc = frappe.get_doc("Job Card", row.name)
@@ -384,11 +387,24 @@ def stop_timer_for_jobcard_every_two_hours():
         if not doc.time_logs:
             continue
 
-        from_time = doc.time_logs[-1].from_time
+        # Find the active time log: to_time is empty AND from_time is set
+        active_log = None
+        for tl in doc.time_logs:
+            if not tl.to_time and tl.from_time:
+                active_log = tl
+
+        if not active_log:
+            continue
+
+        from_time = active_log.from_time
         current_time = get_datetime()
         diff_hours = (current_time - from_time).total_seconds() / 3600
-        employee = doc.time_logs[-1].employee
+        employee = active_log.employee
+        to_time = active_log.to_time
 
+        if to_time:
+            continue
+        
         permissable_hours = frappe.db.get_single_value(
             "Projects Settings",
             "job_card_cut_of_time"
@@ -405,14 +421,39 @@ def stop_timer_for_jobcard_every_two_hours():
             }
             update_unproductive_log(args, row.name)
 
+            # Remove corrupt time log rows (no from_time and no to_time) before
+            # stopping — ERPNext's add_time_log uses time_logs[-1] as last_row and
+            # crashes on time_diff_in_seconds if that row has a null from_time.
+            frappe.db.delete(
+                "Job Card Time Log",
+                {
+                    "parent": row.name,
+                    "from_time": ("is", "not set"),
+                    "to_time": ("is", "not set"),
+                }
+            )
+
             # stop time log
+            stop_time = get_datetime()
             args = {
                 'job_card_id': row.name,
-                "complete_time": get_datetime(),
+                "complete_time": stop_time,
                 "status": "On Hold",
                 "completed_qty": 0,
             }
-            make_time_log(args)
+            try:
+                make_time_log(args)
+            except Exception:
+                # Fallback for job cards that fail doc.save() validation (e.g. missing
+                # mandatory fields like project) — update the DB rows directly.
+                frappe.db.sql(
+                    """UPDATE `tabJob Card Time Log`
+                       SET to_time = %s
+                       WHERE parent = %s AND (to_time IS NULL OR to_time = '')""",
+                    (stop_time, row.name)
+                )
+                frappe.db.set_value("Job Card", row.name, "status", "On Hold")
+                frappe.db.commit()
 
             # ============== EMAIL NOTIFICATION =================
             try:

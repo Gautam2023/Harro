@@ -197,22 +197,35 @@ def update_stop_task_log(arg, start_new=False):
 # Scheduler : Stop Timer after every 2 hours
 def update_task_timer():
     task_list = frappe.db.get_list("Task", {"working_status" : 'Work In Progress'})
+    permissable_hours = frappe.db.get_single_value("Projects Settings", "task_cut_of_time")
     for row in task_list:
         doc = frappe.get_doc("Task", row.name)
-        if doc.unproductive_work_timelogs:
-            from_time = get_datetime(doc.unproductive_work_timelogs[-1].from_time)
-            current_time = get_datetime()
-            diff_hours = (current_time - from_time).total_seconds() / 3600
-            permissable_hours = frappe.db.get_single_value("Projects Settings", "task_cut_of_time")
-            if diff_hours >= permissable_hours:
-                arg = {
-                    "task" : row.name,
-                    "to_time" : now()
-                }
-                update_stop_task_log(arg, start_new=True)
-                if doc.custom_employee__assign_to_employee_:
-                    send_timer_stopper_notification(doc, permissable_hours)
-                frappe.db.commit()
+
+        if not doc.unproductive_work_timelogs:
+            continue
+
+        # Find the active unproductive log: to_time is empty and from_time is set
+        active_log = None
+        for tl in doc.unproductive_work_timelogs:
+            if not tl.to_time and tl.from_time:
+                active_log = tl
+
+        if not active_log:
+            continue
+
+        from_time = get_datetime(active_log.from_time)
+        current_time = get_datetime()
+        diff_hours = (current_time - from_time).total_seconds() / 3600
+
+        if diff_hours >= permissable_hours:
+            arg = {
+                "task" : row.name,
+                "to_time" : now()
+            }
+            update_stop_task_log(arg, start_new=True)
+            if doc.custom_employee__assign_to_employee_:
+                send_timer_stopper_notification(doc, permissable_hours)
+            frappe.db.commit()
 
 def send_timer_stopper_notification(doc, permissible_hours):
     employee_name = frappe.db.get_value(

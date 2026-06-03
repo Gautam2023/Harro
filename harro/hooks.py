@@ -241,7 +241,7 @@ doc_events = {
         "before_save": "harro.harro.docevents.travel_planning.calculate_totals"
     },
     "Purchase Invoice": {
-        "before_save": "harro.harro.docevents.purchase_invoice.set_due_date"
+        "before_save": "harro.harro.docevents.purchase_invoice.fix_due_date_based_on_posting_date"
     }
 }
 

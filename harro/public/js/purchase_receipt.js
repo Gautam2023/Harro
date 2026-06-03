@@ -50,7 +50,16 @@ frappe.ui.form.on("Purchase Receipt", {
     },
     custom_payment_terms_template(frm) {
         generate_payment_schedule(frm);
-    }
+    },
+    custom_customer_service :function(frm) {
+	    if (frm.doc.custom_customer_service) {
+		    console.log("Heyy");
+		    frm.set_value("cost_center", "41630 - CS Spare Parts - Harro IN");
+		}
+		else {
+		    frm.set_value("cost_center", "44010 - Purchasing - Harro IN");
+		}
+	}
 })
 
 frappe.ui.form.on('Purchase Receipt Item', {

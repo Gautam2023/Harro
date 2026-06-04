@@ -300,6 +300,9 @@ def update_the_job_card_timer_based_on_shift_end():
 
         for row in job_card_list:
             try:
+                work_order = frappe.db.get_value("Job Card", row.job_card, "work_order")
+                if not row.project and work_order:
+                    row.project = frappe.db.get_value("Work Order", work_order, "project")
                 # Log unproductive entry
                 args = {
                     "activity_type": "Shift End",

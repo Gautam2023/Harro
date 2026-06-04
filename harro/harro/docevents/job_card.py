@@ -55,7 +55,8 @@ def update_unproductive_log(arg, job_card):
 @frappe.whitelist()
 def resume_unproductive_log(to_time, job_card):
     doc = frappe.get_doc("Job Card", job_card)
-
+    if not doc.project:
+        frappe.throw(_("Project is required to create timesheet for unproductive work log. Add project to the job card and try again."))
     # Last log entry
     last_log = doc.custom_unproductive_work_timelogs[-1]
     last_log.to_time = to_time
@@ -80,7 +81,8 @@ def resume_unproductive_log(to_time, job_card):
                         "from_time": last_log.get("from_time"),
                         "to_time": last_log.get("to_time"),
                         "project": doc.project,
-                        "task": last_log.get("task")
+                        "task": last_log.get("task"),
+                        "project": doc.project
                     }
                 ]
             })
@@ -116,7 +118,8 @@ def resume_unproductive_log(to_time, job_card):
                     "from_time": last_log.get("from_time"),
                     "to_time": last_log.get("to_time"),
                     "project": doc.project,
-                    "task": last_log.get("task")
+                    "task": last_log.get("task"),
+                    "custom_ba_number": doc.project
                 }
             ]
         })

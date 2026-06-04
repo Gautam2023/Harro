@@ -274,7 +274,7 @@ def update_the_job_card_timer_based_on_shift_end():
             diff_minutes = time_diff_in_seconds(shift_end_dt, current_dt) / 60
 
             # Skip if shift hasn't ended yet
-            if diff_minutes > 0:
+            if diff_minutes >= 0:
                 continue
 
             job_card_list = frappe.db.sql(

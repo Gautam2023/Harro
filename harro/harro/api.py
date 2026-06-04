@@ -273,11 +273,8 @@ def update_the_job_card_timer_based_on_shift_end():
             current_dt = now_datetime()
             diff_minutes = time_diff_in_seconds(shift_end_dt, current_dt) / 60
 
-            if not (-15 <= diff_minutes <= 0):
-                frappe.log_error(
-                    title="Shift End Job Card Timer: Skipping employee outside time window",
-                    message=f"Employee: {emp.name}, Shift End: {shift_end_dt}, Current Time: {current_dt}, Diff (min): {diff_minutes}"
-                )
+            # Skip if shift hasn't ended yet
+            if diff_minutes > 0:
                 continue
 
             job_card_list = frappe.db.sql(

@@ -315,7 +315,8 @@ def get_flight_purchase_invoice_defaults(employee_row, travel_doc):
         "supplier": row.custom_flight_booking_vendor,
         "travel_planning": travel_doc,
         "bill_no": row.custom_flight_invoice_id,
-        "project": ba_number
+        "project": ba_number,
+        "custom_supplier_invoice": row.get("custom_flight_invoice_attachment")
     })
 
     doc.append("items", {
@@ -330,6 +331,7 @@ def get_flight_purchase_invoice_defaults(employee_row, travel_doc):
     doc.insert()
 
     attachments = [
+        row.get("custom_flight_invoice_attachment"),
         row.get("custom_onward_flight_invoice_attachment"),
         row.get("custom_return_flight_invoice_attachment")
     ]

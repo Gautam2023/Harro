@@ -281,3 +281,16 @@ def set_payment_terms_template(doc, method=None):
     if payment_terms_template:
         doc.custom_payment_terms_template = payment_terms_template
 
+def set_goods_grn(doc, method=None):
+    item_codes = [row.item_code for row in doc.items if row.item_code]
+
+    doc.goods_grn = bool(
+        item_codes and frappe.db.exists(
+            "Item",
+            {
+                "name": ["in", item_codes],
+                "is_stock_item": 1
+            }
+        )
+    )
+

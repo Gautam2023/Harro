@@ -231,7 +231,8 @@ doc_events = {
     "Purchase Receipt" : {
         "after_insert" : "harro.harro.docevents.purchase_receipt.email_notification",
         "before_save" : "harro.harro.docevents.purchase_receipt.set_due_date",
-        "before_insert" : "harro.harro.docevents.purchase_receipt.set_payment_terms_template"
+        "before_insert" : "harro.harro.docevents.purchase_receipt.set_payment_terms_template",
+        "validate" : "harro.harro.docevents.purchase_receipt.set_goods_grn"
     },
     "Payment Entry": {
         "on_submit": "harro.harro.docevents.payment_entry.send_email_to_company_contact"

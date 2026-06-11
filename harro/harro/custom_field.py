@@ -201,6 +201,12 @@ def create_custom_fields_on_migrate():
                 "fieldtype" : "Link",
                 "options" : "Travel Planning",
                 "insert_after" : "due_date"
+            },
+            {
+                "fieldname" : "from_goods_grn",
+                "label" : "From Goods GRN",
+                "fieldtype" : "Check",
+                "insert_after" : "is_reverse_charge"
             }
         ],
         "Purchase Receipt Item" : [
@@ -562,6 +568,13 @@ def create_custom_fields_on_migrate():
                 "fieldtype": "Data",
                 "insert_after": "transport_registration_no"
             },
+            {
+                "fieldname": "goods_grn",
+                "label": "Goods GRN",
+                "fieldtype": "Check",
+                "insert_after": "custom_customer_service",
+                "read_only" : 1
+            }
         ],
         "Expense Details" :[
             {

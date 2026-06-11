@@ -201,12 +201,6 @@ def create_custom_fields_on_migrate():
                 "fieldtype" : "Link",
                 "options" : "Travel Planning",
                 "insert_after" : "due_date"
-            },
-            {
-                "fieldname" : "from_goods_grn",
-                "label" : "From Goods GRN",
-                "fieldtype" : "Check",
-                "insert_after" : "is_reverse_charge"
             }
         ],
         "Purchase Receipt Item" : [

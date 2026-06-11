@@ -26,12 +26,22 @@ def make_purchase_invoice(source_name, target_doc=None, args=None):
     pr = frappe.get_value(
         "Purchase Receipt",
         source_name,
-        ["supplier_invoice_no","supplier_invoice_date","posting_date"],
+        [
+            "supplier_invoice_no",
+            "supplier_invoice_date",
+            "posting_date",
+            "custom_customer_service",
+            "goods_grn"
+        ],
         as_dict=True
     )
     if pr:
         doclist.bill_no = pr.supplier_invoice_no
         doclist.bill_date = pr.supplier_invoice_date
         doclist.posting_date = pr.posting_date 
+
+        # my custom field mapping
+        doclist.custom_customer_service_ = pr.custom_customer_service
+        doclist.from_goods_grn = pr.goods_grn
 
     return doclist

@@ -750,3 +750,35 @@ def send_revised_ticket_email(travel_planning_name, itinerary_row_name):
     )
 
     return "Emails sent successfully."
+
+
+@frappe.whitelist()
+def make_expense_claim(source_name, target_doc=None):
+    doc = frappe.get_doc("Travel Planning", source_name)
+
+    expense_claim = frappe.new_doc("Expense Claim")
+    expense_claim.custom_travel_planning = doc.name
+
+    employee_id = frappe.db.get_value(
+        "Employee",
+        {"user_id": frappe.session.user},
+        "name"
+    )
+
+    if employee_id:
+        expense_claim.employee = employee_id
+
+    return expense_claim
+
+
+
+@frappe.whitelist()
+def make_timesheet(source_name, target_doc=None):
+    doc = frappe.get_doc("Travel Planning", source_name)
+
+    timesheet = frappe.new_doc("Timesheet")
+    timesheet.custom_travel_planning = doc.name
+    timesheet.parent_project = doc.ba_number
+
+    return timesheet
+

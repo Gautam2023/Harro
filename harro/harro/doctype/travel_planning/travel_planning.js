@@ -36,6 +36,32 @@ frappe.ui.form.on("Travel Planning", {
                                 message: r.message,
                                 indicator: "green"
                             });
+                        }   
+                    }
+                });
+            }, __("Create"));
+
+            frm.add_custom_button(__("Expense Claim"), () => {
+                frappe.call({
+                    method: "harro.harro.doctype.travel_planning.travel_planning.make_expense_claim",
+                    args: {source_name: frm.doc.name},
+                    callback: function(r) {
+                        if (r.message) {
+                            frappe.model.sync(r.message);
+                            frappe.set_route("Form", r.message.doctype, r.message.name);
+                        }
+                    }
+                });
+            }, __("Create"));
+
+            frm.add_custom_button(__("Timesheet"), () => {
+                frappe.call({
+                    method: "harro.harro.doctype.travel_planning.travel_planning.make_timesheet",
+                    args: {source_name: frm.doc.name},
+                    callback: function(r) {
+                        if (r.message) {
+                            frappe.model.sync(r.message);
+                            frappe.set_route("Form", r.message.doctype, r.message.name);
                         }
                     }
                 });

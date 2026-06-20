@@ -206,7 +206,8 @@ def create_custom_fields_on_migrate():
                 "fieldname" : "from_goods_grn",
                 "label" : "From Goods GRN",
                 "fieldtype" : "Check",
-                "insert_after" : "is_reverse_charge"
+                "insert_after" : "is_reverse_charge",
+                "read_only" : 1
             }
         ],
         "Purchase Receipt Item" : [

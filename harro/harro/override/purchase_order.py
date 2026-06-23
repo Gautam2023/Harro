@@ -14,7 +14,7 @@ class CustomPurchaseOrder(PurchaseOrder):
 			return
 
 		if self.docstatus == 1 and 0 < (self.per_received or 0) < 100:
-			self.status = "Partially received and To Bill"
+			self.status = "Partially Received and To Bill"
 			if update:
 				self.db_set("status", self.status, update_modified=update_modified)
 

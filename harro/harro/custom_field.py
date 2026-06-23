@@ -839,6 +839,28 @@ def create_custom_fields_on_migrate():
                 "insert_after": "due_date_calculation_section",
                 "default": "0"
             }
+        ],
+        "Bank Statement Import" : [
+            {
+                "fieldname": "currency",
+                "label": "Currency",
+                "fieldtype": "Link",
+                "options": "Currency",
+                "reqd": 1,
+                "insert_after": "bank"
+            },
+            {
+                "fieldname": "unprocessed_file",
+                "label": "Unprocessed File",
+                "fieldtype": "Attach",
+                "insert_after": "html_5"
+            },
+            {
+                "fieldname": "process",
+                "label": "Process",
+                "fieldtype": "Button",
+                "insert_after": "unprocessed_file"
+            }
         ]
         
     }

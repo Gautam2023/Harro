@@ -64,7 +64,8 @@ doctype_js = {
         "Material Request" : "public/js/material_requiest.js",
         "Request for Quotation" : "public/js/request_for_quotation.js",
         "Travel Request" : "public/js/travel_request.js",
-        "Employee Advance" : "public/js/employee_advance.js"
+        "Employee Advance" : "public/js/employee_advance.js",
+        "Bank Statement Import": "public/js/bank_statement_import.js",
     }
 
 doctype_list_js = {"Task" : "public/js/task_list.js"}

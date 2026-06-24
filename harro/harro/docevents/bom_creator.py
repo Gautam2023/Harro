@@ -41,18 +41,14 @@ def extract_bom_item_data(file_path, bom_c):
             public_file_path = frappe.get_site_path("public", file_path.lstrip("/"))
 
         data = []
-        try:
-            # utf-8
-            with open(public_file_path, mode='r', encoding='utf-8') as file:
-                reader = csv.DictReader(file)
-                for row in reader:
-                    data.append(row)
-
-        except UnicodeDecodeError:
-            with open(public_file_path, mode='r', encoding='cp1252') as file:
-                reader = csv.DictReader(file)
-                for row in reader:
-                    data.append(row)
+        for encoding in ('utf-8-sig', 'cp1252', 'latin-1'):
+            try:
+                with open(public_file_path, mode='r', encoding=encoding, errors='strict') as file:
+                    reader = csv.DictReader(file)
+                    data = [dict(row) for row in reader]
+                break
+            except UnicodeDecodeError:
+                continue
 
     else:
         frappe.throw("Unsupported file type. Please upload a .xlsx or .csv file.")

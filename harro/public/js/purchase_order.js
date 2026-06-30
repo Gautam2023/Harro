@@ -27,5 +27,8 @@ frappe.ui.form.on("Purchase Order", {
 				} 
 			});
 		}
+        if (frm.doc.status === "Partially received and To Bill") {
+            frm.page.set_indicator(__("Partially received and To Bill"), "orange");
+        }
     }
 })

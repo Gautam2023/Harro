@@ -206,7 +206,8 @@ def create_custom_fields_on_migrate():
                 "fieldname" : "from_goods_grn",
                 "label" : "From Goods GRN",
                 "fieldtype" : "Check",
-                "insert_after" : "is_reverse_charge"
+                "insert_after" : "is_reverse_charge",
+                "read_only" : 1
             }
         ],
         "Purchase Receipt Item" : [
@@ -837,6 +838,28 @@ def create_custom_fields_on_migrate():
                 "fieldtype": "Check",
                 "insert_after": "due_date_calculation_section",
                 "default": "0"
+            }
+        ],
+        "Bank Statement Import" : [
+            {
+                "fieldname": "currency",
+                "label": "Currency",
+                "fieldtype": "Link",
+                "options": "Currency",
+                "reqd": 1,
+                "insert_after": "bank"
+            },
+            {
+                "fieldname": "unprocessed_file",
+                "label": "Unprocessed File",
+                "fieldtype": "Attach",
+                "insert_after": "html_5"
+            },
+            {
+                "fieldname": "process",
+                "label": "Process",
+                "fieldtype": "Button",
+                "insert_after": "unprocessed_file"
             }
         ]
         

@@ -64,7 +64,8 @@ doctype_js = {
         "Material Request" : "public/js/material_requiest.js",
         "Request for Quotation" : "public/js/request_for_quotation.js",
         "Travel Request" : "public/js/travel_request.js",
-        "Employee Advance" : "public/js/employee_advance.js"
+        "Employee Advance" : "public/js/employee_advance.js",
+        "Bank Statement Import": "public/js/bank_statement_import.js",
     }
 
 doctype_list_js = {"Task" : "public/js/task_list.js"}
@@ -164,7 +165,8 @@ override_doctype_class = {
     "Purchase Invoice" : "harro.harro.override.purchase_invoice.CustomPurchaseInvoice",
     "Purchase Receipt" : "harro.harro.override.purchase_receipt.CustomPurchaseReceipt",
     "Payment Request" : "harro.harro.override.payment_request.CustomPaymentRequest",
-    "Stock Entry" : "harro.harro.override.stock_entry.CustomStockEntry"
+    "Stock Entry" : "harro.harro.override.stock_entry.CustomStockEntry",
+    "Purchase Order": "harro.harro.override.purchase_order.CustomPurchaseOrder"
 }
 
 # Document Events

@@ -2,7 +2,21 @@ import frappe
 import json
 from frappe.utils import flt
 from frappe.model.mapper import get_mapped_doc
-from erpnext.buying.doctype.purchase_order.purchase_order import set_missing_values
+from erpnext.buying.doctype.purchase_order.purchase_order import set_missing_values, PurchaseOrder
+
+
+class CustomPurchaseOrder(PurchaseOrder):
+	def set_status(self, update=False, status=None, update_modified=True):
+		super().set_status(update, status, update_modified)
+
+		if status:
+			# explicit status passed (e.g. Closed/Cancelled via doc actions) - don't override
+			return
+
+		if self.docstatus == 1 and 0 < (self.per_received or 0) < 100:
+			self.status = "Partially Received and To Bill"
+			if update:
+				self.db_set("status", self.status, update_modified=update_modified)
 
 
 @frappe.whitelist()

@@ -782,3 +782,21 @@ def make_timesheet(source_name, target_doc=None):
 
     return timesheet
 
+@frappe.whitelist()
+@frappe.validate_and_sanitize_search_inputs
+def get_travel_managers(doctype, txt, searchfield, start, page_len, filters):
+    return frappe.db.sql("""
+        SELECT e.name, e.employee_name
+        FROM `tabEmployee` e
+        INNER JOIN `tabUser` u ON u.name = e.user_id
+        INNER JOIN `tabHas Role` hr ON hr.parent = u.name
+        WHERE hr.role = 'Travel Manager'
+        AND e.status = 'Active'
+        AND (e.name LIKE %(txt)s OR e.employee_name LIKE %(txt)s)
+        ORDER BY e.employee_name
+        LIMIT %(start)s, %(page_len)s
+    """, {
+        "txt": "%{0}%".format(txt),
+        "start": start,
+        "page_len": page_len
+    })

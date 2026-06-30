@@ -2,6 +2,19 @@
 // For license information, please see license.txt
 
 frappe.ui.form.on("Travel Planning", {
+    setup: function(frm) {
+        frm.set_query("custom_booked_by", "travel_itinerary", function() {
+            return {
+                query: "harro.harro.doctype.travel_planning.travel_planning.get_travel_managers"
+            };
+        });
+
+        frm.set_query("custom_hotel_booked_by", "travel_itinerary", function() {
+            return {
+                query: "harro.harro.doctype.travel_planning.travel_planning.get_travel_managers"
+            };
+        });
+    },
 	refresh(frm) {
         set_profit_color(frm);
 

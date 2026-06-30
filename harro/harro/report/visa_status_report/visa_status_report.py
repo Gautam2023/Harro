@@ -15,6 +15,9 @@ def get_columns() -> list[dict]:
 	return [
 		{"label": "Country", "fieldname": "country", "fieldtype": "Link", "options": "Country", "width": 120},
 		{"label": "Employee Name", "fieldname": "employee_name" ,"fieldtype": "Data", "width": 200},
+		{"label": "Visa Type", "fieldname": "visa_type" ,"fieldtype": "Data"},
+		{"label": "Visa Number", "fieldname": "visa_number" ,"fieldtype": "Data"},
+		{"label": "Visa Status", "fieldname": "visa_status", "fieldtype": "Data"},
 		# {"label": "Employee Id", "fieldname": "employee_id", "fieldtype": "Link", "options": "Employee"},
 		{"label": "Valid From", "fieldname": "valid_from", "fieldtype": "Date", "width": 120},
 		{"label": "Valid To", "fieldname": "valid_to", "fieldtype": "Date", "width": 120},
@@ -43,7 +46,13 @@ def get_data(filters=None) -> list[dict]:
 			evd.visa_country as country,
 			evd.from as valid_from,
 			evd.to as valid_to,
-			evd.entry as entry_type
+			evd.entry as entry_type,
+			evd.custom_visa_type as visa_type,
+			evd.number as visa_number,
+			CASE
+				WHEN CURDATE() <= evd.`to` THEN 'Valid'
+				ELSE 'Expired'
+			END AS visa_status
 		FROM
 			`tabEmployee` emp
 		JOIN

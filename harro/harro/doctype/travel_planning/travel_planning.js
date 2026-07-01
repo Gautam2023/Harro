@@ -17,7 +17,7 @@ frappe.ui.form.on("Travel Planning", {
     },
 	refresh(frm) {
         set_profit_color(frm);
-
+        try_patch_grid_row_heading(frm);
         // Allowed Roles
         const allowed_roles = [
             "Travel Manager",
@@ -316,7 +316,7 @@ frappe.ui.form.on("Travel Planning Employee Details" , {
 
         let row = locals[cdt][cdn];
 
-        // ── Validate ─────────────────────────────────────────────
+        //  Validate
         if (!row.custom_rescheduled_flight_ticket) {
             frappe.msgprint({
                 title: "Attachment Missing",
@@ -335,13 +335,12 @@ frappe.ui.form.on("Travel Planning Employee Details" , {
             return;
         }
 
-        // ── Confirm ───────────────────────────────────────────────
+        // Confirm 
         frappe.confirm(
             `Send rescheduled ticket emails for <b>${row.employee_name || "this employee"}</b>?`,
             () => {
                 frappe.call({
                     method: "harro.harro.doctype.travel_planning.travel_planning.send_revised_ticket_email",
-                    // ↑ Replace with your actual Python file dotted path
                     args: {
                         travel_planning_name: frm.doc.name,
                         itinerary_row_name: cdn,
@@ -359,6 +358,15 @@ frappe.ui.form.on("Travel Planning Employee Details" , {
                 });
             }
         );
+    },
+    travel_itinerary_add(frm) {
+        try_patch_grid_row_heading(frm);
+    },
+    employee_name(frm, cdt, cdn) {
+        refresh_open_row_heading(frm, cdn);
+    },
+    custom_employee(frm, cdt, cdn) {
+        setTimeout(() => refresh_open_row_heading(frm, cdn), 300);
     }
 });
 
@@ -426,3 +434,33 @@ frappe.ui.form.on('Expense Details', {
         });
     }
 });
+
+function try_patch_grid_row_heading(frm) {
+    const grid = frm.fields_dict["travel_itinerary"]?.grid;
+    if (!grid || !grid.grid_rows || !grid.grid_rows.length) return;
+
+    const proto = Object.getPrototypeOf(grid.grid_rows[0]);
+    if (proto.__employee_name_heading_patched) return;
+
+    const original_show_form = proto.show_form;
+
+    proto.show_form = function () {
+        original_show_form.apply(this, arguments);
+        if (this.grid.df.fieldname === "travel_itinerary") {
+            const employee_name = this.doc.employee_name;
+            this.grid_form.wrapper.find(".grid-form-heading .panel-title").html(employee_name || "");
+        }
+    };
+
+    proto.__employee_name_heading_patched = true;
+}
+
+function refresh_open_row_heading(frm, cdn) {
+    const grid = frm.fields_dict["travel_itinerary"]?.grid;
+    if (!grid) return;
+    const row = grid.grid_rows_by_docname[cdn];
+    if (!row || !row.grid_form) return;
+
+    const employee_name = row.doc.employee_name;
+    row.grid_form.wrapper.find(".grid-form-heading .panel-title").html(employee_name || "");
+}

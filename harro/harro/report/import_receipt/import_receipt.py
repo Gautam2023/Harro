@@ -410,6 +410,26 @@ def escape_html(text):
     return html.escape(str(text))
 
 
+def clean_description(text):
+    """Strip HTML markup from a rich-text description, keeping line breaks
+    between block-level elements (e.g. Item description stored as <p>/<div> HTML)."""
+    if not text:
+        return ""
+    text = str(text)
+    if "<" not in text:
+        return escape_html(text)
+
+    import re
+    text = re.sub(r"(?i)<\s*(br|/p|/div|/li)\s*/?>", "\n", text)
+    text = re.sub(r"(?i)<[^>]+>", "", text)
+
+    import html
+    text = html.unescape(text)
+    lines = [line.strip() for line in text.splitlines()]
+    text = "\n".join(line for line in lines if line)
+    return escape_html(text).replace("\n", "<br>")
+
+
 def generate_inward_table_rows(data):
     """Generate table rows for inward/receipts report"""
     table_rows = ""
@@ -434,7 +454,7 @@ def generate_inward_table_rows(data):
             customs_station = escape_html(str(row.get('customs_station', '') or ''))
             bond_details = escape_html(str(row.get('bond_details', '') or ''))
             insurance_details = escape_html(str(row.get('insurance_details', '') or ''))
-            description = escape_html(str(row.get('description_of_goods', '') or ''))
+            description = clean_description(row.get('description_of_goods', ''))
             invoice = escape_html(str(row.get('invoice_no_and_date', '') or ''))
             quantity = escape_html(str(row.get('quantity_with_uqc', '') or ''))
             # Build Assessable Value cell with rowspan per Purchase Receipt
@@ -525,12 +545,12 @@ def generate_outward_table_rows(data):
             table_rows += f"""
             <tr>
                 <td style="border: 1px solid #000; padding: 6px; text-align: left;">{escape_html(goods_date)}</td>
-                <td style="border: 1px solid #000; padding: 6px; text-align: left;">{escape_html(goods_desc)}</td>
+                <td style="border: 1px solid #000; padding: 6px; text-align: left;">{clean_description(goods_desc)}</td>
                 <td style="border: 1px solid #000; padding: 6px; text-align: right;">{escape_html(goods_qty)}</td>
                 <td style="border: 1px solid #000; padding: 6px; text-align: right;">{escape_html(goods_val)}</td>
 
                 <td style="border: 1px solid #000; padding: 6px; text-align: left;">{escape_html(job_date)}</td>
-                <td style="border: 1px solid #000; padding: 6px; text-align: left;">{escape_html(job_desc)}</td>
+                <td style="border: 1px solid #000; padding: 6px; text-align: left;">{clean_description(job_desc)}</td>
                 <td style="border: 1px solid #000; padding: 6px; text-align: right;">{escape_html(job_qty)}</td>
                 <td style="border: 1px solid #000; padding: 6px; text-align: right;">{escape_html(job_val)}</td>
                 <td style="border: 1px solid #000; padding: 6px; text-align: left;">{escape_html(delivery_challan_no)}</td>
@@ -792,7 +812,7 @@ def generate_export_report_html(export_data, company, from_date, to_date):
             removal_date = '' if is_subsequent else escape_html(str(row.get('removal_date', '') or ''))
             shipping_bill = '' if is_subsequent else escape_html(str(row.get('shipping_bill', '') or ''))
             gst_invoice = '' if is_subsequent else escape_html(str(row.get('gst_invoice', '') or ''))
-            description = '' if is_subsequent else escape_html(str(row.get('description', '') or ''))
+            description = '' if is_subsequent else clean_description(row.get('description', ''))
             quantity = '' if is_subsequent else escape_html(str(row.get('quantity', '') or ''))
             assessable_value = '' if is_subsequent else escape_html(str(row.get('assessable_value', '') or ''))
             export_duty = '' if is_subsequent else escape_html(str(row.get('export_duty', 'Nil') or 'Nil'))

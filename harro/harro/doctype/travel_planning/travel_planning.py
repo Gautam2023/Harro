@@ -51,19 +51,20 @@ def send_flight_booking_emails(docname):
             for field in flight_attachment_fields
             if row.get(field)
         ]
+        travel_planning_link = f"""<a href="{frappe.utils.get_url_to_form(doc.doctype, doc.name)}">{doc.name}</a>"""
 
-        # ── Email to Employee ──────────────────────────────────────────────
+        # ── Email to Employee 
         if row.custom_contact_email:
             frappe.sendmail(
                 recipients=[row.custom_contact_email],
-                subject=f"Flight Ticket has been booked for {row.employee_name} against Travel Request {row.travel_request}",
+                subject=f"{doc.name}: Ticket has been booked for {row.employee_name}",
                 message=f"""
                     Hello {row.employee_name},<br><br>
 
-                    Your flight ticket has been booked against Travel Request {row.travel_request}.
+                    Your flight ticket has been booked.
                     Please find the ticket attachments below.<br><br>
 
-                    <b>Travel Planning:</b> {doc.name}<br>
+                    <b>Travel Planning:</b> {travel_planning_link}<br>
                     <b>Employee:</b> {row.employee_name}<br><br>
 
                     Regards,<br>
@@ -74,30 +75,30 @@ def send_flight_booking_emails(docname):
                 reference_name=doc.name
             )
 
-        # ── Email to Requestor ─────────────────────────────────────────────
-        if doc.custom_requestor_contact_email:
-            travel_request_link = f"""<a href="/app/travel-request/{row.travel_request}">{row.travel_request}</a>"""
+        # ── Email to Requestor 
+        # if doc.custom_requestor_contact_email:
+        #     travel_request_link = f"""<a href="/app/travel-request/{row.travel_request}">{row.travel_request}</a>"""
 
-            frappe.sendmail(
-                recipients=[doc.custom_requestor_contact_email],
-                subject=f"Flight Ticket has been booked for {row.employee_name} against Travel Request {row.travel_request}",
-                message=f"""
-                    Hello {requestor_name},<br><br>
+        #     frappe.sendmail(
+        #         recipients=[doc.custom_requestor_contact_email],
+        #         subject=f"Flight Ticket has been booked for {row.employee_name} against Travel Request {row.travel_request}",
+        #         message=f"""
+        #             Hello {requestor_name},<br><br>
 
-                    This is to inform you that the Flight ticket has been issued for {row.employee_name}
-                    against the travel request {travel_request_link}, and the travel documents are
-                    attached for your reference.<br><br>
+        #             This is to inform you that the Flight ticket has been issued for {row.employee_name}
+        #             against the travel request {travel_request_link}, and the travel documents are
+        #             attached for your reference.<br><br>
 
-                    <b>Travel Planning:</b> {doc.name}<br>
-                    <b>Employee:</b> {row.employee_name}<br><br>
+        #             <b>Travel Planning:</b> {doc.name}<br>
+        #             <b>Employee:</b> {row.employee_name}<br><br>
 
-                    Regards,<br>
-                    <b>Travel Team</b>
-                """,
-                attachments=attachments,
-                reference_doctype=doc.doctype,
-                reference_name=doc.name
-            )
+        #             Regards,<br>
+        #             <b>Travel Team</b>
+        #         """,
+        #         attachments=attachments,
+        #         reference_doctype=doc.doctype,
+        #         reference_name=doc.name
+        #     )
 
 
 def send_hotel_booking_emails(docname):
@@ -106,6 +107,7 @@ def send_hotel_booking_emails(docname):
     hotel_attachment_fields = [
         "custom_taxi_bill",
     ]
+    travel_planning_link = f"""<a href="{frappe.utils.get_url_to_form(doc.doctype, doc.name)}">{doc.name}</a>"""
 
     requestor_name = frappe.db.get_value("Employee", doc.travel_requestor, "employee_name")
 
@@ -119,18 +121,18 @@ def send_hotel_booking_emails(docname):
         # Build travel preferences block (only if the field exists on the row)
         preferences_html = _build_preferences_html(row)
 
-        # ── Email to Employee ──────────────────────────────────────────────
+        # ── Email to Employee 
         if row.custom_contact_email:
             frappe.sendmail(
                 recipients=[row.custom_contact_email],
-                subject=f"Hotel has been booked for {row.employee_name} against Travel Request {row.travel_request}",
+                subject=f"{doc.name}: Hotel has been booked for {row.employee_name}",
                 message=f"""
                     Hello {row.employee_name},<br><br>
 
-                    Your hotel has been booked against Travel Request {row.travel_request}.
+                    Your hotel has been booked.
                     Please find the hotel voucher attachments below.<br><br>
 
-                    <b>Travel Planning:</b> {doc.name}<br>
+                    <b>Travel Planning:</b> {travel_planning_link}<br>
                     <b>Employee:</b> {row.employee_name}<br><br>
 
                     {preferences_html}
@@ -143,30 +145,30 @@ def send_hotel_booking_emails(docname):
                 reference_name=doc.name
             )
 
-        # ── Email to Requestor ─────────────────────────────────────────────
-        if doc.custom_requestor_contact_email:
-            frappe.sendmail(
-                recipients=[doc.custom_requestor_contact_email],
-                subject=f"Hotel has been booked for {row.employee_name} against Travel Request {row.travel_request}",
-                message=f"""
-                    Hello {requestor_name},<br><br>
+        # ── Email to Requestor 
+        # if doc.custom_requestor_contact_email:
+        #     frappe.sendmail(
+        #         recipients=[doc.custom_requestor_contact_email],
+        #         subject=f"Hotel has been booked for {row.employee_name} against Travel Request {row.travel_request}",
+        #         message=f"""
+        #             Hello {requestor_name},<br><br>
 
-                    This is to inform you that the hotel booking has been confirmed for {row.employee_name}
-                    against Travel Request {row.travel_request}. Please find the hotel voucher attached
-                    for your reference.<br><br>
+        #             This is to inform you that the hotel booking has been confirmed for {row.employee_name}
+        #             against Travel Request {row.travel_request}. Please find the hotel voucher attached
+        #             for your reference.<br><br>
 
-                    <b>Travel Planning:</b> {doc.name}<br>
-                    <b>Employee:</b> {row.employee_name}<br><br>
+        #             <b>Travel Planning:</b> {doc.name}<br>
+        #             <b>Employee:</b> {row.employee_name}<br><br>
 
-                    {preferences_html}
+        #             {preferences_html}
 
-                    Regards,<br>
-                    <b>Travel Team</b>
-                """,
-                attachments=attachments,
-                reference_doctype=doc.doctype,
-                reference_name=doc.name
-            )
+        #             Regards,<br>
+        #             <b>Travel Team</b>
+        #         """,
+        #         attachments=attachments,
+        #         reference_doctype=doc.doctype,
+        #         reference_name=doc.name
+        #     )
 
 
 def _build_preferences_html(row):

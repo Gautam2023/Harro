@@ -86,6 +86,7 @@ def send_flight_booking_emails(docname):
         "custom_travel_insurance",
         "custom_flight_bill",
         "custom_return_flight_ticket",
+        "custom_round_trip_ticket",
     ]
 
     requestor_name = frappe.db.get_value("Employee", doc.travel_requestor, "employee_name")
@@ -102,7 +103,7 @@ def send_flight_booking_emails(docname):
         if row.custom_contact_email:
             frappe.sendmail(
                 recipients=[row.custom_contact_email],
-                subject=f"{doc.name}: Ticket has been booked for {row.employee_name}",
+                subject=f"{doc.name}: Flight Ticket has been booked for {row.employee_name}",
                 message=f"""
                     Hello {row.employee_name},<br><br>
 

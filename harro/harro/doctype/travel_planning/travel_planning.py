@@ -4,11 +4,56 @@
 import frappe
 from frappe.model.document import Document
 from frappe.model.mapper import get_mapped_doc
+from frappe.desk.form.assign_to import add
 
 
 class TravelPlanning(Document):
     def on_update(self):
         self.send_ticket_booked_emails()
+        self.assign_travel_plan_to_employees()
+
+    def assign_travel_plan_to_employees(self):
+        if self.is_new():
+            return
+        
+        old_doc = self.get_doc_before_save()
+        if not old_doc or old_doc.workflow_state == self.workflow_state:
+            return
+        if self.workflow_state != "Waiting for Travel Manager to Update Travel Plan":
+            return
+        
+        assigned_users = set()
+        for row in self.travel_itinerary:
+            if not row.custom_employee:
+                continue
+            user = frappe.db.get_value(
+                "Employee",
+                row.custom_employee,
+                "user_id"
+            )
+
+            if not user:
+                continue
+
+            assigned_users.add(user)
+
+        for user in assigned_users:
+            if frappe.db.exists(
+                "ToDo",
+                {
+                    "reference_type": self.doctype,
+                    "reference_name": self.name,
+                    "allocated_to": user,
+                    "status": ("!=", "Cancelled"), 
+                },
+            ):
+                continue
+            add({
+                "assign_to": [user],
+                "doctype": self.doctype,
+                "name": self.name,
+                "description": "Please Update Your Travel Plan."
+            })
 
     def send_ticket_booked_emails(self):
         if self.is_new():

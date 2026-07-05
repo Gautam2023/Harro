@@ -1,0 +1,409 @@
+{
+ "actions": [],
+ "autoname": "hash",
+ "creation": "2026-07-03 00:00:00",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "travel_planning",
+  "segment_no",
+  "column_break_auuc",
+  "employee",
+  "column_break_fcwb",
+  "travel_itinerary_row",
+  "section_break_ftlx",
+  "column_break_link",
+  "custom_onward_travel_date",
+  "custom_return_travel_date",
+  "custom_return_travel_from",
+  "custom_return_travel_to",
+  "custom_direct_flight",
+  "custom_connection_flight",
+  "custom_country",
+  "custom_city",
+  "custom_layover_time",
+  "custom_seat_charges",
+  "custom_flight_bill",
+  "custom_return_flight_ticket",
+  "custom_onward_flight_cost",
+  "custom_return_flight_cost",
+  "custom_round_trip_cost",
+  "custom_flight_booking_status",
+  "custom_booked_by",
+  "custom_flight_cancellation_details",
+  "custom_reason_for_cancellation",
+  "custom_flight_cancellation_charges",
+  "custom_flight_refund_amount",
+  "custom_flight_reschedule_details",
+  "custom_revised_travel_date",
+  "custom_revised_return_date",
+  "custom_reason_for_rescheduling",
+  "custom_flight_reschedule_charges",
+  "custom_rescheduled_flight_ticket",
+  "custom_column_break_gi5iu",
+  "custom_flight_invoice_details",
+  "custom_flight_invoice_id",
+  "custom_service_type",
+  "custom_flight_booking_vendor",
+  "custom_flight_invoice_attachment",
+  "custom_return_flight_invoice_attachment",
+  "custom_round_trip_cost_as_per_invoice",
+  "custom_onward_flight_cost_as_per_invoice",
+  "custom_return_flight_cost_as_per_invoice",
+  "custom_total_flight_cost_as_per_invoice",
+  "custom_flight_payment_status",
+  "custom_paid_amount_flight",
+  "custom_outstanding_amount_flight",
+  "custom_create_purchase_invoice_flight",
+  "custom_send_email_flight",
+  "custom_flight_email_sent"
+ ],
+ "fields": [
+  {
+   "fieldname": "travel_planning",
+   "fieldtype": "Link",
+   "in_standard_filter": 1,
+   "label": "Travel Planning",
+   "options": "Travel Planning",
+   "reqd": 1
+  },
+  {
+   "fieldname": "employee",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Employee",
+   "options": "Employee",
+   "reqd": 1
+  },
+  {
+   "description": "The specific Travel Itinerary row (Travel Planning Employee Details) this record belongs to. Employee alone is not enough when the same employee has more than one itinerary row.",
+   "fieldname": "travel_itinerary_row",
+   "fieldtype": "Data",
+   "in_standard_filter": 1,
+   "label": "Travel Itinerary Row",
+   "read_only": 1,
+   "reqd": 1
+  },
+  {
+   "default": "1",
+   "fieldname": "segment_no",
+   "fieldtype": "Int",
+   "in_list_view": 1,
+   "label": "Segment No"
+  },
+  {
+   "fieldname": "column_break_link",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "custom_onward_travel_date",
+   "fieldtype": "Date",
+   "in_list_view": 1,
+   "label": "Onward Travel Date"
+  },
+  {
+   "fieldname": "custom_return_travel_date",
+   "fieldtype": "Date",
+   "label": "Return Travel Date"
+  },
+  {
+   "fieldname": "custom_return_travel_from",
+   "fieldtype": "Data",
+   "label": "Return Travel From"
+  },
+  {
+   "fieldname": "custom_return_travel_to",
+   "fieldtype": "Data",
+   "label": "Return Travel To"
+  },
+  {
+   "default": "0",
+   "fieldname": "custom_direct_flight",
+   "fieldtype": "Check",
+   "label": "Direct Flight"
+  },
+  {
+   "default": "0",
+   "fieldname": "custom_connection_flight",
+   "fieldtype": "Check",
+   "label": "Connection Flight"
+  },
+  {
+   "depends_on": "eval:doc.custom_connection_flight",
+   "fieldname": "custom_country",
+   "fieldtype": "Link",
+   "label": "Country",
+   "options": "Country"
+  },
+  {
+   "depends_on": "eval:doc.custom_connection_flight",
+   "fieldname": "custom_city",
+   "fieldtype": "Data",
+   "label": "City"
+  },
+  {
+   "depends_on": "eval:doc.custom_connection_flight",
+   "fieldname": "custom_layover_time",
+   "fieldtype": "Int",
+   "label": "Layover Time"
+  },
+  {
+   "description": "Employee seat charges <1 000 INR and less than 2000, and International less than < 50000.",
+   "fieldname": "custom_seat_charges",
+   "fieldtype": "Currency",
+   "label": "Seat Charges"
+  },
+  {
+   "fieldname": "custom_flight_bill",
+   "fieldtype": "Attach",
+   "label": "Onward Flight Ticket"
+  },
+  {
+   "fieldname": "custom_return_flight_ticket",
+   "fieldtype": "Attach",
+   "label": "Return Flight Ticket"
+  },
+  {
+   "fieldname": "custom_onward_flight_cost",
+   "fieldtype": "Currency",
+   "label": "Onward Flight cost"
+  },
+  {
+   "fieldname": "custom_return_flight_cost",
+   "fieldtype": "Currency",
+   "label": "Return Flight Cost"
+  },
+  {
+   "fieldname": "custom_round_trip_cost",
+   "fieldtype": "Currency",
+   "label": "Round Trip Cost"
+  },
+  {
+   "fieldname": "custom_flight_booking_status",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Flight Booking Status",
+   "options": "\nIn progress\nBooked\nCancelled\nRescheduled"
+  },
+  {
+   "fieldname": "custom_booked_by",
+   "fieldtype": "Link",
+   "label": "Flight Booked By",
+   "options": "Employee"
+  },
+  {
+   "depends_on": "eval:doc.custom_flight_booking_status == \"Cancelled\"",
+   "fieldname": "custom_flight_cancellation_details",
+   "fieldtype": "Heading",
+   "label": "Flight Cancellation Details"
+  },
+  {
+   "depends_on": "eval:doc.custom_flight_booking_status == \"Cancelled\"",
+   "fieldname": "custom_reason_for_cancellation",
+   "fieldtype": "Small Text",
+   "label": "Reason for Cancellation"
+  },
+  {
+   "depends_on": "eval:doc.custom_flight_booking_status == \"Cancelled\"",
+   "fieldname": "custom_flight_cancellation_charges",
+   "fieldtype": "Currency",
+   "label": "Flight Cancellation Charges"
+  },
+  {
+   "depends_on": "eval:doc.custom_flight_booking_status == \"Cancelled\"",
+   "fieldname": "custom_flight_refund_amount",
+   "fieldtype": "Currency",
+   "label": "Flight Refund Amount"
+  },
+  {
+   "depends_on": "eval:doc.custom_flight_booking_status == \"Rescheduled\"",
+   "fieldname": "custom_flight_reschedule_details",
+   "fieldtype": "Heading",
+   "label": "Flight Reschedule Details"
+  },
+  {
+   "depends_on": "eval:doc.custom_flight_booking_status == \"Rescheduled\"",
+   "fieldname": "custom_revised_travel_date",
+   "fieldtype": "Date",
+   "label": "Revised Travel Date"
+  },
+  {
+   "depends_on": "eval:doc.custom_flight_booking_status == \"Rescheduled\"",
+   "fieldname": "custom_revised_return_date",
+   "fieldtype": "Date",
+   "label": "Revised Return Date"
+  },
+  {
+   "depends_on": "eval:doc.custom_flight_booking_status == \"Rescheduled\"",
+   "fieldname": "custom_reason_for_rescheduling",
+   "fieldtype": "Small Text",
+   "label": "Reason for Rescheduling"
+  },
+  {
+   "depends_on": "eval:doc.custom_flight_booking_status == \"Rescheduled\"",
+   "fieldname": "custom_flight_reschedule_charges",
+   "fieldtype": "Currency",
+   "label": "Flight Reschedule Charges"
+  },
+  {
+   "depends_on": "eval:doc.custom_flight_booking_status == \"Rescheduled\"",
+   "fieldname": "custom_rescheduled_flight_ticket",
+   "fieldtype": "Attach",
+   "label": "Rescheduled Flight Ticket"
+  },
+  {
+   "fieldname": "custom_column_break_gi5iu",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "custom_flight_invoice_details",
+   "fieldtype": "Heading",
+   "label": "Flight Invoice Details"
+  },
+  {
+   "fieldname": "custom_flight_invoice_id",
+   "fieldtype": "Data",
+   "label": "Flight Invoice ID"
+  },
+  {
+   "fieldname": "custom_service_type",
+   "fieldtype": "Link",
+   "label": "Service Type",
+   "options": "Item"
+  },
+  {
+   "fieldname": "custom_flight_booking_vendor",
+   "fieldtype": "Link",
+   "label": "Flight Booking Vendor",
+   "options": "Supplier"
+  },
+  {
+   "fieldname": "custom_flight_invoice_attachment",
+   "fieldtype": "Attach",
+   "label": "Onward Flight Invoice Attachment"
+  },
+  {
+   "fieldname": "custom_return_flight_invoice_attachment",
+   "fieldtype": "Attach",
+   "label": "Return Flight Invoice Attachment"
+  },
+  {
+   "fieldname": "custom_round_trip_cost_as_per_invoice",
+   "fieldtype": "Currency",
+   "label": "Round Trip Cost (As per Invoice)"
+  },
+  {
+   "fieldname": "custom_onward_flight_cost_as_per_invoice",
+   "fieldtype": "Currency",
+   "label": "Onward Flight Cost (As per Invoice)"
+  },
+  {
+   "fieldname": "custom_return_flight_cost_as_per_invoice",
+   "fieldtype": "Currency",
+   "label": "Return Flight Cost (As per invoice)"
+  },
+  {
+   "description": "Onward flight cost (As per invoice) + Return flight cost (As per invoice) + Baggage cost + Seat cost + Round Trip cost (As per invoice)\n",
+   "fieldname": "custom_total_flight_cost_as_per_invoice",
+   "fieldtype": "Currency",
+   "label": "Total Flight Cost (As per Invoice)"
+  },
+  {
+   "fieldname": "custom_flight_payment_status",
+   "fieldtype": "Select",
+   "label": "Flight Payment Status",
+   "options": "\nPaid\nUnpaid"
+  },
+  {
+   "fieldname": "custom_paid_amount_flight",
+   "fieldtype": "Currency",
+   "label": "Paid Amount (Flight)"
+  },
+  {
+   "fieldname": "custom_outstanding_amount_flight",
+   "fieldtype": "Currency",
+   "label": "Outstanding Amount (Flight)"
+  },
+  {
+   "fieldname": "custom_create_purchase_invoice_flight",
+   "fieldtype": "Button",
+   "label": "Create Purchase Invoice"
+  },
+  {
+   "fieldname": "custom_send_email_flight",
+   "fieldtype": "Button",
+   "label": "Send Email"
+  },
+  {
+   "default": "0",
+   "fieldname": "custom_flight_email_sent",
+   "fieldtype": "Check",
+   "hidden": 1,
+   "label": "Flight Email Sent",
+   "read_only": 1
+  },
+  {
+   "fieldname": "column_break_auuc",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "column_break_fcwb",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "section_break_ftlx",
+   "fieldtype": "Section Break"
+  }
+ ],
+ "index_web_pages_for_search": 1,
+ "links": [],
+ "modified": "2026-07-05 10:00:57.314143",
+ "modified_by": "Administrator",
+ "module": "Harro",
+ "name": "Travel Flight Details",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Travel User",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Travel Manager",
+   "share": 1,
+   "write": 1
+  }
+ ],
+ "row_format": "Dynamic",
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 1
+}

@@ -114,6 +114,29 @@ def calculate_totals(doc, method=None):
 	for child_field, parent_field in field_map.items():
 		doc.set(parent_field, sum((d.get(child_field) or 0) for d in doc.travel_itinerary))
 
+	# Additional travel segments (Travel Flight Details / Travel Hotel Booking / Travel Taxi Details)
+	# are independent DocTypes, not child tables, so they must be queried rather than iterated from doc.get(...).
+	if not doc.is_new():
+		additional_flight_cost = frappe.db.get_value(
+			"Travel Flight Details",
+			{"travel_planning": doc.name},
+			"sum(custom_total_flight_cost_as_per_invoice)",
+		) or 0
+		additional_hotel_cost = frappe.db.get_value(
+			"Travel Hotel Booking",
+			{"travel_planning": doc.name},
+			"sum(custom_total_hotel_charge_as_per_invoice)",
+		) or 0
+		additional_taxi_cost = frappe.db.get_value(
+			"Travel Taxi Details",
+			{"travel_planning": doc.name},
+			"sum(taxi_coast)",
+		) or 0
+
+		doc.total_flight_coast = (doc.total_flight_coast or 0) + additional_flight_cost
+		doc.total_hotel_booking_coast = (doc.total_hotel_booking_coast or 0) + additional_hotel_cost
+		doc.total_taxi_coast = (doc.total_taxi_coast or 0) + additional_taxi_cost
+
 	total_claimable = 0
 	total_unclaimable = 0
 

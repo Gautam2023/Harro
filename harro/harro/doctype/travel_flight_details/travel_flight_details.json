@@ -11,6 +11,7 @@
   "employee",
   "column_break_fcwb",
   "travel_itinerary_row",
+  "contact_email",
   "section_break_ftlx",
   "column_break_link",
   "custom_onward_travel_date",
@@ -84,6 +85,13 @@
    "label": "Travel Itinerary Row",
    "read_only": 1,
    "reqd": 1
+  },
+  {
+   "description": "Contact email of the employee for this segment, carried over from the originating Travel Itinerary row. Used to notify the employee when this segment's booking status changes.",
+   "fieldname": "contact_email",
+   "fieldtype": "Data",
+   "label": "Contact Email",
+   "options": "Email"
   },
   {
    "default": "1",

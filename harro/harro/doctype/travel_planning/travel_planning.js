@@ -1068,6 +1068,9 @@ function render_row_segment_section(frm, grid_row, segment_type, employee, cdn) 
 }
 
 function open_new_segment(frm, segment_type, employee, cdn) {
+    const itinerary_row = locals["Travel Planning Employee Details"][cdn];
+    const contact_email = itinerary_row ? itinerary_row.custom_contact_email : null;
+
     frappe.call({
         method: segment_type.get_method,
         args: { travel_planning: frm.doc.name },
@@ -1083,6 +1086,7 @@ function open_new_segment(frm, segment_type, employee, cdn) {
                 employee: employee,
                 travel_itinerary_row: cdn,
                 segment_no: next_segment_no,
+                contact_email: contact_email,
             });
         },
     });

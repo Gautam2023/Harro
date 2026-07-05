@@ -4,11 +4,56 @@
 import frappe
 from frappe.model.document import Document
 from frappe.model.mapper import get_mapped_doc
+from frappe.desk.form.assign_to import add
 
 
 class TravelPlanning(Document):
     def on_update(self):
         self.send_ticket_booked_emails()
+        self.assign_travel_plan_to_employees()
+
+    def assign_travel_plan_to_employees(self):
+        if self.is_new():
+            return
+        
+        old_doc = self.get_doc_before_save()
+        if not old_doc or old_doc.workflow_state == self.workflow_state:
+            return
+        if self.workflow_state != "Waiting for Travel Manager to Update Travel Plan":
+            return
+        
+        assigned_users = set()
+        for row in self.travel_itinerary:
+            if not row.custom_employee:
+                continue
+            user = frappe.db.get_value(
+                "Employee",
+                row.custom_employee,
+                "user_id"
+            )
+
+            if not user:
+                continue
+
+            assigned_users.add(user)
+
+        for user in assigned_users:
+            if frappe.db.exists(
+                "ToDo",
+                {
+                    "reference_type": self.doctype,
+                    "reference_name": self.name,
+                    "allocated_to": user,
+                    "status": ("!=", "Cancelled"), 
+                },
+            ):
+                continue
+            add({
+                "assign_to": [user],
+                "doctype": self.doctype,
+                "name": self.name,
+                "description": "Please Update Your Travel Plan."
+            })
 
     def send_ticket_booked_emails(self):
         if self.is_new():
@@ -51,19 +96,20 @@ def send_flight_booking_emails(docname):
             for field in flight_attachment_fields
             if row.get(field)
         ]
+        travel_planning_link = f"""<a href="{frappe.utils.get_url_to_form(doc.doctype, doc.name)}">{doc.name}</a>"""
 
-        # ── Email to Employee ──────────────────────────────────────────────
+        # ── Email to Employee 
         if row.custom_contact_email:
             frappe.sendmail(
                 recipients=[row.custom_contact_email],
-                subject=f"Flight Ticket has been booked for {row.employee_name} against Travel Request {row.travel_request}",
+                subject=f"{doc.name}: Ticket has been booked for {row.employee_name}",
                 message=f"""
                     Hello {row.employee_name},<br><br>
 
-                    Your flight ticket has been booked against Travel Request {row.travel_request}.
+                    Your flight ticket has been booked.
                     Please find the ticket attachments below.<br><br>
 
-                    <b>Travel Planning:</b> {doc.name}<br>
+                    <b>Travel Planning:</b> {travel_planning_link}<br>
                     <b>Employee:</b> {row.employee_name}<br><br>
 
                     Regards,<br>
@@ -74,30 +120,30 @@ def send_flight_booking_emails(docname):
                 reference_name=doc.name
             )
 
-        # ── Email to Requestor ─────────────────────────────────────────────
-        if doc.custom_requestor_contact_email:
-            travel_request_link = f"""<a href="/app/travel-request/{row.travel_request}">{row.travel_request}</a>"""
+        # ── Email to Requestor 
+        # if doc.custom_requestor_contact_email:
+        #     travel_request_link = f"""<a href="/app/travel-request/{row.travel_request}">{row.travel_request}</a>"""
 
-            frappe.sendmail(
-                recipients=[doc.custom_requestor_contact_email],
-                subject=f"Flight Ticket has been booked for {row.employee_name} against Travel Request {row.travel_request}",
-                message=f"""
-                    Hello {requestor_name},<br><br>
+        #     frappe.sendmail(
+        #         recipients=[doc.custom_requestor_contact_email],
+        #         subject=f"Flight Ticket has been booked for {row.employee_name} against Travel Request {row.travel_request}",
+        #         message=f"""
+        #             Hello {requestor_name},<br><br>
 
-                    This is to inform you that the Flight ticket has been issued for {row.employee_name}
-                    against the travel request {travel_request_link}, and the travel documents are
-                    attached for your reference.<br><br>
+        #             This is to inform you that the Flight ticket has been issued for {row.employee_name}
+        #             against the travel request {travel_request_link}, and the travel documents are
+        #             attached for your reference.<br><br>
 
-                    <b>Travel Planning:</b> {doc.name}<br>
-                    <b>Employee:</b> {row.employee_name}<br><br>
+        #             <b>Travel Planning:</b> {doc.name}<br>
+        #             <b>Employee:</b> {row.employee_name}<br><br>
 
-                    Regards,<br>
-                    <b>Travel Team</b>
-                """,
-                attachments=attachments,
-                reference_doctype=doc.doctype,
-                reference_name=doc.name
-            )
+        #             Regards,<br>
+        #             <b>Travel Team</b>
+        #         """,
+        #         attachments=attachments,
+        #         reference_doctype=doc.doctype,
+        #         reference_name=doc.name
+        #     )
 
 
 def send_hotel_booking_emails(docname):
@@ -106,6 +152,7 @@ def send_hotel_booking_emails(docname):
     hotel_attachment_fields = [
         "custom_taxi_bill",
     ]
+    travel_planning_link = f"""<a href="{frappe.utils.get_url_to_form(doc.doctype, doc.name)}">{doc.name}</a>"""
 
     requestor_name = frappe.db.get_value("Employee", doc.travel_requestor, "employee_name")
 
@@ -119,18 +166,18 @@ def send_hotel_booking_emails(docname):
         # Build travel preferences block (only if the field exists on the row)
         preferences_html = _build_preferences_html(row)
 
-        # ── Email to Employee ──────────────────────────────────────────────
+        # ── Email to Employee 
         if row.custom_contact_email:
             frappe.sendmail(
                 recipients=[row.custom_contact_email],
-                subject=f"Hotel has been booked for {row.employee_name} against Travel Request {row.travel_request}",
+                subject=f"{doc.name}: Hotel has been booked for {row.employee_name}",
                 message=f"""
                     Hello {row.employee_name},<br><br>
 
-                    Your hotel has been booked against Travel Request {row.travel_request}.
+                    Your hotel has been booked.
                     Please find the hotel voucher attachments below.<br><br>
 
-                    <b>Travel Planning:</b> {doc.name}<br>
+                    <b>Travel Planning:</b> {travel_planning_link}<br>
                     <b>Employee:</b> {row.employee_name}<br><br>
 
                     {preferences_html}
@@ -143,30 +190,30 @@ def send_hotel_booking_emails(docname):
                 reference_name=doc.name
             )
 
-        # ── Email to Requestor ─────────────────────────────────────────────
-        if doc.custom_requestor_contact_email:
-            frappe.sendmail(
-                recipients=[doc.custom_requestor_contact_email],
-                subject=f"Hotel has been booked for {row.employee_name} against Travel Request {row.travel_request}",
-                message=f"""
-                    Hello {requestor_name},<br><br>
+        # ── Email to Requestor 
+        # if doc.custom_requestor_contact_email:
+        #     frappe.sendmail(
+        #         recipients=[doc.custom_requestor_contact_email],
+        #         subject=f"Hotel has been booked for {row.employee_name} against Travel Request {row.travel_request}",
+        #         message=f"""
+        #             Hello {requestor_name},<br><br>
 
-                    This is to inform you that the hotel booking has been confirmed for {row.employee_name}
-                    against Travel Request {row.travel_request}. Please find the hotel voucher attached
-                    for your reference.<br><br>
+        #             This is to inform you that the hotel booking has been confirmed for {row.employee_name}
+        #             against Travel Request {row.travel_request}. Please find the hotel voucher attached
+        #             for your reference.<br><br>
 
-                    <b>Travel Planning:</b> {doc.name}<br>
-                    <b>Employee:</b> {row.employee_name}<br><br>
+        #             <b>Travel Planning:</b> {doc.name}<br>
+        #             <b>Employee:</b> {row.employee_name}<br><br>
 
-                    {preferences_html}
+        #             {preferences_html}
 
-                    Regards,<br>
-                    <b>Travel Team</b>
-                """,
-                attachments=attachments,
-                reference_doctype=doc.doctype,
-                reference_name=doc.name
-            )
+        #             Regards,<br>
+        #             <b>Travel Team</b>
+        #         """,
+        #         attachments=attachments,
+        #         reference_doctype=doc.doctype,
+        #         reference_name=doc.name
+        #     )
 
 
 def _build_preferences_html(row):
@@ -1050,3 +1097,22 @@ def send_taxi_segment_email(name):
     row.db_set("custom_taxi_email_sent", 1)
     return "Email sent successfully"
 
+
+@frappe.whitelist()
+@frappe.validate_and_sanitize_search_inputs
+def get_travel_managers(doctype, txt, searchfield, start, page_len, filters):
+    return frappe.db.sql("""
+        SELECT e.name, e.employee_name
+        FROM `tabEmployee` e
+        INNER JOIN `tabUser` u ON u.name = e.user_id
+        INNER JOIN `tabHas Role` hr ON hr.parent = u.name
+        WHERE hr.role = 'Travel Manager'
+        AND e.status = 'Active'
+        AND (e.name LIKE %(txt)s OR e.employee_name LIKE %(txt)s)
+        ORDER BY e.employee_name
+        LIMIT %(start)s, %(page_len)s
+    """, {
+        "txt": "%{0}%".format(txt),
+        "start": start,
+        "page_len": page_len
+    })

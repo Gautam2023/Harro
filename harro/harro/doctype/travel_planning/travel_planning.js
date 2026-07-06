@@ -82,7 +82,8 @@ frappe.ui.form.on("Travel Planning", {
         const allowed_roles = [
             "Travel Manager",
             "Accounts Manager",
-            "Accounts User"
+            "Accounts User",
+            "Employee"
         ];
 
         // Check if current user has any allowed role
@@ -130,6 +131,19 @@ frappe.ui.form.on("Travel Planning", {
             frm.add_custom_button(__("Timesheet"), () => {
                 frappe.call({
                     method: "harro.harro.doctype.travel_planning.travel_planning.make_timesheet",
+                    args: {source_name: frm.doc.name},
+                    callback: function(r) {
+                        if (r.message) {
+                            frappe.model.sync(r.message);
+                            frappe.set_route("Form", r.message.doctype, r.message.name);
+                        }
+                    }
+                });
+            }, __("Create"));
+
+            frm.add_custom_button(__("Employee Advance"), () => {
+                frappe.call({
+                    method: "harro.harro.doctype.travel_planning.travel_planning.make_employee_advance",
                     args: {source_name: frm.doc.name},
                     callback: function(r) {
                         if (r.message) {

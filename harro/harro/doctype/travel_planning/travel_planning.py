@@ -121,7 +121,7 @@ def send_flight_booking_emails(docname):
                 reference_name=doc.name
             )
 
-        # ── Email to Requestor 
+        # ── Email to Requestor
         # if doc.custom_requestor_contact_email:
         #     travel_request_link = f"""<a href="/app/travel-request/{row.travel_request}">{row.travel_request}</a>"""
 
@@ -145,6 +145,50 @@ def send_flight_booking_emails(docname):
         #         reference_doctype=doc.doctype,
         #         reference_name=doc.name
         #     )
+
+    # Additional flight segments (Travel Flight Details) — one email per segment,
+    # mirroring the primary itinerary row's email above.
+    segment_attachment_fields = [
+        "custom_flight_bill",
+        "custom_return_flight_ticket",
+        "custom_flight_invoice_attachment",
+        "custom_return_flight_invoice_attachment",
+    ]
+    for segment in frappe.get_all(
+        "Travel Flight Details",
+        filters={"travel_planning": docname},
+        fields=["name", "employee", "contact_email"] + segment_attachment_fields,
+    ):
+        if not segment.contact_email:
+            continue
+
+        employee_name = frappe.db.get_value("Employee", segment.employee, "employee_name") or segment.employee
+        attachments = [
+            {"file_url": segment.get(field)}
+            for field in segment_attachment_fields
+            if segment.get(field)
+        ]
+        travel_planning_link = f"""<a href="{frappe.utils.get_url_to_form(doc.doctype, doc.name)}">{doc.name}</a>"""
+
+        frappe.sendmail(
+            recipients=[segment.contact_email],
+            subject=f"{doc.name}: Ticket has been booked for {employee_name}",
+            message=f"""
+                Hello {employee_name},<br><br>
+
+                Your flight ticket has been booked.
+                Please find the ticket attachments below.<br><br>
+
+                <b>Travel Planning:</b> {travel_planning_link}<br>
+                <b>Employee:</b> {employee_name}<br><br>
+
+                Regards,<br>
+                <b>Travel Team</b>
+            """,
+            attachments=attachments,
+            reference_doctype=doc.doctype,
+            reference_name=doc.name
+        )
 
 
 def send_hotel_booking_emails(docname):
@@ -215,6 +259,49 @@ def send_hotel_booking_emails(docname):
         #         reference_doctype=doc.doctype,
         #         reference_name=doc.name
         #     )
+
+    # Additional hotel segments (Travel Hotel Booking) — one email per segment,
+    # mirroring the primary itinerary row's email above.
+    segment_preference_fields = [
+        "custom_laundry_facility", "custom_laundry_facility_remarks",
+        "custom_discount_on_meal", "custom_meal_discount_remarks",
+        "custom_airport_transport", "custom_airport_transport_remarks",
+        "custom_break_fast", "custom_break_fast_remarks",
+        "custom_wifi", "custom_wifi_remarks",
+    ]
+    for segment in frappe.get_all(
+        "Travel Hotel Booking",
+        filters={"travel_planning": docname},
+        fields=["name", "employee", "contact_email", "custom_taxi_bill"] + segment_preference_fields,
+    ):
+        if not segment.contact_email:
+            continue
+
+        employee_name = frappe.db.get_value("Employee", segment.employee, "employee_name") or segment.employee
+        attachments = [{"file_url": segment.custom_taxi_bill}] if segment.custom_taxi_bill else []
+        segment_preferences_html = _build_preferences_html(segment)
+
+        frappe.sendmail(
+            recipients=[segment.contact_email],
+            subject=f"{doc.name}: Hotel has been booked for {employee_name}",
+            message=f"""
+                Hello {employee_name},<br><br>
+
+                Your hotel has been booked.
+                Please find the hotel voucher attachments below.<br><br>
+
+                <b>Travel Planning:</b> {travel_planning_link}<br>
+                <b>Employee:</b> {employee_name}<br><br>
+
+                {segment_preferences_html}
+
+                Regards,<br>
+                <b>Travel Team</b>
+            """,
+            attachments=attachments,
+            reference_doctype=doc.doctype,
+            reference_name=doc.name
+        )
 
 
 def _build_preferences_html(row):
@@ -851,6 +938,274 @@ def make_employee_advance(source_name, target_doc=None):
     employee_advance.custom_travel_planning = travel.name
 
     return employee_advance
+
+@frappe.whitelist()
+def get_flight_segments(travel_planning):
+    frappe.has_permission("Travel Flight Details", "read", throw=True)
+    return frappe.get_all(
+        "Travel Flight Details",
+        filters={"travel_planning": travel_planning},
+        fields=[
+            "name",
+            "employee",
+            "employee.employee_name as employee_name",
+            "travel_itinerary_row",
+            "segment_no",
+            "custom_onward_travel_date",
+            "custom_return_travel_date",
+            "custom_flight_booking_status",
+            "custom_total_flight_cost_as_per_invoice",
+        ],
+        order_by="employee, segment_no",
+    )
+
+
+@frappe.whitelist()
+def get_hotel_segments(travel_planning):
+    frappe.has_permission("Travel Hotel Booking", "read", throw=True)
+    return frappe.get_all(
+        "Travel Hotel Booking",
+        filters={"travel_planning": travel_planning},
+        fields=[
+            "name",
+            "employee",
+            "employee.employee_name as employee_name",
+            "travel_itinerary_row",
+            "segment_no",
+            "custom_hotel_name",
+            "check_in_date",
+            "check_out_date",
+            "custom_hotel_booking_status",
+            "custom_total_hotel_charge_as_per_invoice",
+        ],
+        order_by="employee, segment_no",
+    )
+
+
+@frappe.whitelist()
+def get_taxi_segments(travel_planning):
+    frappe.has_permission("Travel Taxi Details", "read", throw=True)
+    return frappe.get_all(
+        "Travel Taxi Details",
+        filters={"travel_planning": travel_planning},
+        fields=[
+            "name",
+            "employee",
+            "employee.employee_name as employee_name",
+            "travel_itinerary_row",
+            "segment_no",
+            "custom_taxi_type",
+            "custom_driver_name",
+            "taxi_coast",
+        ],
+        order_by="employee, segment_no",
+    )
+
+
+@frappe.whitelist()
+def delete_travel_segment(doctype, name):
+    if doctype not in ("Travel Flight Details", "Travel Hotel Booking", "Travel Taxi Details"):
+        frappe.throw(frappe._("Invalid segment doctype"))
+
+    frappe.has_permission(doctype, "delete", throw=True)
+    frappe.delete_doc(doctype, name, ignore_permissions=False)
+
+
+def _throw_if_missing(mandatory_fields, doctype, name):
+    missing_fields = [field for field, value in mandatory_fields.items() if not value]
+    if missing_fields:
+        doc_link = frappe.utils.get_link_to_form(doctype, name)
+        field_list = "".join(f"<li>{frappe.utils.escape_html(field)}</li>" for field in missing_fields)
+        frappe.throw(
+            f"Please fill in the following field(s) on {doc_link} and save before creating a Purchase Invoice:"
+            f"<ul>{field_list}</ul>",
+            title="Missing Information",
+        )
+
+
+def _get_accounts_manager_emails():
+    accounts_managers = frappe.get_all("Has Role", filters={"role": "Accounts Manager"}, pluck="parent")
+    recipients = frappe.get_all(
+        "User", filters={"name": ["in", accounts_managers], "enabled": 1}, pluck="email"
+    )
+    if not recipients:
+        frappe.throw("No active Accounts Manager found")
+    return recipients
+
+
+def _send_segment_email(travel_planning, segment_label, employee_name):
+    recipients = _get_accounts_manager_emails()
+    subject = "Action Required: Supplier Invoice Details Updated – Please Create Purchase Invoice"
+    doc_link = frappe.utils.get_url_to_form("Travel Planning", travel_planning)
+
+    message = f"""
+    <p>Dear Accounts Manager,</p>
+
+    <p>
+    The {segment_label} invoice details have been updated for <b>{employee_name}</b>
+    on Travel Planning <b>{travel_planning}</b>. Kindly review and proceed with the creation
+    of the Purchase Invoice and payment processing.
+    </p>
+
+    <p>
+    <a href="{doc_link}">Open Travel Planning</a>
+    </p>
+
+    <p>
+    Regards,<br>
+    Travel Manager
+    </p>
+    """
+
+    frappe.sendmail(recipients=recipients, subject=subject, message=message)
+
+
+@frappe.whitelist()
+def get_flight_segment_purchase_invoice_defaults(name):
+    row = frappe.get_doc("Travel Flight Details", name)
+    ba_number = frappe.get_value("Travel Planning", row.travel_planning, "ba_number")
+
+    mandatory_fields = {
+        "Flight Booking Vendor": row.custom_flight_booking_vendor,
+        "Flight Invoice ID": row.custom_flight_invoice_id,
+        "BA Number (on Travel Planning)": ba_number,
+        "Service Type": row.custom_service_type,
+        "Total Flight Cost (As per Invoice)": row.custom_total_flight_cost_as_per_invoice,
+    }
+    _throw_if_missing(mandatory_fields, "Travel Flight Details", name)
+
+    doc = frappe.get_doc({
+        "doctype": "Purchase Invoice",
+        "supplier": row.custom_flight_booking_vendor,
+        "travel_planning": row.travel_planning,
+        "bill_no": row.custom_flight_invoice_id,
+        "project": ba_number,
+        "custom_supplier_invoice": row.custom_flight_invoice_attachment,
+    })
+    doc.append("items", {
+        "item_code": row.custom_service_type,
+        "qty": 1,
+        "rate": row.custom_total_flight_cost_as_per_invoice,
+    })
+    doc.flags.ignore_permissions = True
+    doc.flags.ignore_mandatory = True
+    doc.insert()
+
+    for file_url in (row.custom_flight_invoice_attachment, row.custom_return_flight_invoice_attachment):
+        if file_url:
+            frappe.get_doc({
+                "doctype": "File",
+                "file_url": file_url,
+                "attached_to_doctype": "Purchase Invoice",
+                "attached_to_name": doc.name,
+            }).insert(ignore_permissions=True)
+
+    return doc.name
+
+
+@frappe.whitelist()
+def send_flight_segment_email(name):
+    row = frappe.get_doc("Travel Flight Details", name)
+    if row.custom_flight_email_sent:
+        frappe.throw("Email already sent for this record.")
+
+    employee_name = frappe.get_value("Employee", row.employee, "employee_name") or row.employee
+    _send_segment_email(row.travel_planning, "flight", employee_name)
+    row.db_set("custom_flight_email_sent", 1)
+    return "Email sent successfully"
+
+
+@frappe.whitelist()
+def get_hotel_segment_purchase_invoice_defaults(name):
+    row = frappe.get_doc("Travel Hotel Booking", name)
+    ba_number = frappe.get_value("Travel Planning", row.travel_planning, "ba_number")
+
+    mandatory_fields = {
+        "Hotel Booking Vendor": row.custom_hotel_booking_vendor_name,
+        "Hotel Invoice ID": row.custom_hotel_invoice_id,
+        "BA Number (on Travel Planning)": ba_number,
+        "Service Category": row.custom_service_category,
+        "Total Hotel Charge": row.custom_total_hotel_charge,
+    }
+    _throw_if_missing(mandatory_fields, "Travel Hotel Booking", name)
+
+    doc = frappe.get_doc({
+        "doctype": "Purchase Invoice",
+        "supplier": row.custom_hotel_booking_vendor_name,
+        "travel_planning": row.travel_planning,
+        "bill_no": row.custom_hotel_invoice_id,
+        "project": ba_number,
+        "custom_supplier_invoice": row.custom_taxi_bill,
+    })
+    doc.append("items", {
+        "item_code": row.custom_service_category,
+        "qty": 1,
+        "rate": row.custom_total_hotel_charge,
+    })
+    doc.flags.ignore_permissions = True
+    doc.flags.ignore_mandatory = True
+    doc.insert()
+
+    return doc.name
+
+
+@frappe.whitelist()
+def send_hotel_segment_email(name):
+    row = frappe.get_doc("Travel Hotel Booking", name)
+    if row.custom_hotel_email_sent:
+        frappe.throw("Email already sent for this record.")
+
+    employee_name = frappe.get_value("Employee", row.employee, "employee_name") or row.employee
+    _send_segment_email(row.travel_planning, "hotel", employee_name)
+    row.db_set("custom_hotel_email_sent", 1)
+    return "Email sent successfully"
+
+
+@frappe.whitelist()
+def get_taxi_segment_purchase_invoice_defaults(name):
+    row = frappe.get_doc("Travel Taxi Details", name)
+    ba_number = frappe.get_value("Travel Planning", row.travel_planning, "ba_number")
+
+    mandatory_fields = {
+        "Taxi Vendor": row.custom_taxi_vendor,
+        "Taxi Invoice ID": row.custom_taxi_invoice_id,
+        "BA Number (on Travel Planning)": ba_number,
+        "Taxi Type": row.custom_taxi_type,
+        "Taxi Coast": row.taxi_coast,
+    }
+    _throw_if_missing(mandatory_fields, "Travel Taxi Details", name)
+
+    doc = frappe.get_doc({
+        "doctype": "Purchase Invoice",
+        "supplier": row.custom_taxi_vendor,
+        "travel_planning": row.travel_planning,
+        "bill_no": row.custom_taxi_invoice_id,
+        "project": ba_number,
+        "custom_supplier_invoice": row.custom_taxi_invoice_attachment,
+    })
+    doc.append("items", {
+        "item_code": row.custom_service_item,
+        "qty": 1,
+        "rate": row.taxi_coast,
+    })
+    doc.flags.ignore_permissions = True
+    doc.flags.ignore_mandatory = True
+    doc.insert()
+
+    return doc.name
+
+
+@frappe.whitelist()
+def send_taxi_segment_email(name):
+    row = frappe.get_doc("Travel Taxi Details", name)
+    if row.custom_taxi_email_sent:
+        frappe.throw("Email already sent for this record.")
+
+    employee_name = frappe.get_value("Employee", row.employee, "employee_name") or row.employee
+    _send_segment_email(row.travel_planning, "taxi", employee_name)
+    row.db_set("custom_taxi_email_sent", 1)
+    return "Email sent successfully"
+
 
 @frappe.whitelist()
 @frappe.validate_and_sanitize_search_inputs

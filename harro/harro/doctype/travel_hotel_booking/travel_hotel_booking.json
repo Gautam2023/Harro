@@ -1,0 +1,386 @@
+{
+ "actions": [],
+ "autoname": "hash",
+ "creation": "2026-07-03 00:00:00",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "travel_planning",
+  "segment_no",
+  "column_break_qnko",
+  "employee",
+  "column_break_vibp",
+  "travel_itinerary_row",
+  "contact_email",
+  "section_break_gpok",
+  "column_break_link",
+  "preferred_area_for_lodging",
+  "check_in_date",
+  "check_out_date",
+  "room_night",
+  "hotel_coast",
+  "custom_hotel_name",
+  "custom_taxi_bill",
+  "custom_hotel_booking_status",
+  "custom_hotel_booked_by",
+  "custom_hotel_cancellation_details",
+  "custom_hotel_cancellation_charges",
+  "custom_hotel_refund_amount",
+  "custom_hotel_reschedule_details",
+  "custom_hotel_reschedule_charges",
+  "custom_rescheduled_hotel_ticket_",
+  "custom_hotel_preferences",
+  "custom_laundry_facility",
+  "custom_laundry_facility_remarks",
+  "custom_discount_on_meal",
+  "custom_meal_discount_remarks",
+  "custom_airport_transport",
+  "custom_airport_transport_remarks",
+  "custom_break_fast",
+  "custom_wifi",
+  "custom_column_break_9gose",
+  "custom_hotel_invoice_details",
+  "custom_hotel_invoice_id",
+  "custom_hotel_booking_vendor_name",
+  "custom_service_category",
+  "custom_payment_terms_for_hotel_booking",
+  "custom_hotel_cost_per_day",
+  "custom_total_hotel_charge",
+  "custom_total_hotel_charge_as_per_invoice",
+  "custom_hotel_payment_status",
+  "custom_paid_amount_hotel",
+  "custom_outstanding_amount_hotel",
+  "custom_create_purchase_invoice_hotel",
+  "custom_send_email_hotel",
+  "custom_hotel_email_sent"
+ ],
+ "fields": [
+  {
+   "fieldname": "travel_planning",
+   "fieldtype": "Link",
+   "in_standard_filter": 1,
+   "label": "Travel Planning",
+   "options": "Travel Planning",
+   "reqd": 1
+  },
+  {
+   "fieldname": "employee",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Employee",
+   "options": "Employee",
+   "reqd": 1
+  },
+  {
+   "description": "The specific Travel Itinerary row (Travel Planning Employee Details) this record belongs to. Employee alone is not enough when the same employee has more than one itinerary row.",
+   "fieldname": "travel_itinerary_row",
+   "fieldtype": "Data",
+   "in_standard_filter": 1,
+   "label": "Travel Itinerary Row",
+   "read_only": 1,
+   "reqd": 1
+  },
+  {
+   "description": "Contact email of the employee for this segment, carried over from the originating Travel Itinerary row. Used to notify the employee when this segment's booking status changes.",
+   "fieldname": "contact_email",
+   "fieldtype": "Data",
+   "label": "Contact Email",
+   "options": "Email"
+  },
+  {
+   "default": "1",
+   "fieldname": "segment_no",
+   "fieldtype": "Int",
+   "in_list_view": 1,
+   "label": "Segment No"
+  },
+  {
+   "fieldname": "column_break_link",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "preferred_area_for_lodging",
+   "fieldtype": "Data",
+   "label": "Preferred Area for Lodging"
+  },
+  {
+   "fieldname": "check_in_date",
+   "fieldtype": "Date",
+   "in_list_view": 1,
+   "label": "Check-in Date"
+  },
+  {
+   "fieldname": "check_out_date",
+   "fieldtype": "Date",
+   "label": "Check-out Date"
+  },
+  {
+   "fieldname": "room_night",
+   "fieldtype": "Int",
+   "label": "Room Night"
+  },
+  {
+   "fieldname": "hotel_coast",
+   "fieldtype": "Currency",
+   "label": "Hotel Coast"
+  },
+  {
+   "fieldname": "custom_hotel_name",
+   "fieldtype": "Link",
+   "label": "Hotel Name",
+   "options": "Supplier"
+  },
+  {
+   "fieldname": "custom_taxi_bill",
+   "fieldtype": "Attach",
+   "label": "Hotel Voucher"
+  },
+  {
+   "fieldname": "custom_hotel_booking_status",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Hotel Booking Status",
+   "options": "\nIn progress\nBooked\nCancelled\nRescheduled"
+  },
+  {
+   "fieldname": "custom_hotel_booked_by",
+   "fieldtype": "Link",
+   "label": "Hotel Booked By",
+   "options": "Employee"
+  },
+  {
+   "depends_on": "eval:doc.custom_hotel_booking_status == \"Cancelled\"",
+   "fieldname": "custom_hotel_cancellation_details",
+   "fieldtype": "Heading",
+   "label": "Hotel Cancellation Details"
+  },
+  {
+   "depends_on": "eval:doc.custom_hotel_booking_status == \"Cancelled\"",
+   "fieldname": "custom_hotel_cancellation_charges",
+   "fieldtype": "Currency",
+   "label": "Hotel Cancellation Charges"
+  },
+  {
+   "depends_on": "eval:doc.custom_hotel_booking_status == \"Cancelled\"",
+   "fieldname": "custom_hotel_refund_amount",
+   "fieldtype": "Currency",
+   "label": "Hotel Refund Amount"
+  },
+  {
+   "depends_on": "eval:doc.custom_hotel_booking_status == \"Rescheduled\"",
+   "fieldname": "custom_hotel_reschedule_details",
+   "fieldtype": "Heading",
+   "label": "Hotel Reschedule Details"
+  },
+  {
+   "depends_on": "eval:doc.custom_hotel_booking_status == \"Rescheduled\"",
+   "fieldname": "custom_hotel_reschedule_charges",
+   "fieldtype": "Currency",
+   "label": "Hotel Reschedule Charges"
+  },
+  {
+   "depends_on": "eval:doc.custom_hotel_booking_status == \"Rescheduled\"",
+   "fieldname": "custom_rescheduled_hotel_ticket_",
+   "fieldtype": "Attach",
+   "label": "Rescheduled Hotel Ticket "
+  },
+  {
+   "fieldname": "custom_hotel_preferences",
+   "fieldtype": "Heading",
+   "label": "Hotel Preferences"
+  },
+  {
+   "default": "0",
+   "fieldname": "custom_laundry_facility",
+   "fieldtype": "Check",
+   "label": "Laundry Facility"
+  },
+  {
+   "depends_on": "custom_laundry_facility",
+   "fieldname": "custom_laundry_facility_remarks",
+   "fieldtype": "Small Text",
+   "label": "Laundry Facility Remarks"
+  },
+  {
+   "default": "0",
+   "fieldname": "custom_discount_on_meal",
+   "fieldtype": "Check",
+   "label": "Discount On Meal"
+  },
+  {
+   "depends_on": "custom_discount_on_meal",
+   "fieldname": "custom_meal_discount_remarks",
+   "fieldtype": "Small Text",
+   "label": "Meal Discount Remarks"
+  },
+  {
+   "default": "0",
+   "fieldname": "custom_airport_transport",
+   "fieldtype": "Check",
+   "label": "Airport Transport"
+  },
+  {
+   "depends_on": "custom_airport_transport",
+   "fieldname": "custom_airport_transport_remarks",
+   "fieldtype": "Small Text",
+   "label": "Airport Transport Remarks"
+  },
+  {
+   "default": "0",
+   "fieldname": "custom_break_fast",
+   "fieldtype": "Check",
+   "label": "Break Fast"
+  },
+  {
+   "default": "0",
+   "fieldname": "custom_wifi",
+   "fieldtype": "Check",
+   "label": "Wifi"
+  },
+  {
+   "fieldname": "custom_column_break_9gose",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "custom_hotel_invoice_details",
+   "fieldtype": "Heading",
+   "label": "Hotel Invoice Details"
+  },
+  {
+   "fieldname": "custom_hotel_invoice_id",
+   "fieldtype": "Data",
+   "label": "Hotel Invoice ID"
+  },
+  {
+   "fieldname": "custom_hotel_booking_vendor_name",
+   "fieldtype": "Link",
+   "label": "Hotel Booking Vendor",
+   "options": "Supplier"
+  },
+  {
+   "fieldname": "custom_service_category",
+   "fieldtype": "Link",
+   "label": "Service Category",
+   "options": "Item"
+  },
+  {
+   "fieldname": "custom_payment_terms_for_hotel_booking",
+   "fieldtype": "Select",
+   "label": "Payment Terms for Hotel Booking",
+   "options": "\nB2C\nDirect Payment"
+  },
+  {
+   "fieldname": "custom_hotel_cost_per_day",
+   "fieldtype": "Currency",
+   "label": "Hotel Cost per Day"
+  },
+  {
+   "fieldname": "custom_total_hotel_charge",
+   "fieldtype": "Currency",
+   "label": "Total Hotel Charge"
+  },
+  {
+   "fieldname": "custom_total_hotel_charge_as_per_invoice",
+   "fieldtype": "Currency",
+   "label": "Total Hotel Charge as per Invoice"
+  },
+  {
+   "fieldname": "custom_hotel_payment_status",
+   "fieldtype": "Select",
+   "label": "Hotel Payment Status",
+   "options": "\nPaid\nUnpaid"
+  },
+  {
+   "fieldname": "custom_paid_amount_hotel",
+   "fieldtype": "Currency",
+   "label": "Paid Amount (Hotel)"
+  },
+  {
+   "fieldname": "custom_outstanding_amount_hotel",
+   "fieldtype": "Currency",
+   "label": "Outstanding Amount (Hotel)"
+  },
+  {
+   "fieldname": "custom_create_purchase_invoice_hotel",
+   "fieldtype": "Button",
+   "label": "Create Purchase Invoice"
+  },
+  {
+   "fieldname": "custom_send_email_hotel",
+   "fieldtype": "Button",
+   "label": "Send Email"
+  },
+  {
+   "default": "0",
+   "fieldname": "custom_hotel_email_sent",
+   "fieldtype": "Check",
+   "hidden": 1,
+   "label": "Hotel Email Sent",
+   "read_only": 1
+  },
+  {
+   "fieldname": "column_break_qnko",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "column_break_vibp",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "section_break_gpok",
+   "fieldtype": "Section Break"
+  }
+ ],
+ "index_web_pages_for_search": 1,
+ "links": [],
+ "modified": "2026-07-05 10:01:41.921152",
+ "modified_by": "Administrator",
+ "module": "Harro",
+ "name": "Travel Hotel Booking",
+ "naming_rule": "Random",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Travel User",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Travel Manager",
+   "share": 1,
+   "write": 1
+  }
+ ],
+ "row_format": "Dynamic",
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 1
+}

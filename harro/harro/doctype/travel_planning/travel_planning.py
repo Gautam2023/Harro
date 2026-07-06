@@ -830,6 +830,28 @@ def make_timesheet(source_name, target_doc=None):
 
     return timesheet
 
+import frappe
+from frappe.utils import today
+
+@frappe.whitelist()
+def make_employee_advance(source_name, target_doc=None):
+    travel = frappe.get_doc("Travel Planning", source_name)
+
+    employee_advance = frappe.new_doc("Employee Advance")
+
+    if travel.travel_itinerary:
+        row = travel.travel_itinerary[0]
+
+        employee_advance.employee = row.custom_employee
+        employee_advance.employee_name = row.employee_name
+
+    employee_advance.posting_date = today()
+    employee_advance.custom_employee_advance_type = "Travel Allowance"
+    employee_advance.custom_country = travel.custom_country
+    employee_advance.custom_travel_planning = travel.name
+
+    return employee_advance
+
 @frappe.whitelist()
 @frappe.validate_and_sanitize_search_inputs
 def get_travel_managers(doctype, txt, searchfield, start, page_len, filters):

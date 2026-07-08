@@ -98,7 +98,7 @@
    "fieldname": "segment_no",
    "fieldtype": "Int",
    "in_list_view": 1,
-   "label": "Segment No"
+   "label": "Sector No"
   },
   {
    "fieldname": "column_break_link",
@@ -123,7 +123,7 @@
   {
    "fieldname": "custom_return_travel_to",
    "fieldtype": "Data",
-   "label": "Return Travel To"
+   "label": "Onward Travel To"
   },
   {
    "default": "0",
@@ -272,28 +272,33 @@
   {
    "fieldname": "custom_flight_invoice_id",
    "fieldtype": "Data",
+   "hidden": 1,
    "label": "Flight Invoice ID"
   },
   {
    "fieldname": "custom_service_type",
    "fieldtype": "Link",
+   "hidden": 1,
    "label": "Service Type",
    "options": "Item"
   },
   {
    "fieldname": "custom_flight_booking_vendor",
    "fieldtype": "Link",
+   "hidden": 1,
    "label": "Flight Booking Vendor",
    "options": "Supplier"
   },
   {
    "fieldname": "custom_flight_invoice_attachment",
    "fieldtype": "Attach",
+   "hidden": 1,
    "label": "Onward Flight Invoice Attachment"
   },
   {
    "fieldname": "custom_return_flight_invoice_attachment",
    "fieldtype": "Attach",
+   "hidden": 1,
    "label": "Return Flight Invoice Attachment"
   },
   {
@@ -366,10 +371,11 @@
  ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-07-08 10:41:33.109221",
+ "modified": "2026-07-08 12:10:36.813537",
  "modified_by": "Administrator",
  "module": "Harro",
  "name": "Travel Flight Details",
+ "naming_rule": "Random",
  "owner": "Administrator",
  "permissions": [
   {

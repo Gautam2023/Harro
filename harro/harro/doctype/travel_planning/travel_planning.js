@@ -536,6 +536,7 @@ function show_review_confirmation_dialog(frm, action) {
 
 	d.fields_dict.travel_summary.$wrapper.html(build_review_html(frm));
 	d.show();
+	d.$wrapper.find(".modal-dialog").css({ width: "70%", maxWidth: "70%" });
 }
 
 function apply_workflow_action(frm, action) {

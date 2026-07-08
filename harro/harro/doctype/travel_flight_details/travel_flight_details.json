@@ -113,12 +113,12 @@
   {
    "fieldname": "custom_return_travel_date",
    "fieldtype": "Date",
-   "label": "Return Travel Date"
+   "label": "Onward Travel Date"
   },
   {
    "fieldname": "custom_return_travel_from",
    "fieldtype": "Data",
-   "label": "Return Travel From"
+   "label": "Onward Travel From"
   },
   {
    "fieldname": "custom_return_travel_to",
@@ -366,7 +366,7 @@
  ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-07-05 10:00:57.314143",
+ "modified": "2026-07-08 10:41:33.109221",
  "modified_by": "Administrator",
  "module": "Harro",
  "name": "Travel Flight Details",

@@ -194,7 +194,7 @@ const TRAVEL_SEGMENT_TYPES = [
         get_method: "harro.harro.doctype.travel_planning.travel_planning.get_flight_segments",
         add_label: __("Add Flight"),
         label_fn: (row) => `${row.custom_onward_travel_date || "—"} → ${row.custom_return_travel_date || "—"}`,
-        meta_fn: (row) => row.custom_flight_booking_status || __("Draft"),
+        meta_fn: (row) => `${row.custom_return_travel_from || "—"} → ${row.custom_return_travel_to || "—"}`,
         anchor_field: "custom_flight_details",
         section_label: __("Flight Details"),
         legacy_fields: [
@@ -221,8 +221,8 @@ const TRAVEL_SEGMENT_TYPES = [
         html_field: "hotel_segments_html",
         get_method: "harro.harro.doctype.travel_planning.travel_planning.get_hotel_segments",
         add_label: __("Add Hotel"),
-        label_fn: (row) => `${row.custom_hotel_name || __("Hotel")}`,
-        meta_fn: (row) => `${row.check_in_date || "—"} → ${row.check_out_date || "—"}`,
+        label_fn: (row) => `${row.check_in_date || "—"} → ${row.check_out_date || "—"}`,
+        meta_fn: (row) => `${row.custom_hotel_name || __("Hotel")}`,
         anchor_field: "custom_section_break_q45fn",
         section_label: __("Hotel Booking"),
         legacy_fields: [
@@ -245,7 +245,7 @@ const TRAVEL_SEGMENT_TYPES = [
         get_method: "harro.harro.doctype.travel_planning.travel_planning.get_taxi_segments",
         add_label: __("Add Taxi"),
         label_fn: (row) => `${row.custom_taxi_type || __("Taxi")}`,
-        meta_fn: (row) => row.custom_driver_name ? __("Driver: {0}", [row.custom_driver_name]) : __("No driver assigned"),
+        meta_fn: (row) => `${row.custom_taxi_vendor || __("No vendor assigned")}`,
         anchor_field: "custom_taxi_details",
         section_label: __("Taxi Details"),
         legacy_fields: [

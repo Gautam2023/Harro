@@ -73,7 +73,7 @@ def execute():
                     "fieldname": HOTEL_CHECKBOX,
                     "label": "Stay Required",
                     "fieldtype": "Check",
-                    "insert_after": "contact_email",
+                    "insert_after": "employee_name",
                     "default": "0",
                 }
             ],

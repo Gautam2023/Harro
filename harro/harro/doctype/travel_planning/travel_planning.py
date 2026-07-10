@@ -92,6 +92,13 @@ def send_flight_booking_emails(docname):
     requestor_name = frappe.db.get_value("Employee", doc.travel_requestor, "employee_name")
 
     for row in doc.travel_itinerary:
+        # skip rows that already got this email
+        if row.get("flight_booking_email_sent"):
+            continue
+
+        if not row.custom_contact_email:
+            continue
+
         attachments = [
             {"file_url": row.get(field)}
             for field in flight_attachment_fields
@@ -120,6 +127,9 @@ def send_flight_booking_emails(docname):
                 reference_doctype=doc.doctype,
                 reference_name=doc.name
             )
+
+            # mark this row so it's not emailed again on a future transition
+            row.db_set("flight_booking_email_sent", 1)
 
         # ── Email to Requestor
         # if doc.custom_requestor_contact_email:
@@ -202,6 +212,13 @@ def send_hotel_booking_emails(docname):
     requestor_name = frappe.db.get_value("Employee", doc.travel_requestor, "employee_name")
 
     for row in doc.travel_itinerary:
+        # skip rows that already got this email
+        if row.get("hotel_booking_email_sent"):
+            continue
+
+        if not row.get("custom_contact_email"):
+            continue
+
         attachments = [
             {"file_url": row.get(field)}
             for field in hotel_attachment_fields
@@ -234,6 +251,8 @@ def send_hotel_booking_emails(docname):
                 reference_doctype=doc.doctype,
                 reference_name=doc.name
             )
+            
+            row.db_set("hotel_booking_email_sent", 1)
 
         # ── Email to Requestor 
         # if doc.custom_requestor_contact_email:

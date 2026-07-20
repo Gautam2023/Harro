@@ -233,10 +233,22 @@
    "label": "Break Fast"
   },
   {
+    "depends_on": "custom_break_fast",
+    "fieldname": "custom_break_fast_remarks",
+    "fieldtype": "Small Text",
+    "label": "Break Fast Remarks"
+  },
+  {
    "default": "0",
    "fieldname": "custom_wifi",
    "fieldtype": "Check",
    "label": "Wifi"
+  },
+  {
+    "depends_on": "custom_wifi",
+    "fieldname": "custom_wifi_remarks",
+    "fieldtype": "Small Text",
+    "label": "Wifi Remarks"
   },
   {
    "fieldname": "custom_column_break_9gose",

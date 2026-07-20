@@ -168,8 +168,8 @@ def calculate_totals(doc, method=None):
 
 # View only logged in user linked employee rows in travelling planning child table(travel iternary)
 VIEW_ALL_ROLES = {
-    # "Travel Manager",
-    # "Travel User",
+    "Travel Manager",
+    "Travel User",
     "Travel Desk Manager",
     "Accounts Manager",
     "Accounts User",

@@ -227,8 +227,9 @@ def send_hotel_booking_emails(docname):
 
         # Build travel preferences block (only if the field exists on the row)
         preferences_html = _build_preferences_html(row)
+        payment_terms_html = _build_payment_terms_html(row)
 
-        # ── Email to Employee 
+        # ── Email to Employee
         if row.custom_contact_email:
             frappe.sendmail(
                 recipients=[row.custom_contact_email],
@@ -241,6 +242,8 @@ def send_hotel_booking_emails(docname):
 
                     <b>Travel Planning:</b> {travel_planning_link}<br>
                     <b>Employee:</b> {row.employee_name}<br><br>
+
+                    {payment_terms_html}
 
                     {preferences_html}
 
@@ -291,7 +294,8 @@ def send_hotel_booking_emails(docname):
     for segment in frappe.get_all(
         "Travel Hotel Booking",
         filters={"travel_planning": docname},
-        fields=["name", "employee", "contact_email", "custom_taxi_bill"] + segment_preference_fields,
+        fields=["name", "employee", "contact_email", "custom_taxi_bill",
+                "custom_payment_terms_for_hotel_booking"] + segment_preference_fields,
     ):
         if not segment.contact_email:
             continue
@@ -299,6 +303,7 @@ def send_hotel_booking_emails(docname):
         employee_name = frappe.db.get_value("Employee", segment.employee, "employee_name") or segment.employee
         attachments = [{"file_url": segment.custom_taxi_bill}] if segment.custom_taxi_bill else []
         segment_preferences_html = _build_preferences_html(segment)
+        segment_payment_terms_html = _build_payment_terms_html(segment)
 
         frappe.sendmail(
             recipients=[segment.contact_email],
@@ -312,6 +317,8 @@ def send_hotel_booking_emails(docname):
                 <b>Travel Planning:</b> {travel_planning_link}<br>
                 <b>Employee:</b> {employee_name}<br><br>
 
+                {segment_payment_terms_html}
+
                 {segment_preferences_html}
 
                 Regards,<br>
@@ -321,6 +328,13 @@ def send_hotel_booking_emails(docname):
             reference_doctype=doc.doctype,
             reference_name=doc.name
         )
+
+
+def _build_payment_terms_html(row):
+    payment_terms = row.get("custom_payment_terms_for_hotel_booking")
+    if not payment_terms:
+        return ""
+    return f"<b>Payment Terms for Hotel Booking:</b> {payment_terms}<br><br>"
 
 
 def _build_preferences_html(row):

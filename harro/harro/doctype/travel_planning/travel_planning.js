@@ -1,12 +1,275 @@
-    // Copyright (c) 2025, Fosserp and contributors
-    // For license information, please see license.txt
+// Copyright (c) 2025, Fosserp and contributors
+// For license information, please see license.txt
 
-    const TRAVEL_SEGMENT_STATUS_CLASS = {
-        "Booked": "tp-status-booked",
-        "In progress": "tp-status-progress",
-        "Cancelled": "tp-status-cancelled",
-        "Rescheduled": "tp-status-rescheduled",
-    };
+const TRAVEL_SEGMENT_STATUS_CLASS = {
+    "Booked": "tp-status-booked",
+    "In progress": "tp-status-progress",
+    "Cancelled": "tp-status-cancelled",
+    "Rescheduled": "tp-status-rescheduled",
+};
+
+function inject_travel_segment_styles() {
+    if (document.getElementById("tp-segment-styles")) return;
+    const style = document.createElement("style");
+    style.id = "tp-segment-styles";
+    style.textContent = `
+        :root {
+            --tp-surface: #faf9f7;
+            --tp-surface-alt: #f1efe9;
+            --tp-border: #e3ddd0;
+            --tp-ink: #2b2620;
+            --tp-ink-muted: #6b6357;
+            --tp-accent: #2f6f6b;
+            --tp-accent-soft: #e4efee;
+            --tp-status-progress: #b3782d;
+            --tp-status-cancelled: #b23b3b;
+            --tp-status-rescheduled: #7a5cc4;
+        }
+        .dark .tp-segment-block, [data-theme="dark"] .tp-segment-block {
+            --tp-surface: #262320;
+            --tp-surface-alt: #2e2b26;
+            --tp-border: #3d3830;
+            --tp-ink: #ece7de;
+            --tp-ink-muted: #a89e8f;
+            --tp-accent: #6bc2bb;
+            --tp-accent-soft: #1f3634;
+        }
+        .tp-segment-block {
+            width: 50%;
+            min-width: 260px;
+            margin: 10px 0 16px;
+            font-family: inherit;
+        }
+        .tp-segment-heading {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 11px;
+            font-weight: 600;
+            letter-spacing: 0.06em;
+            text-transform: uppercase;
+            color: var(--tp-ink-muted);
+            margin-bottom: 6px;
+        }
+        .tp-segment-heading .tp-icon {
+            width: 14px;
+            height: 14px;
+            flex: none;
+            color: var(--tp-accent);
+        }
+        .tp-segment-list {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            margin-bottom: 8px;
+        }
+        .tp-segment-empty {
+            font-size: 12px;
+            color: var(--tp-ink-muted);
+            padding: 8px 10px;
+            background: var(--tp-surface-alt);
+            border: 1px dashed var(--tp-border);
+            border-radius: 6px;
+        }
+        .tp-stub {
+            position: relative;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            background: var(--tp-surface);
+            border: 1px solid var(--tp-border);
+            border-radius: 6px;
+            padding: 8px 10px 8px 12px;
+            overflow: hidden;
+        }
+        .tp-stub::before {
+            content: "";
+            position: absolute;
+            left: 0;
+            top: 0;
+            bottom: 0;
+            width: 4px;
+            background: var(--tp-accent);
+        }
+        .tp-stub.tp-status-progress::before { background: var(--tp-status-progress); }
+        .tp-stub.tp-status-cancelled::before { background: var(--tp-status-cancelled); }
+        .tp-stub.tp-status-rescheduled::before { background: var(--tp-status-rescheduled); }
+        .tp-stub-body {
+            flex: 1;
+            min-width: 0;
+        }
+        .tp-stub-title {
+            font-size: 12.5px;
+            font-weight: 600;
+            color: var(--tp-ink);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .tp-stub-meta {
+            font-size: 11px;
+            color: var(--tp-ink-muted);
+            font-variant-numeric: tabular-nums;
+            margin-top: 1px;
+        }
+        .tp-stub-actions {
+            display: flex;
+            gap: 5px;
+            flex: none;
+        }
+        .tp-stub-actions button {
+            border: 1px solid var(--tp-border);
+            background: var(--tp-surface-alt);
+            color: var(--tp-ink);
+            width: 26px;
+            height: 26px;
+            border-radius: 5px;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .tp-stub-actions button.tp-view,
+        .tp-stub-actions button.tp-edit {
+            color: var(--tp-accent);
+            border-color: var(--tp-accent);
+            background: var(--tp-accent-soft);
+        }
+        .tp-stub-actions button.tp-view:hover,
+        .tp-stub-actions button.tp-edit:hover {
+            background: var(--tp-accent);
+            color: #fff;
+        }
+        .tp-stub-actions button.tp-danger {
+            color: var(--tp-status-cancelled);
+            border-color: var(--tp-status-cancelled);
+            background: #f6dede;
+        }
+        .tp-stub-actions button.tp-danger:hover {
+            background: var(--tp-status-cancelled);
+            color: #fff;
+        }
+        [data-theme="dark"] .tp-stub-actions button.tp-danger,
+        .dark .tp-stub-actions button.tp-danger {
+            background: #3a2222;
+        }
+        .tp-stub-actions button:focus-visible {
+            outline: 2px solid var(--tp-accent);
+            outline-offset: 1px;
+        }
+        .tp-add-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            font-size: 11.5px;
+            font-weight: 600;
+            color: var(--tp-accent);
+            background: var(--tp-accent-soft);
+            border: 1px solid transparent;
+            border-radius: 5px;
+            padding: 5px 10px;
+            cursor: pointer;
+        }
+        .tp-add-btn:hover {
+            border-color: var(--tp-accent);
+        }
+    `;
+    document.head.appendChild(style);
+}
+
+const TRAVEL_SEGMENT_ICONS = {
+    "Travel Flight Details": '<svg class="tp-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.8 19.2 16 11l3.5-3.5C21 6 21.5 4 21 3c-1-.5-3 0-4.5 1.5L13 8 4.8 6.2c-.5-.1-1 .1-1.3.5l-.7.7c-.5.5-.3 1.2.3 1.5L9 12l-2 3H4l-1 1 3 2 2 3 1-1v-3l3-2 3.1 6.1c.3.5 1 .7 1.5.3l.7-.7c.4-.3.6-.8.5-1.3Z"/></svg>',
+    "Travel Hotel Booking": '<svg class="tp-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 21V9l9-6 9 6v12"/><path d="M9 21v-6h6v6"/><path d="M3 12h18"/></svg>',
+    "Travel Taxi Details": '<svg class="tp-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 17h14M5 17a2 2 0 1 1-4 0 2 2 0 0 1 4 0Zm14 0a2 2 0 1 0 4 0 2 2 0 0 0-4 0ZM3 17V9l2-4h14l2 4v8"/><path d="M5 9h14"/></svg>',
+};
+
+const ICON_VIEW = '<svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8Z"/><circle cx="12" cy="12" r="3"/></svg>';
+const ICON_EDIT = '<svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>';
+const ICON_DELETE = '<svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/></svg>';
+
+const TRAVEL_SEGMENT_TYPES = [
+    {
+        doctype: "Travel Flight Details",
+        html_field: "flight_segments_html",
+        get_method: "harro.harro.doctype.travel_planning.travel_planning.get_flight_segments",
+        add_label: __("Add Flight"),
+        label_fn: (row) => `${row.custom_onward_travel_date || "—"} → ${row.custom_return_travel_date || "—"}`,
+        meta_fn: (row) => `${row.custom_return_travel_from || "—"} → ${row.custom_return_travel_to || "—"}`,
+        anchor_field: "custom_flight_details",
+        section_label: __("Flight Details"),
+        legacy_fields: [
+            "custom_flight_details", "custom_flight_booking_details", "custom_onward_travel_date",
+            "custom_return_travel_date", "custom_return_travel_from", "custom_return_travel_to",
+            "custom_direct_flight", "custom_connection_flight", "custom_country", "custom_city",
+            "custom_layover_time", "custom_seat_charges", "custom_flight_bill", "custom_return_flight_ticket",
+            "custom_onward_flight_cost", "custom_return_flight_cost", "custom_round_trip_cost",
+            "custom_flight_booking_status", "custom_booked_by", "custom_flight_cancellation_details",
+            "custom_reason_for_cancellation", "custom_flight_cancellation_charges", "custom_flight_refund_amount",
+            "custom_flight_reschedule_details", "custom_revised_travel_date", "custom_revised_return_date",
+            "custom_reason_for_rescheduling", "custom_flight_reschedule_charges", "custom_rescheduled_flight_ticket",
+            "custom_send_revised_ticket", "custom_column_break_gi5iu", "custom_flight_invoice_details",
+            "custom_flight_invoice_id", "custom_service_type", "custom_flight_booking_vendor",
+            "custom_flight_invoice_attachment", "custom_return_flight_invoice_attachment",
+            "custom_round_trip_cost_as_per_invoice", "custom_onward_flight_cost_as_per_invoice",
+            "custom_return_flight_cost_as_per_invoice", "custom_total_flight_cost_as_per_invoice",
+            "custom_flight_payment_status", "custom_paid_amount_flight", "custom_outstanding_amount_flight",
+            "custom_create_purchase_invoice_flight", "custom_send_email_flight", "custom_flight_email_sent",
+        ],
+    },
+    {
+        doctype: "Travel Hotel Booking",
+        html_field: "hotel_segments_html",
+        get_method: "harro.harro.doctype.travel_planning.travel_planning.get_hotel_segments",
+        add_label: __("Add Hotel"),
+        label_fn: (row) => `${row.check_in_date || "—"} → ${row.check_out_date || "—"}`,
+        meta_fn: (row) => `${row.custom_hotel_name || __("Hotel")}`,
+        anchor_field: "custom_section_break_q45fn",
+        section_label: __("Hotel Booking"),
+        legacy_fields: [
+            "custom_section_break_q45fn", "custom_hotel_booking_details", "custom_hotel_name", "custom_taxi_bill",
+            "custom_hotel_booking_status", "custom_hotel_booked_by", "custom_hotel_cancellation_details",
+            "custom_hotel_cancellation_charges", "custom_hotel_refund_amount", "custom_hotel_reschedule_details",
+            "custom_hotel_reschedule_charges", "custom_hotel_preferences", "custom_laundry_facility",
+            "custom_laundry_facility_remarks", "custom_discount_on_meal", "custom_meal_discount_remarks",
+            "custom_airport_transport", "custom_airport_transport_remarks", "custom_break_fast", "custom_wifi",
+            "custom_rescheduled_hotel_ticket_", "custom_column_break_9gose", "custom_hotel_invoice_details",
+            "custom_hotel_invoice_id", "custom_hotel_booking_vendor_name", "custom_service_category",
+            "custom_payment_terms_for_hotel_booking", "custom_hotel_cost_per_day", "custom_total_hotel_charge",
+            "custom_total_hotel_charge_as_per_invoice", "custom_hotel_payment_status", "custom_paid_amount_hotel",
+            "custom_outstanding_amount_hotel", "custom_create_purchase_invoice_hotel", "custom_send_email_hotel",
+        ],
+    },
+    {
+        doctype: "Travel Taxi Details",
+        html_field: "taxi_segments_html",
+        get_method: "harro.harro.doctype.travel_planning.travel_planning.get_taxi_segments",
+        add_label: __("Add Taxi"),
+        label_fn: (row) => `${row.custom_taxi_type || __("Taxi")}`,
+        meta_fn: (row) => `${row.custom_taxi_vendor || __("No vendor assigned")}`,
+        anchor_field: "custom_taxi_details",
+        section_label: __("Taxi Details"),
+        legacy_fields: [
+            "custom_taxi_details", "custom_taxi_required", "custom_driver_contact_number", "custom_taxi_type",
+            "custom_airport_transfer", "custom_daily_transfer", "custom_out_of_india", "custom_taxi_number",
+            "custom_driver_name", "custom_taxi_invoice_attachment", "custom_column_break_d9krg",
+            "custom_taxi_invoice_details", "custom_taxi_invoice_id", "custom_service_item", "custom_taxi_vendor",
+            "custom_daily_transfer_taxi_cost", "custom_create_purchase_invoice", "custom_send_email",
+        ],
+    },
+];
+
+/**
+ * Handles:
+ *   1. "Add Traveller" grid button relabeling
+ *   2. Auto-population of Travel Requestor on new documents
+ *   3. Workflow interception for "Send to Travel Manager for Travel Plan
+ *      Update" — validates Claim Status on all rows, then shows a
+ *      read-only Review Confirmation dialog before applying the workflow
+ *      action
+ *   4. Claim Status mutual exclusivity on child table rows
+ *   5. Visa status lookup + dialog when an Employee is set on a child row
+ *      (International travel only), with Visa Request creation shortcut
+ */
 
     function inject_travel_segment_styles() {
         if (document.getElementById("tp-segment-styles")) return;
@@ -557,9 +820,10 @@
             },
         });
 
-        d.fields_dict.travel_summary.$wrapper.html(build_review_html(frm));
-        d.show();
-    }
+	d.fields_dict.travel_summary.$wrapper.html(build_review_html(frm));
+	d.show();
+	d.$wrapper.find(".modal-dialog").css({ width: "70%", maxWidth: "70%" });
+}
 
     function apply_workflow_action(frm, action) {
         frappe.xcall("frappe.model.workflow.apply_workflow", {
